@@ -33,7 +33,7 @@ pub fn bind(
     defer persistent.deinit(gpa);
 
     var sockets: [SocketKind.count]net.Socket.Handle = undefined;
-    var buffers: [SocketKind.count][mtu]u8 = undefined;
+    var buffers: [SocketKind.count][mtu]u8 align(@alignOf(u64)) = undefined;
     var messages: [SocketKind.count]net.IncomingMessage = undefined;
     var operations: [SocketKind.count]Io.Operation.Storage = undefined;
 
@@ -119,12 +119,13 @@ pub fn bind(
 
                 std.debug.assert(n_messages == 1);
 
-                const ctl_message = messages[completion.index];
+                const message = messages[completion.index];
+                const data = buffers[completion.index][0..message.data.len];
 
-                std.log.debug(
-                    "received ctl message from {f}: {X}",
-                    .{ ctl_message.from, ctl_message.data },
-                );
+                control.process(io, &sockets, &server, &message.from, data) catch |err| switch (err) {
+                    error.Canceled => break :recv_loop,
+                    else => {},
+                };
             },
         };
     } else |err| switch (err) {
@@ -482,6 +483,7 @@ const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
 const Assets = @import("Assets.zig");
 const Server = @import("Server.zig");
+const control = @import("control.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 

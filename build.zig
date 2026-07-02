@@ -6,6 +6,7 @@ const stable_protos: []const []const u8 = &.{
 
 pub fn build(b: *Build) void {
     const rmio = b.createModule(.{ .root_source_file = b.path("rmio/src/root.zig") });
+    const rmnet = b.createModule(.{ .root_source_file = b.path("rmnet/src/root.zig") });
     const rmmem = b.createModule(.{ .root_source_file = b.path("rmmem/src/root.zig") });
     const rmcli = b.createModule(.{ .root_source_file = b.path("rmcli/src/root.zig") });
     const rmcrypt = b.createModule(.{ .root_source_file = b.path("rmcrypt/src/root.zig") });
@@ -108,6 +109,7 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("gamesv/src/main.zig"),
             .imports = &.{
                 .{ .name = "rmio", .module = rmio },
+                .{ .name = "rmnet", .module = rmnet },
                 .{ .name = "rmmem", .module = rmmem },
                 .{ .name = "rmcli", .module = rmcli },
                 .{ .name = "rmcrypt", .module = rmcrypt },
@@ -122,20 +124,40 @@ pub fn build(b: *Build) void {
     gamesv.step.dependOn(&compile_main_descriptors.step);
     gamesv.step.dependOn(&compile_stable_definitions.step);
 
+    const rmctl = b.addExecutable(.{
+        .name = "rmctl",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("rmctl/src/main.zig"),
+            .imports = &.{
+                .{ .name = "rmio", .module = rmio },
+                .{ .name = "rmnet", .module = rmnet },
+            },
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
     b.step(
         "pb",
         "run a struct generation pass on `main.proto`",
     ).dependOn(&compile_main_structs.step);
 
+    const ctl = b.addRunArtifact(rmctl);
     const serve_dp = b.addRunArtifact(dpsv);
     const serve_sdk = b.addRunArtifact(sdksv);
     const serve_game = b.addRunArtifact(gamesv);
 
     if (b.args) |args| {
+        ctl.addArgs(args);
         serve_dp.addArgs(args);
         serve_sdk.addArgs(args);
         serve_game.addArgs(args);
     }
+
+    b.step(
+        "ctl",
+        "execute the rmctl command",
+    ).dependOn(&ctl.step);
 
     b.step(
         "serve-dp",
