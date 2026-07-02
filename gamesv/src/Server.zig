@@ -1,5 +1,10 @@
 const log = std.log.scoped(.@"remielle-gamesv");
 
+/// Used for persistent allocations that are recycled by using internal mechanisms.
+/// Has the same lifetime as the `Server` itself.
+resource_arena: heap.ArenaAllocator,
+/// Used for allocations that have lifetime of a single handler pipeline pass.
+resettable_arena: heap.ArenaAllocator,
 /// Initialized at startup.
 assets: *const Assets,
 persistent: *Persistent,
@@ -24,10 +29,6 @@ conv_map: array_hash_map.Auto(kcp.ConvId, void),
 /// * `kcp.ConvId`
 /// * `kcp.Token`
 conv_random: u64,
-/// Used for persistent allocations that are recycled by using internal mechanisms.
-arena: Allocator,
-/// Used for allocations that have lifetime of a single handler pipeline pass.
-per_message_arena: *heap.ArenaAllocator,
 /// Decreased on each new connection and increased on each disconnect.
 /// When `nothing` is set, `onAuthSucceeded` returns `error.SessionLimitExceeded`.
 session_limit: Limit,
@@ -64,14 +65,15 @@ pub const Frame = struct {
 };
 
 pub fn init(
-    arena: Allocator,
-    per_message_arena: *heap.ArenaAllocator,
+    gpa: Allocator,
     csprng: Random,
     assets: *const Assets,
     persistent: *Persistent,
     session_limit: Limit,
 ) Server {
     return .{
+        .resource_arena = .init(gpa),
+        .resettable_arena = .init(gpa),
         .assets = assets,
         .multi_conversation = .init,
         .conv_counter = .init,
@@ -79,11 +81,14 @@ pub fn init(
         .clients = .empty,
         .properties = .empty,
         .conv_random = csprng.int(u64),
-        .arena = arena,
         .persistent = persistent,
-        .per_message_arena = per_message_arena,
         .session_limit = session_limit,
     };
+}
+
+pub fn deinit(server: *Server) void {
+    server.resource_arena.deinit();
+    server.resettable_arena.deinit();
 }
 
 pub const ControlPacketStatus = union(enum) {
@@ -148,7 +153,9 @@ pub fn onAuthSucceeded(
 
     errdefer server.increaseLimit();
 
-    const client = try server.multi_conversation.create(server.arena, conv_id, token, current_time);
+    const resource_arena = server.resource_arena.allocator();
+
+    const client = try server.multi_conversation.create(resource_arena, conv_id, token, current_time);
     errdefer server.multi_conversation.swapRemove(client);
 
     // ACK the packet at kcp level
@@ -166,7 +173,7 @@ pub fn onAuthSucceeded(
     const cmd_id = comptime rmpb.cmdId(rmpb.main.PlayerGetTokenScRsp).?;
     messaging.encode(&writer.interface, .initial, cmd_id, .init, auth_response) catch unreachable;
 
-    try server.conv_map.put(server.arena, conv_id, {});
+    try server.conv_map.put(resource_arena, conv_id, {});
     errdefer _ = server.conv_map.swapRemove(conv_id);
 
     const index = try server.addClient(from.*, key, auth_response.uid);
@@ -222,10 +229,10 @@ pub fn receiveKcpPacket(
     while (true) {
         var reader = server.multi_conversation.reader(client) orelse break;
         defer server.multi_conversation.discardAt(client);
-        defer _ = server.per_message_arena.reset(.retain_capacity);
+        defer _ = server.resettable_arena.reset(.retain_capacity);
 
         messaging.handlers.process(
-            server.per_message_arena.allocator(),
+            server.resettable_arena.allocator(),
             &frame,
             &reader.interface,
         ) catch |err| {

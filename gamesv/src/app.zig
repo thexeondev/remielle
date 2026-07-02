@@ -64,22 +64,15 @@ pub fn bind(
             .flags = .{},
         } });
 
-    // Used for all of the `Server`-related persistent allocations
-    var server_arena: heap.ArenaAllocator = .init(gpa);
-    defer server_arena.deinit();
-
-    // Used for temporary per-message allocations.
-    var per_message_arena: heap.ArenaAllocator = .init(gpa);
-    defer per_message_arena.deinit();
-
     var server: Server = .init(
-        server_arena.allocator(),
-        &per_message_arena,
+        gpa,
         csprng,
         assets,
         &persistent,
         concurrent_session_limit,
     );
+
+    defer server.deinit();
 
     recv_loop: while (batch.awaitConcurrent(io, .none)) {
         const current_time: Io.Timestamp = .now(io, .real);
@@ -154,7 +147,7 @@ pub fn bind(
     while (session_index < server.conv_map.count()) : (session_index += 1) {
         savePlayer(
             io,
-            &per_message_arena,
+            &server.resettable_arena,
             &persistent,
             &server.properties,
             server.clients.get(.uid, session_index),
@@ -201,7 +194,7 @@ fn onGameMessageReceived(
 
                 savePlayer(
                     io,
-                    server.per_message_arena,
+                    &server.resettable_arena,
                     server.persistent,
                     &server.properties,
                     server.clients.get(.uid, index),
@@ -309,7 +302,7 @@ fn onGameMessageReceived(
 
                 savePlayer(
                     io,
-                    server.per_message_arena,
+                    &server.resettable_arena,
                     server.persistent,
                     &server.properties,
                     player_token.uid,
@@ -318,7 +311,7 @@ fn onGameMessageReceived(
             } else {
                 loadPlayer(
                     io,
-                    server.per_message_arena,
+                    &server.resettable_arena,
                     server.persistent,
                     &server.properties,
                     player_token.uid,
@@ -358,7 +351,6 @@ fn onGameMessageReceived(
 
 fn savePlayer(
     io: Io,
-    /// Same as `per_message_arena`.
     resettable_arena: *heap.ArenaAllocator,
     persistent: *Persistent,
     properties: *logic.Properties.List,
