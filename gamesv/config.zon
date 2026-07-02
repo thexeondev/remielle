@@ -1,7 +1,11 @@
 .{
-    // UDP bind address.
+    // UDP bind address for the main socket.
     // Can be overridden by the `-b` option.
-    .bind_address = "127.0.0.1:20501",
+    .game_bind_address = "127.0.0.1:20501",
+
+    // UDP bind address for the control socket.
+    // Can be overridden by the `-B` option.
+    .ctl_bind_address = "127.0.0.1:15810",
 
     // The amount of sessions allowed to be processed concurrently.
     // Zero means unlimited amount.

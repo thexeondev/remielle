@@ -1,7 +1,8 @@
 const log = std.log.scoped(.@"remielle-gamesv");
 
 pub const Options = struct {
-    bind_address: []const u8 = @import("config").bind_address,
+    bind_address_game: []const u8 = @import("config").game_bind_address,
+    Bind_address_ctl: []const u8 = @import("config").ctl_bind_address,
     concurrent_sessions_limit: u32 = @import("config").concurrent_sessions_limit,
     insecure_random_allowed: bool = false,
 };
@@ -33,8 +34,13 @@ pub fn main(init: Init.Minimal) void {
         .{ options_err, args[0], rmcli.opt.Usage(Options) },
     );
 
-    const bind_address = net.IpAddress.parseLiteral(options.bind_address) catch |err|
-        fatal("bad bind address specified: {t}", .{err});
+    var addresses: [SocketKind.count]net.IpAddress = undefined;
+
+    addresses[SocketKind.game.toIndex()] = net.IpAddress.parseLiteral(options.bind_address_game) catch |err|
+        fatal("bad game bind address specified: {t}", .{err});
+
+    addresses[SocketKind.ctl.toIndex()] = net.IpAddress.parseLiteral(options.Bind_address_ctl) catch |err|
+        fatal("bad ctl bind address specified: {t}", .{err});
 
     var io_impl = if (rmio.RemiellIo.supported)
         rmio.RemiellIo.init(gpa, .{ .coroutine_limit = .unlimited, .stack_size = 1024 * 1024 }) catch |err|
@@ -69,7 +75,7 @@ pub fn main(init: Init.Minimal) void {
 
     defer assets.deinit(gpa);
 
-    const bind_args = .{ io, gpa, csprng, &assets, &bind_address, concurrent_sessions_limit };
+    const bind_args = .{ io, gpa, csprng, &assets, &addresses, concurrent_sessions_limit };
 
     var app_future = io.concurrent(app.bind, bind_args) catch |concurrent_err| switch (concurrent_err) {
         error.ConcurrencyUnavailable => {
@@ -98,6 +104,7 @@ const is_debug = builtin.mode == .Debug;
 
 const Io = std.Io;
 const Init = std.process.Init;
+const SocketKind = app.SocketKind;
 const DefaultCsprng = std.Random.DefaultCsprng;
 
 const heap = std.heap;
