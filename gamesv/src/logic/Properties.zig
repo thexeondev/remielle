@@ -718,12 +718,9 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
 
 pub fn fromPlayerSave(
     props: *Properties.List,
-    gpa: Allocator,
     player: Player,
     save: *const pb.PlayerSave,
 ) !void {
-    _ = gpa;
-
     const index = @intFromEnum(player);
     props.getPtr(.basic_info, index).* = if (save.basic) |basic| .{
         .level = @enumFromInt(basic.level),

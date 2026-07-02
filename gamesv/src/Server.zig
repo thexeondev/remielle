@@ -1,32 +1,61 @@
 const log = std.log.scoped(.@"remielle-gamesv");
 
+/// Initialized at startup.
 assets: *const Assets,
+persistent: *Persistent,
+/// Indexes into arrays in this structure correspond to indexes in `conv_map`.
 multi_conversation: kcp.MultiConversation,
+/// Per-client, network-related variables that are not part of the `kcp` layer.
 clients: Clients,
+/// Per-client logic properties.
 properties: logic.Properties.List,
+/// Counts `kcp.Control.Kind.connect` requests to assign an ID for each client.
 conv_counter: kcp.ConvId.Counter,
-/// ConvId -> session index
+/// Active conversation IDs.
+/// The index of each entry corresponds to index of resources associated
+/// with the conversation.
+///
+/// See also:
+/// * `kcp.MultiConversation`
+/// * `logic.Properties`
 conv_map: array_hash_map.Auto(kcp.ConvId, void),
-/// Used for kcp tokens
+/// Used to randomize tokens derived from source address and conversation ID.
+/// See also:
+/// * `kcp.ConvId`
+/// * `kcp.Token`
 conv_random: u64,
+/// Used for persistent allocations that are recycled by using internal mechanisms.
+arena: Allocator,
+/// Used for allocations that have lifetime of a single handler pipeline pass.
 per_message_arena: *heap.ArenaAllocator,
-session_limit: Io.Limit,
+/// Decreased on each new connection and increased on each disconnect.
+/// When `nothing` is set, `onAuthSucceeded` returns `error.SessionLimitExceeded`.
+session_limit: Limit,
 
 pub const Client = struct {
+    /// Used for assigning the server-to-client `PacketHead.packet_id`.
     packet_counter: PacketCounter,
     xorpad: messaging.Xorpad,
+    /// The remote address of the client.
     addr: net.IpAddress,
+    /// The player UID associated with the client.
     uid: u32,
 };
 
 pub const Clients = rmmem.RemielleArrayList(rmmem.suggestBucketSize(64, Client), Client, u32);
 
 pub const Frame = struct {
+    /// The index of resources associated with the client this `Frame` is originated from.
     target_index: u32,
-    time: Io.Timestamp,
+    /// Wall-clock time of the moment this `Frame` was constructed.
+    time: Timestamp,
+    /// Same as `Server.clients`
     clients: *Clients,
+    /// Same as `Server.assets`
     assets: *const Assets,
+    /// Same as `Server.properties`
     properties: *logic.Properties.List,
+    /// Same as `Server.multi_conversation`
     multi_conversation: *kcp.MultiConversation,
 
     pub inline fn player(frame: *const Frame) logic.Properties.Player {
@@ -35,11 +64,12 @@ pub const Frame = struct {
 };
 
 pub fn init(
-    /// Used for per-message allocations
+    arena: Allocator,
     per_message_arena: *heap.ArenaAllocator,
     csprng: Random,
     assets: *const Assets,
-    session_limit: Io.Limit,
+    persistent: *Persistent,
+    session_limit: Limit,
 ) Server {
     return .{
         .assets = assets,
@@ -49,6 +79,8 @@ pub fn init(
         .clients = .empty,
         .properties = .empty,
         .conv_random = csprng.int(u64),
+        .arena = arena,
+        .persistent = persistent,
         .per_message_arena = per_message_arena,
         .session_limit = session_limit,
     };
@@ -100,14 +132,11 @@ pub fn receiveControlPacket(
 
 pub fn onAuthSucceeded(
     server: *Server,
-    /// Used for allocation of per-client ring buffers.
-    /// The allocation will be recycled.
-    arena: Allocator,
     from: *const net.IpAddress,
     first_packet: []u8,
     conv_id: kcp.ConvId,
     token: kcp.Token,
-    current_time: Io.Timestamp,
+    current_time: Timestamp,
     key: messaging.Xorpad.Key,
     auth_response: rmpb.main.PlayerGetTokenScRsp,
 ) !u32 {
@@ -119,7 +148,7 @@ pub fn onAuthSucceeded(
 
     errdefer server.increaseLimit();
 
-    const client = try server.multi_conversation.create(arena, conv_id, token, current_time);
+    const client = try server.multi_conversation.create(server.arena, conv_id, token, current_time);
     errdefer server.multi_conversation.swapRemove(client);
 
     // ACK the packet at kcp level
@@ -137,7 +166,7 @@ pub fn onAuthSucceeded(
     const cmd_id = comptime rmpb.cmdId(rmpb.main.PlayerGetTokenScRsp).?;
     messaging.encode(&writer.interface, .initial, cmd_id, .init, auth_response) catch unreachable;
 
-    try server.conv_map.put(arena, conv_id, {});
+    try server.conv_map.put(server.arena, conv_id, {});
     errdefer _ = server.conv_map.swapRemove(conv_id);
 
     const index = try server.addClient(from.*, key, auth_response.uid);
@@ -156,7 +185,7 @@ pub const ReceiveStatus = union(enum) {
 
 pub fn receiveKcpPacket(
     server: *Server,
-    time: Io.Timestamp,
+    time: Timestamp,
     from: *const net.IpAddress,
     buffer: []u8,
 ) !ReceiveStatus {
@@ -234,21 +263,17 @@ fn increaseLimit(server: *Server) void {
     };
 }
 
-pub fn release(server: *Server, id: kcp.ConvId) bool {
-    const client: u32 = @intCast(server.conv_map.getIndex(id) orelse
-        return false);
-
-    // Release the resources associated with this `conv_id`.
-
-    server.increaseLimit();
+/// Releases the resources associated with this `id`.
+/// Asserts `id` is active.
+pub fn release(server: *Server, id: kcp.ConvId) void {
+    const client: u32 = @intCast(server.conv_map.getIndex(id).?);
 
     _ = server.conv_map.swapRemove(id);
-
     server.multi_conversation.swapRemove(client);
     server.clients.swapRemove(client);
     server.properties.swapRemove(client);
 
-    return true;
+    server.increaseLimit();
 }
 
 pub const PacketCounter = enum(u32) {
@@ -261,8 +286,9 @@ pub const PacketCounter = enum(u32) {
     }
 };
 
-const Io = std.Io;
 const Random = std.Random;
+const Limit = std.Io.Limit;
+const Timestamp = std.Io.Timestamp;
 const Allocator = std.mem.Allocator;
 
 const heap = std.heap;
@@ -273,8 +299,8 @@ const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
 const Assets = @import("Assets.zig");
 const messaging = @import("messaging.zig");
+const Persistent = @import("Persistent.zig");
 
-const rmio = @import("rmio");
 const rmpb = @import("rmpb");
 const rmmem = @import("rmmem");
 

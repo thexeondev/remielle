@@ -72,15 +72,16 @@ pub fn bind(
     var per_message_arena: heap.ArenaAllocator = .init(gpa);
     defer per_message_arena.deinit();
 
-    var server: Server = .init(&per_message_arena, csprng, assets, concurrent_session_limit);
+    var server: Server = .init(
+        server_arena.allocator(),
+        &per_message_arena,
+        csprng,
+        assets,
+        &persistent,
+        concurrent_session_limit,
+    );
 
-    recv_loop: while (true) {
-        batch.awaitConcurrent(io, .none) catch |err| switch (err) {
-            error.Canceled => break :recv_loop,
-            error.Timeout => unreachable,
-            error.ConcurrencyUnavailable => fatal("couldn't start receiving: concurrency is unavailable", .{}),
-        };
-
+    recv_loop: while (batch.awaitConcurrent(io, .none)) {
         const current_time: Io.Timestamp = .now(io, .real);
 
         while (batch.next()) |completion| : (batch.addAt(completion.index, .{ .net_receive = .{
@@ -101,210 +102,18 @@ pub fn bind(
 
                 std.debug.assert(n_messages == 1);
 
-                const udp_message = messages[completion.index];
-                const udp_socket: net.Socket = .{ .handle = sockets[completion.index], .address = undefined };
+                const socket: net.Socket = .{ .handle = sockets[completion.index], .address = undefined };
 
-                if (udp_message.data.len == kcp.Control.size) {
-                    var out_buf: ?[kcp.Control.size]u8 = null;
-                    const status = server.receiveControlPacket(
-                        &udp_message.from,
-                        .{ .buffer = udp_message.data[0..kcp.Control.size] },
-                        &out_buf,
-                    );
-
-                    switch (status) {
-                        .nothing => {},
-                        .disconnect => |conv_id| disconnect: {
-                            const index: u32 = @intCast(server.conv_map.getIndex(conv_id) orelse
-                                break :disconnect);
-
-                            defer _ = server.release(conv_id);
-
-                            log.debug("player from {f} disconnected", .{udp_message.from});
-
-                            // Save player on disconnect
-                            const player_uid = server.clients.get(.uid, index);
-
-                            savePlayer(
-                                io,
-                                per_message_arena.allocator(),
-                                &persistent,
-                                &server.properties,
-                                player_uid,
-                                index,
-                            ) catch |err| log.err(
-                                "failed to save player with uid {d}: {t}",
-                                .{ player_uid, err },
-                            );
-                        },
-                    }
-
-                    if (out_buf) |*send_buf|
-                        udp_socket.send(io, &udp_message.from, send_buf) catch |err| switch (err) {
-                            error.Canceled => |e| return e,
-                            else => {},
-                        };
-
-                    continue;
-                } else if (udp_message.data.len < kcp.Header.size) continue;
-
-                const status = server.receiveKcpPacket(
-                    current_time,
-                    &udp_message.from,
-                    udp_message.data,
-                ) catch |recv_err| switch (recv_err) {
-                    error.InvalidToken => {
-                        // This may happen if server has been restarted, but the game
-                        // had an active session.
-                        const kcp_header = kcp.Header.decode(udp_message.data[0..kcp.Header.size]) catch
-                            unreachable;
-
-                        var ctl: [kcp.Control.size]u8 = undefined;
-
-                        kcp.Control.encode(&ctl, .disconnect, kcp_header.conv_id, kcp_header.token, 404);
-                        udp_socket.send(io, &udp_message.from, &ctl) catch |send_err| switch (send_err) {
-                            error.Canceled => |e| return e,
-                            else => {},
-                        };
-
-                        continue;
-                    },
-                    error.MalformedPacket, error.FillFailed => continue,
-                };
-
-                switch (status) {
-                    .success => {},
-                    .unauthenticated => |input| {
-                        var request_string_buffer: [1024]u8 = undefined;
-
-                        const request = messaging.expectFirstPacket(
-                            &request_string_buffer,
-                            udp_message.data[kcp.Header.size..][0..input.header.len],
-                        ) catch |err| switch (err) {
-                            error.SizeMismatch,
-                            error.InvalidMagic,
-                            error.UnexpectedCmdId,
-                            error.MalformedPayload,
-                            => continue,
-                        };
-
-                        var response_string_buffer: [messaging.auth.string_buffer_size]u8 = undefined;
-
-                        const player_token = messaging.auth.playerGetToken(
-                            gpa,
-                            csprng,
-                            &persistent,
-                            &request,
-                            &response_string_buffer,
-                        ) catch |err| switch (err) {
-                            error.OutOfMemory,
-                            error.InvalidUidString,
-                            error.RandKeyDecryptFail,
-                            => |e| {
-                                log.err(
-                                    "failed to authenticate client from {f}: {t}",
-                                    .{ udp_message.from, e },
-                                );
-                                continue;
-                            },
-                        };
-
-                        const player_index = server.onAuthSucceeded(
-                            server_arena.allocator(),
-                            &udp_message.from,
-                            udp_message.data,
-                            input.header.conv_id,
-                            input.token,
-                            current_time,
-                            player_token.key,
-                            player_token.response,
-                        ) catch |err| switch (err) {
-                            error.MessageOversize,
-                            error.OutOfMemory,
-                            error.SessionLimitExceeded,
-                            error.InvalidFirstPacket,
-                            error.MappingFailed,
-                            => continue,
-                        };
-
-                        if (player_token.is_first_login) {
-                            const old_cancel_protection = io.swapCancelProtection(.blocked);
-                            defer _ = io.swapCancelProtection(old_cancel_protection);
-
-                            persistent.saveAccountUidMap(io) catch |err| switch (err) {
-                                error.Canceled => unreachable, // blocked
-                                else => |e| fatal("failed to save account uid map: {t}", .{e}),
-                            };
-
-                            logic.Properties.setDefaultsAt(
-                                &server.properties,
-                                current_time,
-                                @enumFromInt(player_index),
-                            );
-
-                            savePlayer(
-                                io,
-                                per_message_arena.allocator(),
-                                &persistent,
-                                &server.properties,
-                                player_token.uid,
-                                player_index,
-                            ) catch |err| log.err(
-                                "failed to save player with uid {d}: {t}",
-                                .{ player_token.uid, err },
-                            );
-                        } else {
-                            const player_save = persistent.loadPlayer(
-                                io,
-                                per_message_arena.allocator(),
-                                player_token.uid,
-                            ) catch |err| switch (err) {
-                                error.Canceled => |e| return e,
-                                else => |e| {
-                                    log.err(
-                                        "failed to load player with uid {d}: {t}",
-                                        .{ player_token.uid, e },
-                                    );
-
-                                    // Reset defaults for now.
-                                    logic.Properties.setDefaultsAt(
-                                        &server.properties,
-                                        current_time,
-                                        @enumFromInt(player_index),
-                                    );
-                                    continue;
-                                },
-                            };
-
-                            logic.Properties.fromPlayerSave(
-                                &server.properties,
-                                gpa,
-                                @enumFromInt(player_index),
-                                &player_save,
-                            ) catch |err| {
-                                log.err("failed to load player with uid {d}: {t}", .{ player_token.uid, err });
-
-                                // Reset defaults for now.
-                                logic.Properties.setDefaultsAt(
-                                    &server.properties,
-                                    current_time,
-                                    @enumFromInt(player_index),
-                                );
-                                continue;
-                            };
-                        }
-                    },
-                }
-
-                while (server.multi_conversation.nextUndrained()) |index| drainOutgoingPackets(
+                onGameMessageReceived(
                     io,
-                    udp_socket,
+                    gpa,
+                    csprng,
+                    &server,
+                    socket,
                     current_time,
-                    &server.multi_conversation,
-                    index,
-                    &udp_message.from,
+                    &messages[completion.index],
                 ) catch |err| switch (err) {
-                    error.Canceled => break :recv_loop, // The cancelation was requested.
+                    error.Canceled => break :recv_loop,
                     else => {},
                 };
             },
@@ -325,12 +134,15 @@ pub fn bind(
                 );
             },
         };
+    } else |err| switch (err) {
+        error.Canceled => {}, // shutdown
+        error.Timeout => unreachable,
+        error.ConcurrencyUnavailable => fatal("couldn't start receiving: concurrency is unavailable", .{}),
     }
 
     log.info("shutting down...", .{});
 
     const current_time: Io.Timestamp = .now(io, .real);
-    var i: u32 = 0;
 
     // Save all online players and, if possible, kick them out gracefully
     const game_udp_socket: net.Socket = .{
@@ -338,19 +150,15 @@ pub fn bind(
         .address = undefined,
     };
 
-    while (i < server.conv_map.count()) : (i += 1) {
-        const uid = server.clients.getPtr(.uid, i);
-
+    var session_index: u32 = 0;
+    while (session_index < server.conv_map.count()) : (session_index += 1) {
         savePlayer(
             io,
-            server_arena.allocator(),
+            &per_message_arena,
             &persistent,
             &server.properties,
-            uid.*,
-            i,
-        ) catch |err| log.err(
-            "failed to save player with uid {d}: {t}",
-            .{ uid.*, err },
+            server.clients.get(.uid, session_index),
+            session_index,
         );
 
         if (rmpb.features.isAvailable(.player_kick)) {
@@ -359,30 +167,248 @@ pub fn bind(
                 game_udp_socket,
                 &server,
                 current_time,
-                i,
+                session_index,
                 .PlayerKickReason_ServerClose,
             ) catch {};
         }
     }
 }
 
+fn onGameMessageReceived(
+    io: Io,
+    gpa: Allocator,
+    csprng: Random,
+    server: *Server,
+    socket: net.Socket,
+    current_time: Io.Timestamp,
+    message: *const net.IncomingMessage,
+) !void {
+    if (message.data.len == kcp.Control.size) {
+        var out_buf: ?[kcp.Control.size]u8 = null;
+        const status = server.receiveControlPacket(
+            &message.from,
+            .{ .buffer = message.data[0..kcp.Control.size] },
+            &out_buf,
+        );
+
+        switch (status) {
+            .nothing => {},
+            .disconnect => |conv_id| disconnect: {
+                const index: u32 = @intCast(server.conv_map.getIndex(conv_id) orelse
+                    break :disconnect);
+
+                log.debug("player from {f} disconnected", .{message.from});
+
+                savePlayer(
+                    io,
+                    server.per_message_arena,
+                    server.persistent,
+                    &server.properties,
+                    server.clients.get(.uid, index),
+                    index,
+                );
+
+                server.release(conv_id);
+            },
+        }
+
+        if (out_buf) |*send_buf|
+            try socket.send(io, &message.from, send_buf);
+
+        return;
+    } else if (message.data.len < kcp.Header.size) return;
+
+    const status = server.receiveKcpPacket(
+        current_time,
+        &message.from,
+        message.data,
+    ) catch |recv_err| switch (recv_err) {
+        error.InvalidToken => {
+            // This may happen if server has been restarted, but the game
+            // had an active session.
+            const kcp_header = kcp.Header.decode(message.data[0..kcp.Header.size]) catch
+                unreachable;
+
+            var ctl: [kcp.Control.size]u8 = undefined;
+
+            kcp.Control.encode(&ctl, .disconnect, kcp_header.conv_id, kcp_header.token, 404);
+            try socket.send(io, &message.from, &ctl);
+            return;
+        },
+        error.MalformedPacket, error.FillFailed => return,
+    };
+
+    switch (status) {
+        .success => {},
+        .unauthenticated => |input| {
+            var request_string_buffer: [1024]u8 = undefined;
+
+            const request = messaging.expectFirstPacket(
+                &request_string_buffer,
+                message.data[kcp.Header.size..][0..input.header.len],
+            ) catch |err| switch (err) {
+                error.SizeMismatch,
+                error.InvalidMagic,
+                error.UnexpectedCmdId,
+                error.MalformedPayload,
+                => return,
+            };
+
+            var response_string_buffer: [messaging.auth.string_buffer_size]u8 = undefined;
+
+            const player_token = messaging.auth.playerGetToken(
+                gpa,
+                csprng,
+                server.persistent,
+                &request,
+                &response_string_buffer,
+            ) catch |err| switch (err) {
+                error.OutOfMemory,
+                error.InvalidUidString,
+                error.RandKeyDecryptFail,
+                => |e| {
+                    log.err(
+                        "failed to authenticate client from {f}: {t}",
+                        .{ message.from, e },
+                    );
+                    return;
+                },
+            };
+
+            const player_index = server.onAuthSucceeded(
+                &message.from,
+                message.data,
+                input.header.conv_id,
+                input.token,
+                current_time,
+                player_token.key,
+                player_token.response,
+            ) catch |err| switch (err) {
+                error.MessageOversize,
+                error.OutOfMemory,
+                error.SessionLimitExceeded,
+                error.InvalidFirstPacket,
+                error.MappingFailed,
+                => return,
+            };
+
+            if (player_token.is_first_login) {
+                const old_cancel_protection = io.swapCancelProtection(.blocked);
+                defer _ = io.swapCancelProtection(old_cancel_protection);
+
+                server.persistent.saveAccountUidMap(io) catch |err| switch (err) {
+                    error.Canceled => unreachable, // blocked
+                    else => |e| fatal("failed to save account uid map: {t}", .{e}),
+                };
+
+                logic.Properties.setDefaultsAt(
+                    &server.properties,
+                    current_time,
+                    @enumFromInt(player_index),
+                );
+
+                savePlayer(
+                    io,
+                    server.per_message_arena,
+                    server.persistent,
+                    &server.properties,
+                    player_token.uid,
+                    player_index,
+                );
+            } else {
+                loadPlayer(
+                    io,
+                    server.per_message_arena,
+                    server.persistent,
+                    &server.properties,
+                    player_token.uid,
+                    player_index,
+                ) catch |err| switch (err) {
+                    error.Canceled => |e| return e,
+                    else => |e| {
+                        log.err(
+                            "failed to load player with uid {d}: {t}",
+                            .{ player_token.uid, e },
+                        );
+
+                        // Reset defaults for now.
+                        logic.Properties.setDefaultsAt(
+                            &server.properties,
+                            current_time,
+                            @enumFromInt(player_index),
+                        );
+                    },
+                };
+            }
+        },
+    }
+
+    while (server.multi_conversation.nextUndrained()) |index| drainOutgoingPackets(
+        io,
+        socket,
+        current_time,
+        &server.multi_conversation,
+        index,
+        &message.from,
+    ) catch |err| switch (err) {
+        error.Canceled => |e| return e,
+        else => {},
+    };
+}
+
 fn savePlayer(
     io: Io,
-    arena: Allocator,
+    /// Same as `per_message_arena`.
+    resettable_arena: *heap.ArenaAllocator,
     persistent: *Persistent,
     properties: *logic.Properties.List,
     uid: u32,
     index: u32,
-) !void {
-    const player_save = try logic.Properties.toPlayerSave(properties, arena, @enumFromInt(index));
+) void {
+    defer _ = resettable_arena.reset(.retain_capacity);
+
+    const player_save = logic.Properties.toPlayerSave(
+        properties,
+        resettable_arena.allocator(),
+        @enumFromInt(index),
+    ) catch |err| switch (err) {
+        error.OutOfMemory => {
+            // TODO: get rid of protobuf for saves to avoid this error.
+            log.err("ran out of memory while constructing save for UID {d}", .{uid});
+            return;
+        },
+    };
 
     const old_cancel_protection = io.swapCancelProtection(.blocked);
     defer _ = io.swapCancelProtection(old_cancel_protection);
 
     persistent.savePlayer(io, uid, player_save) catch |err| switch (err) {
         error.Canceled => unreachable, // blocked
-        else => |e| return e,
+        else => |e| log.err("failed to save player with UID {d}: {t}", .{ uid, e }),
     };
+}
+
+fn loadPlayer(
+    io: Io,
+    resettable_arena: *heap.ArenaAllocator,
+    persistent: *Persistent,
+    properties: *logic.Properties.List,
+    uid: u32,
+    index: u32,
+) !void {
+    defer _ = resettable_arena.reset(.retain_capacity);
+
+    const player_save = try persistent.loadPlayer(
+        io,
+        resettable_arena.allocator(),
+        uid,
+    );
+
+    try logic.Properties.fromPlayerSave(
+        properties,
+        @enumFromInt(index),
+        &player_save,
+    );
 }
 
 /// Sends `PlayerKickScNotify` followed by disconnection control packet.
