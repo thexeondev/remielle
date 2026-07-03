@@ -68,14 +68,11 @@ pub fn bind(
 
         switch (SocketKind.fromIndex(completion.socket_index)) {
             .game => {
-                const message = switch (completion.result) {
-                    .message => |message| message,
-                    .err => |err| switch (err) {
-                        error.MessageOversize => continue,
-                        else => |e| {
-                            log.err("UDP packet receive failed: {t}", .{e});
-                            continue;
-                        },
+                const message = completion.result catch |err| switch (err) {
+                    error.MessageOversize => continue,
+                    else => |e| {
+                        log.err("UDP packet receive failed: {t}", .{e});
+                        continue;
                     },
                 };
 
@@ -93,14 +90,11 @@ pub fn bind(
                 };
             },
             .ctl => {
-                const message = switch (completion.result) {
-                    .message => |message| message,
-                    .err => |err| switch (err) {
-                        error.MessageOversize => continue,
-                        else => |e| {
-                            log.err("ctl receive failed: {t}", .{e});
-                            continue;
-                        },
+                const message = completion.result catch |err| switch (err) {
+                    error.MessageOversize => continue,
+                    else => |e| {
+                        log.err("ctl receive failed: {t}", .{e});
+                        continue;
                     },
                 };
 

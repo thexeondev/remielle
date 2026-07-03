@@ -114,10 +114,7 @@ pub const ReceiveError = Io.Batch.AwaitConcurrentError;
 
 pub const SocketCompletion = struct {
     socket_index: usize,
-    result: union(enum) {
-        err: Io.Operation.NetReceive.Error,
-        message: Io.net.IncomingMessage,
-    },
+    result: Io.Operation.NetReceive.Error!Io.net.IncomingMessage,
 };
 
 /// Wait until at least one socket receives a message.
@@ -139,7 +136,7 @@ pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!SocketCompletion {
                 error.Canceled => unreachable, // what the FUCK `Canceled` is doing here..
                 else => |e| return .{
                     .socket_index = completion.index,
-                    .result = .{ .err = e },
+                    .result = e,
                 },
             };
 
@@ -147,7 +144,7 @@ pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!SocketCompletion {
 
             return .{
                 .socket_index = completion.index,
-                .result = .{ .message = context.message },
+                .result = context.message,
             };
         }
 
