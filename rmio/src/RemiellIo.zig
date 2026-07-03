@@ -67,7 +67,6 @@ const WaitPoint = struct {
         operation: struct {
             /// How many operations are in-flight for this coroutine.
             outstanding: u32,
-            completed_list: DoublyLinkedList,
             status: enum {
                 waiting_for_one_or_more,
                 waiting_for_all,
@@ -482,12 +481,53 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
 // Trailing:
 // * [batch.storage.len]Operation.Storage.WithAwaiter
 const BatchUserdata = extern struct {
+    wait_point: ?*WaitPoint,
+    completions_head: ?*anyopaque,
+    completions_tail: ?*anyopaque,
     pending_count: u32,
+
+    fn popCompletion(userdata: *BatchUserdata) ?*Operation.Storage.WithAwaiter {
+        const head: *DoublyLinkedList.Node = @ptrCast(@alignCast(userdata.completions_head orelse
+            return null));
+
+        userdata.completions_head = head.next;
+
+        if (userdata.completions_head == null)
+            userdata.completions_tail = null;
+
+        if (head.prev) |prev|
+            prev.next = head.next
+        else
+            userdata.completions_head = head.next;
+
+        if (head.next) |next|
+            next.prev = head.prev
+        else
+            userdata.completions_tail = head.prev;
+
+        const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", head));
+        return completion.parentPtr(Operation.Storage.WithAwaiter, "storage");
+    }
+
+    fn appendCompletion(userdata: *BatchUserdata, node: *DoublyLinkedList.Node) void {
+        if (userdata.completions_tail) |tail_ptr| {
+            const tail: *DoublyLinkedList.Node = @ptrCast(@alignCast(tail_ptr));
+            tail.next = node;
+            node.prev = tail;
+            node.next = null;
+            userdata.completions_tail = node;
+        } else { // empty
+            userdata.completions_tail = node;
+            userdata.completions_head = node;
+            node.prev = null;
+            node.next = null;
+        }
+    }
 
     inline fn operations(userdata: *BatchUserdata) [*]Operation.Storage.WithAwaiter {
         return @ptrFromInt(std.mem.alignForward(
             usize,
-            @intFromPtr(userdata) + @sizeOf(@FieldType(BatchUserdata, "pending_count")),
+            @intFromPtr(userdata) + @sizeOf(BatchUserdata),
             @alignOf(Operation.Storage.WithAwaiter),
         ));
     }
@@ -495,7 +535,7 @@ const BatchUserdata = extern struct {
     fn allocationSize(operations_count: usize) usize {
         const operations_base = std.mem.alignForward(
             usize,
-            @sizeOf(@FieldType(BatchUserdata, "pending_count")),
+            @sizeOf(BatchUserdata),
             @alignOf(Operation.Storage.WithAwaiter),
         );
 
@@ -508,12 +548,19 @@ const BatchUserdata = extern struct {
         return operations_base + operations_size;
     }
 
-    fn alloc(gpa: Allocator, operations_count: usize) Allocator.Error!*BatchUserdata {
-        return @ptrCast(try gpa.alignedAlloc(
+    fn create(gpa: Allocator, operations_count: usize) Allocator.Error!*BatchUserdata {
+        const batch_userdata: *BatchUserdata = @ptrCast(try gpa.alignedAlloc(
             u8,
             .of(BatchUserdata),
             allocationSize(operations_count),
         ));
+
+        batch_userdata.wait_point = null;
+        batch_userdata.pending_count = 0;
+        batch_userdata.completions_head = null;
+        batch_userdata.completions_tail = null;
+
+        return batch_userdata;
     }
 
     fn destroy(userdata: *BatchUserdata, gpa: Allocator, operations_count: usize) void {
@@ -562,22 +609,33 @@ fn batchAwaitAsync(userdata: ?*anyopaque, batch: *Io.Batch) Io.Cancelable!void {
         error.ConcurrencyUnavailable => {
             // If concurrency is not available, perform one operation and return.
 
-            const submitted_index = switch (batch.submitted.head) {
-                .none => return,
-                _ => |index| index.toIndex(),
-            };
+            if (batch.submitted.head == .none)
+                return;
 
-            const submission = &batch.storage[submitted_index].submission;
+            const index = batch.submitted.head;
+
+            const submission = &batch.storage[index.toIndex()].submission;
             const result = try operate(userdata, submission.operation);
 
-            batch.submitted = .{ .head = submission.node.next, .tail = submission.node.next };
+            if (batch.submitted.head == batch.submitted.tail)
+                batch.submitted = .{ .head = .none, .tail = .none }
+            else
+                batch.submitted.head = submission.node.next;
 
-            batch.storage[submitted_index] = .{ .completion = .{
+            batch.storage[index.toIndex()] = .{ .completion = .{
                 .node = .{ .next = batch.completed.head },
                 .result = result,
             } };
 
-            batch.completed.head = @enumFromInt(submitted_index);
+            switch (batch.completed.tail) {
+                .none => batch.completed = .{ .head = index, .tail = index },
+                _ => |tail| {
+                    batch.completed.tail = index;
+                    batch.storage[tail.toIndex()].completion.node.next = index;
+                },
+            }
+
+            batch.completed.head = index;
         },
     };
 }
@@ -592,19 +650,29 @@ fn batchAwaitConcurrent(
 
     switch (timeout) {
         .none => {},
-        .deadline, .duration => return error.ConcurrencyUnavailable, // Not implemented
+        .deadline, .duration => return error.ConcurrencyUnavailable, // TODO: submit `Operation.Sleep`.
     }
 
     if (rio.current_coro) |coro|
         try coro.cancelation.acknowledge();
 
-    const batch_userdata: *BatchUserdata = if (batch.userdata) |type_erased|
-        @ptrCast(@alignCast(type_erased))
-    else create: {
-        const batch_userdata = BatchUserdata.alloc(rio.gpa, batch.storage.len) catch
-            return error.ConcurrencyUnavailable;
+    const batch_userdata: *BatchUserdata = if (batch.userdata) |type_erased| existing: {
+        const batch_userdata: *BatchUserdata = @ptrCast(@alignCast(type_erased));
+        var any_completed: bool = false;
 
-        batch_userdata.pending_count = 0;
+        while (batch_userdata.popCompletion()) |with_awaiter| {
+            any_completed = true;
+            batch_userdata.pending_count -= 1;
+
+            batchPutCompletion(batch, batch_userdata, &with_awaiter.storage.completion);
+        }
+
+        if (any_completed) return;
+
+        break :existing batch_userdata;
+    } else create: {
+        const batch_userdata = BatchUserdata.create(rio.gpa, batch.storage.len) catch
+            return error.ConcurrencyUnavailable;
 
         batch.userdata = batch_userdata;
         break :create batch_userdata;
@@ -629,7 +697,7 @@ fn batchAwaitConcurrent(
                 const message = &net_receive.message_buffer[0];
 
                 batched_list[index] = .{
-                    .wait_point = wait_point,
+                    .awaiter = .{ .batch = batch_userdata },
                     .storage = .init(.{ .net_receive = .{
                         .socket_handle = net_receive.socket_handle,
                         .from = &message.from,
@@ -658,14 +726,13 @@ fn batchAwaitConcurrent(
         }
 
         batch.storage[index].pending.node.prev = batch.pending.tail;
-
-        // `submitted.tail` is used only for `Batch.addAt` to be in-order.
-        // In case of a partial submission here, it'll become unordered.
-        batch.submitted = .{ .head = next, .tail = next };
+        batch.submitted.head = next;
 
         batch.pending.tail = @enumFromInt(index);
         batch_userdata.pending_count += 1;
     }
+
+    batch.submitted.tail = .none;
 
     if (batch_userdata.pending_count == 0)
         return;
@@ -673,24 +740,23 @@ fn batchAwaitConcurrent(
     wait_point.awaitee = .{
         .operation = .{
             .outstanding = batch_userdata.pending_count,
-            .completed_list = .{},
             .status = .waiting_for_one_or_more,
         },
     };
 
+    batch_userdata.wait_point = wait_point;
     rio.yield(.wait_for_io);
+    batch_userdata.wait_point = null;
 
-    if (wait_point.awaitee.operation.completed_list.first == null) {
+    if (batch_userdata.completions_head == null) {
         // Must be due to cancelation.
         try rio.current_coro.?.cancelation.acknowledge();
         unreachable; // `acknowledge` must return `error.Canceled`
     }
 
-    while (wait_point.awaitee.operation.completed_list.popFirst()) |node| {
+    while (batch_userdata.popCompletion()) |with_awaiter| {
         batch_userdata.pending_count -= 1;
-
-        const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
-        batchPutCompletion(batch, batch_userdata, completion);
+        batchPutCompletion(batch, batch_userdata, &with_awaiter.storage.completion);
     }
 }
 
@@ -701,6 +767,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
     if (batch_userdata.pending_count != 0) {
         const maybe_coro = rio.current_coro;
         const wait_point = rio.waitPoint();
+        batch_userdata.wait_point = wait_point;
 
         const batched_list = batch_userdata.operations()[0..batch.storage.len];
 
@@ -726,7 +793,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
                 next = batch.storage[index].pending.node.next;
 
                 cancelation.* = .{
-                    .wait_point = wait_point,
+                    .awaiter = .{ .batch = batch_userdata },
                     .storage = .init(.{ .cancel = .{ .operation = &batched_list[index].storage } }),
                 };
 
@@ -741,19 +808,16 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
                 wait_point.awaitee = .{ .operation = .{
                     .outstanding = batch_userdata.pending_count + unacknowledged,
                     .status = .waiting_for_one_or_more,
-                    .completed_list = .{},
                 } };
 
                 rio.yield(.wait_for_io);
 
-                while (wait_point.awaitee.operation.completed_list.popFirst()) |node| {
-                    const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
-
-                    switch (completion.result) {
+                while (batch_userdata.popCompletion()) |with_awaiter| {
+                    switch (with_awaiter.storage.completion.result) {
                         .cancel => unacknowledged -= 1,
                         else => {
                             batch_userdata.pending_count -= 1;
-                            batchPutCompletion(batch, batch_userdata, completion);
+                            batchPutCompletion(batch, batch_userdata, &with_awaiter.storage.completion);
                         },
                     }
                 }
@@ -765,19 +829,16 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
             wait_point.awaitee = .{ .operation = .{
                 .outstanding = batch_userdata.pending_count,
                 .status = .waiting_for_all,
-                .completed_list = .{},
             } };
 
             rio.yield(.wait_for_io);
 
-            while (wait_point.awaitee.operation.completed_list.popFirst()) |node| {
-                const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
-
-                switch (completion.result) {
+            while (batch_userdata.popCompletion()) |with_awaiter| {
+                switch (with_awaiter.storage.completion.result) {
                     .cancel => unreachable, // cancel requests are already acknowledged.
                     else => {
                         batch_userdata.pending_count -= 1;
-                        batchPutCompletion(batch, batch_userdata, completion);
+                        batchPutCompletion(batch, batch_userdata, &with_awaiter.storage.completion);
                     },
                 }
             }
@@ -1085,7 +1146,7 @@ fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
         defer cursor = cursor[oneshot_size..];
 
         for (operations[0..oneshot_size], cursor[0..oneshot_size]) |*op, entry| {
-            op.* = .{ .wait_point = wp, .storage = .init(
+            op.* = .{ .awaiter = .{ .synchronous = wp }, .storage = .init(
                 .{ .close = .{
                     .handle = switch (T) {
                         net.Socket.Handle => entry,
@@ -1100,7 +1161,6 @@ fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
 
         wp.awaitee = .{ .operation = .{
             .outstanding = @intCast(oneshot_size),
-            .completed_list = .{},
             .status = .waiting_for_all,
         } };
 
@@ -1598,18 +1658,17 @@ fn syscall(
     const wp = rio.waitPoint();
 
     var operation: Operation.Storage.WithAwaiter = .{
-        .wait_point = wp,
+        .awaiter = .{ .synchronous = wp },
         .storage = .init(@unionInit(Operation, @tagName(op), param)),
     };
 
     var cancelation: Operation.Storage.WithAwaiter = .{
-        .wait_point = wp,
+        .awaiter = .{ .synchronous = wp },
         .storage = .init(.{ .cancel = .{ .operation = &operation.storage } }),
     };
 
     wp.awaitee = .{ .operation = .{
         .outstanding = 1,
-        .completed_list = .{},
         .status = .waiting_for_all,
     } };
 
@@ -1635,7 +1694,6 @@ fn syscall(
 
     wait.* = .{
         .outstanding = 2,
-        .completed_list = .{},
         .status = .waiting_for_all,
     };
 
@@ -1701,19 +1759,26 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
             const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
             const storage = completion.parentPtr(Operation.Storage.WithAwaiter, "storage");
 
-            const wait = &storage.wait_point.awaitee.operation;
+            const point = switch (storage.awaiter) {
+                .synchronous => |wait_point| wait_point,
+                .batch => |batch_userdata| batch: {
+                    batch_userdata.appendCompletion(&completion.node);
+                    break :batch batch_userdata.wait_point orelse continue;
+                },
+            };
+
+            const wait = &point.awaitee.operation;
             wait.outstanding -= 1;
-            wait.completed_list.append(&completion.node);
 
             switch (wait.status) {
                 .scheduled => {}, // already
                 .waiting_for_one_or_more => {
                     wait.status = .scheduled;
-                    rio.schedule(storage.wait_point);
+                    rio.schedule(point);
                 },
                 .waiting_for_all => if (wait.outstanding == 0) {
                     wait.status = .scheduled;
-                    rio.schedule(storage.wait_point);
+                    rio.schedule(point);
                 },
             }
         }
@@ -1928,7 +1993,10 @@ pub const Operation = union(enum) {
     /// This structure must be pinned.
     pub const Storage = union {
         pub const WithAwaiter = struct {
-            wait_point: *WaitPoint,
+            awaiter: union(enum) {
+                synchronous: *WaitPoint,
+                batch: *BatchUserdata,
+            },
             storage: Storage,
         };
 
