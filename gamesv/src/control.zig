@@ -3,7 +3,7 @@ pub const mtu: usize = 1200;
 pub fn process(
     io: Io,
     current_time: Io.Timestamp,
-    sockets: *const [SocketKind.count]net.Socket.Handle,
+    sockets: *MultiSocket,
     server: *Server,
     from: *const net.IpAddress,
     data: []align(@alignOf(u64)) u8,
@@ -11,8 +11,8 @@ pub fn process(
     if (data.len < @sizeOf(rmnet.ClientHeader))
         return error.InvalidPacket;
 
-    const game_socket: net.Socket = .{ .handle = sockets[SocketKind.game.toIndex()], .address = undefined };
-    const ctl_socket: net.Socket = .{ .handle = sockets[SocketKind.ctl.toIndex()], .address = undefined };
+    const game_socket = sockets.get(SocketKind.game.toIndex());
+    const ctl_socket = sockets.get(SocketKind.ctl.toIndex());
 
     const header: *rmnet.ClientHeader = @ptrCast(data[0..@sizeOf(rmnet.ClientHeader)]);
     if (header.protocol_version != rmnet.Version.current)
@@ -93,6 +93,7 @@ fn send(
 
 const Io = std.Io;
 const SocketKind = app.SocketKind;
+const MultiSocket = rmio.MultiSocket;
 
 const net = std.Io.net;
 
@@ -101,4 +102,5 @@ const Server = @import("Server.zig");
 
 const rmnet = @import("rmnet");
 const rmpb = @import("rmpb");
+const rmio = @import("rmio");
 const std = @import("std");

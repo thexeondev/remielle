@@ -2,17 +2,17 @@ const log = std.log.scoped(.@"remielle-gamesv");
 
 const mtu = kcp.mtu;
 
-pub const SocketKind = enum(u32) {
+pub const SocketKind = enum(usize) {
     game = 0,
     ctl = 1,
 
     pub const count = 2;
 
-    pub fn toIndex(sk: SocketKind) u32 {
+    pub fn toIndex(sk: SocketKind) usize {
         return @intFromEnum(sk);
     }
 
-    pub fn fromIndex(index: u32) SocketKind {
+    pub fn fromIndex(index: usize) SocketKind {
         return @enumFromInt(index);
     }
 };
@@ -32,37 +32,26 @@ pub fn bind(
 
     defer persistent.deinit(gpa);
 
-    var sockets: [SocketKind.count]net.Socket.Handle = undefined;
-    var buffers: [SocketKind.count][mtu]u8 align(@alignOf(u64)) = undefined;
-    var messages: [SocketKind.count]net.IncomingMessage = undefined;
-    var operations: [SocketKind.count]Io.Operation.Storage = undefined;
+    var receive_buffers: [SocketKind.count][mtu]u8 align(@alignOf(u64)) = undefined;
+    var sockets_buffer: MultiSocket.Buffer(SocketKind.count) = undefined;
+    var sockets: MultiSocket = undefined;
 
-    const kinds = std.enums.values(SocketKind);
+    sockets.init(sockets_buffer.toSockets(), &.{ &receive_buffers[0], &receive_buffers[1] });
+    defer sockets.deinit(io);
 
-    for (&sockets, addresses, kinds) |*socket, *address, kind| {
-        socket.* = (address.bind(io, .{ .mode = .dgram, .protocol = .udp }) catch |err| switch (err) {
+    for (addresses, std.enums.values(SocketKind)) |address, kind| {
+        const index = sockets.bind(io, address) catch |err| switch (err) {
             error.AddressInUse => fatal(
                 "the address {f} is already in use; another instance of this server might be already running",
                 .{address},
             ),
             else => |e| fatal("bind: {t}", .{e}),
-        }).handle;
+        };
+
+        std.debug.assert(index == @intFromEnum(kind));
 
         log.info("waiting for {t} clients at udp://{f}", .{ kind, address });
     }
-
-    defer io.vtable.netClose(io.userdata, &sockets);
-
-    var batch: Io.Batch = .init(&operations);
-    defer batch.cancel(io);
-
-    for (&sockets, &buffers, &messages, kinds) |*socket, *buffer, *message, kind|
-        batch.addAt(kind.toIndex(), .{ .net_receive = .{
-            .socket_handle = socket.*,
-            .message_buffer = message[0..1],
-            .data_buffer = buffer,
-            .flags = .{},
-        } });
 
     var server: Server = .init(
         gpa,
@@ -74,60 +63,55 @@ pub fn bind(
 
     defer server.deinit();
 
-    recv_loop: while (batch.awaitConcurrent(io, .none)) {
+    recv_loop: while (sockets.receive(io)) |completion| {
         const current_time: Io.Timestamp = .now(io, .real);
 
-        while (batch.next()) |completion| : (batch.addAt(completion.index, .{ .net_receive = .{
-            .socket_handle = sockets[completion.index],
-            .message_buffer = (&messages[completion.index])[0..1],
-            .data_buffer = &buffers[completion.index],
-            .flags = .{},
-        } })) switch (SocketKind.fromIndex(completion.index)) {
+        switch (SocketKind.fromIndex(completion.socket_index)) {
             .game => {
-                const maybe_err, const n_messages = completion.result.net_receive;
-                if (maybe_err) |err| switch (err) {
-                    error.MessageOversize => continue,
-                    else => |e| {
-                        log.err("UDP packet receive failed: {t}", .{e});
-                        continue;
+                const message = switch (completion.result) {
+                    .message => |message| message,
+                    .err => |err| switch (err) {
+                        error.MessageOversize => continue,
+                        else => |e| {
+                            log.err("UDP packet receive failed: {t}", .{e});
+                            continue;
+                        },
                     },
                 };
-
-                std.debug.assert(n_messages == 1);
-
-                const socket: net.Socket = .{ .handle = sockets[completion.index], .address = undefined };
 
                 onGameMessageReceived(
                     io,
                     gpa,
                     csprng,
                     &server,
-                    socket,
+                    sockets.get(completion.socket_index),
                     current_time,
-                    &messages[completion.index],
+                    &message,
                 ) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
                     else => {},
                 };
             },
             .ctl => {
-                const maybe_err, const n_messages = completion.result.net_receive;
-                if (maybe_err) |err| {
-                    log.err("ctl receive failed: {t}", .{err});
-                    continue;
-                }
+                const message = switch (completion.result) {
+                    .message => |message| message,
+                    .err => |err| switch (err) {
+                        error.MessageOversize => continue,
+                        else => |e| {
+                            log.err("ctl receive failed: {t}", .{e});
+                            continue;
+                        },
+                    },
+                };
 
-                std.debug.assert(n_messages == 1);
-
-                const message = messages[completion.index];
-                const data = buffers[completion.index][0..message.data.len];
+                const data = receive_buffers[completion.socket_index][0..message.data.len];
 
                 control.process(io, current_time, &sockets, &server, &message.from, data) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
                     else => {},
                 };
             },
-        };
+        }
     } else |err| switch (err) {
         error.Canceled => {}, // shutdown
         error.Timeout => unreachable,
@@ -137,13 +121,9 @@ pub fn bind(
     log.info("shutting down...", .{});
 
     const current_time: Io.Timestamp = .now(io, .real);
+    const game_udp_socket = sockets.get(SocketKind.game.toIndex());
 
     // Save all online players and, if possible, kick them out gracefully
-    const game_udp_socket: net.Socket = .{
-        .handle = sockets[SocketKind.game.toIndex()],
-        .address = undefined,
-    };
-
     var session_index: u32 = 0;
     while (session_index < server.conv_map.count()) : (session_index += 1) {
         savePlayer(
@@ -475,6 +455,7 @@ fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
 const Io = std.Io;
 const Random = std.Random;
 const Allocator = std.mem.Allocator;
+const MultiSocket = rmio.MultiSocket;
 
 const heap = std.heap;
 const net = std.Io.net;
