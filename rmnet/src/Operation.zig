@@ -2,12 +2,21 @@ pub const Version = u8;
 
 pub const Tag = enum(u16) {
     nop = 0,
+    player_kick = 1,
     _,
 };
 
 pub const Nop = extern struct {
     pub const tag: Tag = .nop;
     pub const version: Version = 0;
+};
+
+pub const PlayerKick = extern struct {
+    pub const tag: Tag = .player_kick;
+    pub const version: Version = 0;
+
+    uid: u32,
+    reason: i32,
 };
 
 pub fn Message(comptime Op: type) type {

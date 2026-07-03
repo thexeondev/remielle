@@ -24,6 +24,14 @@ conv_counter: kcp.ConvId.Counter,
 /// * `kcp.MultiConversation`
 /// * `logic.Properties`
 conv_map: array_hash_map.Auto(kcp.ConvId, void),
+/// Active player UIDs.
+/// The index of each entry corresponds to index of resources associated
+/// with the player session.
+///
+/// See also:
+/// * `kcp.MultiConversation`
+/// * `logic.Properties`
+uid_map: array_hash_map.Auto(u32, void),
 /// Used to randomize tokens derived from source address and conversation ID.
 /// See also:
 /// * `kcp.ConvId`
@@ -39,8 +47,6 @@ pub const Client = struct {
     xorpad: messaging.Xorpad,
     /// The remote address of the client.
     addr: net.IpAddress,
-    /// The player UID associated with the client.
-    uid: u32,
 };
 
 pub const Clients = rmmem.RemielleArrayList(rmmem.suggestBucketSize(64, Client), Client, u32);
@@ -78,6 +84,7 @@ pub fn init(
         .multi_conversation = .init,
         .conv_counter = .init,
         .conv_map = .empty,
+        .uid_map = .empty,
         .clients = .empty,
         .properties = .empty,
         .conv_random = csprng.int(u64),
@@ -176,7 +183,10 @@ pub fn onAuthSucceeded(
     try server.conv_map.put(resource_arena, conv_id, {});
     errdefer _ = server.conv_map.swapRemove(conv_id);
 
-    const index = try server.addClient(from.*, key, auth_response.uid);
+    try server.uid_map.put(resource_arena, auth_response.uid, {});
+    errdefer _ = server.uid_map.swapRemove(auth_response.uid);
+
+    const index = try server.addClient(from.*, key);
     log.debug("player from {f} has logged in into account with uid {d}", .{ from, auth_response.uid });
 
     return index;
@@ -248,7 +258,6 @@ fn addClient(
     server: *Server,
     addr: net.IpAddress,
     key: messaging.Xorpad.Key,
-    uid: u32,
 ) !u32 {
     const index = try server.clients.addOne();
     const properties_index = try server.properties.addOne();
@@ -257,7 +266,6 @@ fn addClient(
 
     server.clients.getPtr(.packet_counter, index).* = .init;
     server.clients.getPtr(.addr, index).* = addr;
-    server.clients.getPtr(.uid, index).* = uid;
     server.clients.getPtr(.xorpad, index).fillSeeded(key);
 
     return index;
@@ -275,7 +283,8 @@ fn increaseLimit(server: *Server) void {
 pub fn release(server: *Server, id: kcp.ConvId) void {
     const client: u32 = @intCast(server.conv_map.getIndex(id).?);
 
-    _ = server.conv_map.swapRemove(id);
+    server.conv_map.swapRemoveAt(client);
+    server.uid_map.swapRemoveAt(client);
     server.multi_conversation.swapRemove(client);
     server.clients.swapRemove(client);
     server.properties.swapRemove(client);

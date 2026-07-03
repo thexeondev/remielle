@@ -122,7 +122,7 @@ pub fn bind(
                 const message = messages[completion.index];
                 const data = buffers[completion.index][0..message.data.len];
 
-                control.process(io, &sockets, &server, &message.from, data) catch |err| switch (err) {
+                control.process(io, current_time, &sockets, &server, &message.from, data) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
                     else => {},
                 };
@@ -151,7 +151,7 @@ pub fn bind(
             &server.resettable_arena,
             &persistent,
             &server.properties,
-            server.clients.get(.uid, session_index),
+            server.uid_map.keys()[session_index],
             session_index,
         );
 
@@ -198,7 +198,7 @@ fn onGameMessageReceived(
                     &server.resettable_arena,
                     server.persistent,
                     &server.properties,
-                    server.clients.get(.uid, index),
+                    server.uid_map.keys()[index],
                     index,
                 );
 
@@ -350,7 +350,7 @@ fn onGameMessageReceived(
     };
 }
 
-fn savePlayer(
+pub fn savePlayer(
     io: Io,
     resettable_arena: *heap.ArenaAllocator,
     persistent: *Persistent,
@@ -405,7 +405,7 @@ fn loadPlayer(
 }
 
 /// Sends `PlayerKickScNotify` followed by disconnection control packet.
-fn notifyPlayerKick(
+pub fn notifyPlayerKick(
     io: Io,
     udp_socket: net.Socket,
     server: *Server,

@@ -16,9 +16,10 @@ pub const Nak = extern struct {
     pub const version: Version = 0;
 
     pub const Reason = enum(u32) {
-        protocol_version_mismatch = 1, // extra: server protocol version
+        protocol_version_mismatch = 1,
         operation_version_mismatch = 2, // extra: server operation version
         unknown_operation_tag = 3,
+        _,
     };
 
     reason: Reason,
