@@ -104,6 +104,18 @@ pub fn bind(
                     error.Canceled => break :recv_loop,
                     else => {},
                 };
+
+                while (server.multi_conversation.nextUndrained()) |index| drainOutgoingPackets(
+                    io,
+                    sockets.get(SocketKind.game.toIndex()),
+                    current_time,
+                    &server.multi_conversation,
+                    index,
+                    &message.from,
+                ) catch |err| switch (err) {
+                    error.Canceled => break :recv_loop,
+                    else => {},
+                };
             },
         }
     } else |err| switch (err) {
