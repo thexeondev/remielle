@@ -5,6 +5,13 @@ pub const Command = union(enum) {
         uid: u32,
         reason: u31 = 3,
     },
+    @"mod-avatar-meta": struct {
+        field: rmnet.Operation.ModAvatarMeta.Field,
+        uid: u32,
+        id: u32,
+        value: u32,
+        value_extra: u32 = 0,
+    },
 
     /// Exits on invalid input.
     pub fn parse(
@@ -40,6 +47,12 @@ pub const Command = union(enum) {
 
                                 @field(params, field.name) = int;
                             },
+                            .@"enum" => {
+                                const e = std.meta.stringToEnum(field.type, string) orelse
+                                    fatal("invalid value for " ++ field.name, .{});
+
+                                @field(params, field.name) = e;
+                            },
                             else => @compileError("unsupported argument type: " ++ @typeName(field.type)),
                         }
                     }
@@ -53,4 +66,5 @@ pub const Command = union(enum) {
 
 const fatal = std.process.fatal;
 
+const rmnet = @import("rmnet");
 const std = @import("std");

@@ -83,7 +83,7 @@ pub fn process(
                         .extra = OperationParam.Data.version,
                     });
 
-                const ExpectedMessage = rmnet.Operation.Message(rmnet.Operation.PlayerKick);
+                const ExpectedMessage = rmnet.Operation.Message(OperationParam.Data);
 
                 if (data.len != @sizeOf(ExpectedMessage))
                     return error.InvalidPacket;

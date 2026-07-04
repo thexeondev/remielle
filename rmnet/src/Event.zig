@@ -19,6 +19,8 @@ pub const Nak = extern struct {
         protocol_version_mismatch = 1,
         operation_version_mismatch = 2, // extra: server operation version
         unknown_operation_tag = 3,
+        invalid_parameter = 4,
+        no_entry = 5,
         _,
     };
 

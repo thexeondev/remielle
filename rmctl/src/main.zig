@@ -52,6 +52,33 @@ pub fn main(init: Init) void {
             const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
+        .@"mod-avatar-meta" => |mod_avatar_meta| {
+            const value: u64 = switch (mod_avatar_meta.field) {
+                _ => unreachable,
+                .skill_level => skill_level: {
+                    const skill: rmnet.Operation.ModAvatarMeta.Skill = .{
+                        .skill = mod_avatar_meta.value,
+                        .level = mod_avatar_meta.value_extra,
+                    };
+
+                    break :skill_level @bitCast(skill);
+                },
+                inline else => mod_avatar_meta.value,
+            };
+
+            const mod_message: rmnet.Operation.Message(rmnet.Operation.ModAvatarMeta) = .init(userdata, .{
+                .player_uid = mod_avatar_meta.uid,
+                .avatar_id = mod_avatar_meta.id,
+                .field = mod_avatar_meta.field,
+                .value = value,
+            });
+
+            socket.send(io, &destination, @ptrCast(&mod_message)) catch |err|
+                fatal("send: {t}", .{err});
+
+            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            _ = ack;
+        },
     }
 }
 

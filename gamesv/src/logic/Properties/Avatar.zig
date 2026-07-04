@@ -179,14 +179,11 @@ pub const MindscapeTabState = enum(u6) {
         if (bools.len != tab_count)
             return null;
 
-        var int: u6 = 0;
+        var bits: u6 = 0;
         for (bools, 0..) |bit, index|
-            int |= @as(u6, @intFromBool(bit)) << @intCast(index);
+            bits |= @as(u6, @intFromBool(bit)) << @intCast(index);
 
-        if ((int & 0b111) & ((int >> 3) & 0b111) != 0)
-            return null;
-
-        return @enumFromInt(int);
+        return .fromBits(bits);
     }
 
     pub fn toBools(mind: MindscapeTabState) [MindscapeTabState.tab_count]bool {
@@ -197,6 +194,13 @@ pub const MindscapeTabState = enum(u6) {
             bit.* = (int >> index) & 1 != 0;
 
         return bools;
+    }
+
+    pub fn fromBits(bits: u6) ?MindscapeTabState {
+        if ((bits & 0b111) & ((bits >> 3) & 0b111) != 0)
+            return null;
+
+        return @enumFromInt(bits);
     }
 
     pub fn requiredTalentNum(mind: MindscapeTabState) u3 {
