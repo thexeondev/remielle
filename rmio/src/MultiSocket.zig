@@ -81,11 +81,18 @@ pub fn init(ms: *MultiSocket, sockets: *Sockets, buffers: []const []u8) void {
     };
 }
 
+/// Cancels any outstanding receive `Operation`s and closes the sockets.
 pub fn deinit(ms: *MultiSocket, io: Io) void {
     ms.batch.cancel(io);
     io.vtable.netClose(io.userdata, ms.sockets.handles()[0..ms.count]);
 }
 
+/// Associates an address with a `Socket` which will be used to receive UDP messages.
+/// The returned value is the index associated with the bound `Socket`.
+///
+/// The `Socket` instance can be obtained with the `get` function.
+///
+/// Asserts the capacity of this `MultiSocket`.
 pub fn bind(ms: *MultiSocket, io: Io, address: net.IpAddress) !usize {
     std.debug.assert(ms.count < ms.sockets.capacity);
 
@@ -110,15 +117,23 @@ pub fn bind(ms: *MultiSocket, io: Io, address: net.IpAddress) !usize {
     return index;
 }
 
+pub fn get(ms: *MultiSocket, index: usize) Socket {
+    return .{
+        .handle = ms.sockets.handles()[index],
+        .address = ms.sockets.contexts()[index].address,
+    };
+}
+
 pub const ReceiveError = Io.Batch.AwaitConcurrentError;
 
-pub const SocketCompletion = struct {
-    socket_index: usize,
+pub const Completion = struct {
+    /// The index of the socket the message was received by.
+    index: usize,
     result: Io.Operation.NetReceive.Error!Io.net.IncomingMessage,
 };
 
 /// Wait until at least one socket receives a message.
-pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!SocketCompletion {
+pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!Completion {
     while (true) {
         while (ms.batch.next()) |completion| {
             const context = &ms.sockets.contexts()[completion.index];
@@ -133,9 +148,9 @@ pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!SocketCompletion {
             const maybe_err, const n = completion.result.net_receive;
 
             if (maybe_err) |err| switch (err) {
-                error.Canceled => unreachable, // what the FUCK `Canceled` is doing here..
+                error.Canceled => unreachable, // `Canceled` in `NetReceive.Result` is unreachable.
                 else => |e| return .{
-                    .socket_index = completion.index,
+                    .index = completion.index,
                     .result = e,
                 },
             };
@@ -143,20 +158,13 @@ pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!SocketCompletion {
             std.debug.assert(n == 1);
 
             return .{
-                .socket_index = completion.index,
+                .index = completion.index,
                 .result = context.message,
             };
         }
 
         try ms.batch.awaitConcurrent(io, .none);
     }
-}
-
-pub fn get(ms: *MultiSocket, index: usize) net.Socket {
-    return .{
-        .handle = ms.sockets.handles()[index],
-        .address = ms.sockets.contexts()[index].address,
-    };
 }
 
 const Io = std.Io;

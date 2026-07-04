@@ -66,7 +66,7 @@ pub fn bind(
     recv_loop: while (sockets.receive(io)) |completion| {
         const current_time: Io.Timestamp = .now(io, .real);
 
-        switch (SocketKind.fromIndex(completion.socket_index)) {
+        switch (SocketKind.fromIndex(completion.index)) {
             .game => {
                 const message = completion.result catch |err| switch (err) {
                     error.MessageOversize => continue,
@@ -81,7 +81,7 @@ pub fn bind(
                     gpa,
                     csprng,
                     &server,
-                    sockets.get(completion.socket_index),
+                    sockets.get(completion.index),
                     current_time,
                     &message,
                 ) catch |err| switch (err) {
@@ -98,7 +98,7 @@ pub fn bind(
                     },
                 };
 
-                const data = receive_buffers[completion.socket_index][0..message.data.len];
+                const data = receive_buffers[completion.index][0..message.data.len];
 
                 control.process(io, current_time, &sockets, &server, &message.from, data) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
