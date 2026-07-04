@@ -379,6 +379,9 @@ fn loadPlayer(
 }
 
 /// Sends `PlayerKickScNotify` followed by disconnection control packet.
+///
+/// TODO: introduce `Server.kick` instead, it should:
+/// send this message, save the player, release the resources.
 pub fn notifyPlayerKick(
     io: Io,
     udp_socket: net.Socket,
