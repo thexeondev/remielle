@@ -125,21 +125,9 @@ pub fn bind(
     const current_time: Io.Timestamp = .now(io, .real);
     const game_udp_socket = sockets.get(SocketKind.game.toIndex());
 
-    // Save all online players and, if possible, kick them out gracefully
     var session_index: u32 = 0;
     while (session_index < server.conv_map.count()) : (session_index += 1) {
-        server.savePlayer(io, session_index);
-
-        if (rmpb.features.isAvailable(.player_kick)) {
-            notifyPlayerKick(
-                io,
-                game_udp_socket,
-                &server,
-                current_time,
-                session_index,
-                .PlayerKickReason_ServerClose,
-            ) catch {};
-        }
+        server.kick(io, current_time, game_udp_socket, session_index, .PlayerKickReason_ServerClose);
     }
 }
 
@@ -169,7 +157,7 @@ fn onGameMessageReceived(
                 log.debug("player from {f} disconnected", .{message.from});
 
                 server.savePlayer(io, index);
-                server.release(conv_id);
+                server.release(index);
             },
         }
 
@@ -321,44 +309,6 @@ fn loadPlayer(
         @enumFromInt(index),
         &player_save,
     );
-}
-
-/// Sends `PlayerKickScNotify` followed by disconnection control packet.
-///
-/// TODO: introduce `Server.kick` instead, it should:
-/// send this message, save the player, release the resources.
-pub fn notifyPlayerKick(
-    io: Io,
-    socket: net.Socket,
-    server: *Server,
-    current_time: Io.Timestamp,
-    index: u32,
-    reason: rmpb.main.PlayerKickReason,
-) !void {
-    const notify: rmpb.main.PlayerKickScNotify = .{ .reason = reason };
-
-    try messaging.send(
-        &server.multi_conversation,
-        &server.clients,
-        index,
-        .notify,
-        notify,
-    );
-
-    try server.drainOutgoingQueue(io, socket, current_time);
-
-    var ctl: [kcp.Control.size]u8 = undefined;
-    const identifier = server.multi_conversation.identifierAt(index);
-
-    kcp.Control.encode(
-        &ctl,
-        .disconnect,
-        identifier.id,
-        identifier.token.downgrade(),
-        404,
-    );
-
-    try socket.send(io, server.clients.getPtr(.addr, index), &ctl);
 }
 
 fn fatal(comptime fmt: []const u8, args: anytype) noreturn {

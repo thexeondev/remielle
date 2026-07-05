@@ -288,11 +288,7 @@ fn increaseLimit(server: *Server) void {
     };
 }
 
-/// Releases the resources associated with this `id`.
-/// Asserts `id` is active.
-pub fn release(server: *Server, id: kcp.ConvId) void {
-    const client: u32 = @intCast(server.conv_map.getIndex(id).?);
-
+pub fn release(server: *Server, client: u32) void {
     server.conv_map.swapRemoveAt(client);
     server.uid_map.swapRemoveAt(client);
     server.multi_conversation.swapRemove(client);
@@ -338,7 +334,7 @@ pub fn drainOutgoingQueue(
     io: Io,
     socket: net.Socket,
     current_time: Io.Timestamp,
-) Io.Cancelable!void {
+) Cancelable!void {
     while (server.multi_conversation.nextUndrained()) |index| try server.drainConversation(
         io,
         socket,
@@ -347,13 +343,62 @@ pub fn drainOutgoingQueue(
     );
 }
 
+pub fn kick(
+    server: *Server,
+    io: Io,
+    current_time: Io.Timestamp,
+    socket: net.Socket,
+    index: u32,
+    reason: rmpb.main.PlayerKickReason,
+) void {
+    server.savePlayer(io, index);
+    defer server.release(index);
+
+    const old_cancel_protection = io.swapCancelProtection(.blocked);
+    defer _ = io.swapCancelProtection(old_cancel_protection);
+
+    if (rmpb.features.isAvailable(.player_kick)) {
+        const notify: rmpb.main.PlayerKickScNotify = .{ .reason = reason };
+
+        if (messaging.send(
+            &server.multi_conversation,
+            &server.clients,
+            index,
+            .notify,
+            notify,
+        )) {
+            server.drainOutgoingQueue(io, socket, current_time) catch |err| switch (err) {
+                error.Canceled => unreachable, // blocked
+            };
+        } else |err| switch (err) {
+            error.MessageOversize => {},
+        }
+    }
+
+    var ctl: [kcp.Control.size]u8 = undefined;
+    const identifier = server.multi_conversation.identifierAt(index);
+
+    kcp.Control.encode(
+        &ctl,
+        .disconnect,
+        identifier.id,
+        identifier.token.downgrade(),
+        404,
+    );
+
+    socket.send(io, server.clients.getPtr(.addr, index), &ctl) catch |err| switch (err) {
+        error.Canceled => unreachable, // blocked
+        else => {},
+    };
+}
+
 fn drainConversation(
     server: *Server,
     io: Io,
     socket: net.Socket,
     current_time: Io.Timestamp,
     index: u32,
-) Io.Cancelable!void {
+) Cancelable!void {
     server.multi_conversation.updateAt(index, current_time);
 
     const destination = server.clients.getPtr(.addr, index);
@@ -376,6 +421,7 @@ const Random = std.Random;
 const Limit = std.Io.Limit;
 const Timestamp = std.Io.Timestamp;
 const Allocator = std.mem.Allocator;
+const Cancelable = std.Io.Cancelable;
 
 const heap = std.heap;
 const net = std.Io.net;

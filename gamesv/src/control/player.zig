@@ -14,22 +14,7 @@ pub fn playerKick(
     ) orelse @enumFromInt(0);
 
     const socket = context.sockets.get(app.SocketKind.game.toIndex());
-
-    // TODO: this should be moved into `Server`.
-    app.notifyPlayerKick(
-        context.io,
-        socket,
-        context.server,
-        context.time,
-        index,
-        reason,
-    ) catch |err| switch (err) {
-        error.Canceled => |e| return e,
-        else => {},
-    };
-
-    server.savePlayer(context.io, index);
-    server.release(server.conv_map.keys()[index]);
+    server.kick(context.io, context.time, socket, index, reason);
 }
 
 pub fn modAvatarMeta(
