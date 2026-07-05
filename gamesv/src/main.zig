@@ -34,12 +34,12 @@ pub fn main(init: Init.Minimal) void {
         .{ options_err, args[0], rmcli.opt.Usage(Options) },
     );
 
-    var addresses: [SocketKind.count]net.IpAddress = undefined;
+    var addresses: [Server.Socket.count]net.IpAddress = undefined;
 
-    addresses[SocketKind.game.toIndex()] = net.IpAddress.parseLiteral(options.bind_address_game) catch |err|
+    addresses[Server.Socket.game.toIndex()] = net.IpAddress.parseLiteral(options.bind_address_game) catch |err|
         fatal("bad game bind address specified: {t}", .{err});
 
-    addresses[SocketKind.ctl.toIndex()] = net.IpAddress.parseLiteral(options.Bind_address_ctl) catch |err|
+    addresses[Server.Socket.control.toIndex()] = net.IpAddress.parseLiteral(options.Bind_address_ctl) catch |err|
         fatal("bad ctl bind address specified: {t}", .{err});
 
     var io_impl = if (rmio.RemiellIo.supported)
@@ -104,7 +104,6 @@ const is_debug = builtin.mode == .Debug;
 
 const Io = std.Io;
 const Init = std.process.Init;
-const SocketKind = app.SocketKind;
 const DefaultCsprng = std.Random.DefaultCsprng;
 
 const heap = std.heap;
@@ -113,6 +112,7 @@ const exit = std.process.exit;
 
 const app = @import("app.zig");
 const Assets = @import("Assets.zig");
+const Server = @import("Server.zig");
 
 const std = @import("std");
 const rmio = @import("rmio");

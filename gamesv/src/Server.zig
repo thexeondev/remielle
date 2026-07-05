@@ -1,10 +1,27 @@
 const log = std.log.scoped(.@"remielle-gamesv");
 
+pub const Socket = enum(usize) {
+    game,
+    control,
+
+    pub const count = 2;
+
+    pub inline fn toIndex(socket: Socket) usize {
+        return @intFromEnum(socket);
+    }
+
+    pub inline fn fromIndex(index: usize) Socket {
+        return @enumFromInt(index);
+    }
+};
+
 /// Used for persistent allocations that are recycled by using internal mechanisms.
 /// Has the same lifetime as the `Server` itself.
 resource_arena: heap.ArenaAllocator,
 /// Used for allocations that have lifetime of a single handler pipeline pass.
 resettable_arena: heap.ArenaAllocator,
+/// Set of connectionless sockets, as defined by `Socket`.
+sockets: *MultiSocket,
 /// Initialized at startup.
 assets: *const Assets,
 persistent: *Persistent,
@@ -83,6 +100,7 @@ pub const Frame = struct {
 pub fn init(
     gpa: Allocator,
     csprng: Random,
+    sockets: *MultiSocket,
     assets: *const Assets,
     persistent: *Persistent,
     session_limit: Limit,
@@ -90,6 +108,7 @@ pub fn init(
     return .{
         .resource_arena = .init(gpa),
         .resettable_arena = .init(gpa),
+        .sockets = sockets,
         .assets = assets,
         .multi_conversation = .init,
         .conv_counter = .init,
@@ -366,9 +385,10 @@ fn loadPlayerPropertiesFromSave(server: *Server, io: Io, uid: u32, index: u32) !
 pub fn drainOutgoingQueue(
     server: *Server,
     io: Io,
-    socket: net.Socket,
     current_time: Io.Timestamp,
 ) Cancelable!void {
+    const socket = server.sockets.get(Socket.game.toIndex());
+
     while (server.multi_conversation.nextUndrained()) |index| try server.drainConversation(
         io,
         socket,
@@ -380,8 +400,7 @@ pub fn drainOutgoingQueue(
 pub fn kick(
     server: *Server,
     io: Io,
-    current_time: Io.Timestamp,
-    socket: net.Socket,
+    time: Io.Timestamp,
     index: u32,
     reason: rmpb.main.PlayerKickReason,
 ) void {
@@ -401,7 +420,7 @@ pub fn kick(
             .notify,
             notify,
         )) {
-            server.drainOutgoingQueue(io, socket, current_time) catch |err| switch (err) {
+            server.drainOutgoingQueue(io, time) catch |err| switch (err) {
                 error.Canceled => unreachable, // blocked
             };
         } else |err| switch (err) {
@@ -420,6 +439,7 @@ pub fn kick(
         404,
     );
 
+    const socket = server.sockets.get(Socket.game.toIndex());
     socket.send(io, server.clients.getPtr(.addr, index), &ctl) catch |err| switch (err) {
         error.Canceled => unreachable, // blocked
         else => {},
@@ -456,6 +476,7 @@ const Limit = std.Io.Limit;
 const Timestamp = std.Io.Timestamp;
 const Allocator = std.mem.Allocator;
 const Cancelable = std.Io.Cancelable;
+const MultiSocket = rmio.MultiSocket;
 
 const heap = std.heap;
 const net = std.Io.net;
@@ -467,6 +488,7 @@ const Assets = @import("Assets.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
+const rmio = @import("rmio");
 const rmpb = @import("rmpb");
 const rmmem = @import("rmmem");
 

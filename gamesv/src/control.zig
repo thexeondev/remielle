@@ -16,7 +16,6 @@ pub fn Operation(comptime T: type) type {
 pub const Context = struct {
     io: Io,
     time: Io.Timestamp,
-    sockets: *MultiSocket,
     server: *Server,
     from: *const net.IpAddress,
     userdata: u32,
@@ -24,7 +23,7 @@ pub const Context = struct {
     pub fn sendEvent(context: *const Context, comptime Event: type, event: Event) !void {
         const message: rmnet.Event.Message(Event) = .init(context.userdata, event);
 
-        const socket = context.sockets.get(SocketKind.ctl.toIndex());
+        const socket = context.server.sockets.get(Server.Socket.control.toIndex());
         try socket.send(context.io, context.from, @ptrCast(&message));
     }
 };
@@ -32,7 +31,6 @@ pub const Context = struct {
 pub fn process(
     io: Io,
     current_time: Io.Timestamp,
-    sockets: *MultiSocket,
     server: *Server,
     from: *const net.IpAddress,
     data: []align(@alignOf(u64)) u8,
@@ -40,7 +38,7 @@ pub fn process(
     if (data.len < @sizeOf(rmnet.ClientHeader))
         return error.InvalidPacket;
 
-    const socket = sockets.get(SocketKind.ctl.toIndex());
+    const socket = server.sockets.get(Server.Socket.control.toIndex());
 
     const header: *rmnet.ClientHeader = @ptrCast(data[0..@sizeOf(rmnet.ClientHeader)]);
     if (header.protocol_version != rmnet.Version.current)
@@ -92,7 +90,6 @@ pub fn process(
                 try @field(ns, decl.name)(.{ .data = &message.operation }, &.{
                     .io = io,
                     .time = current_time,
-                    .sockets = sockets,
                     .server = server,
                     .from = from,
                     .userdata = header.userdata,
@@ -117,9 +114,6 @@ fn send(
 }
 
 const Io = std.Io;
-const SocketKind = app.SocketKind;
-const MultiSocket = rmio.MultiSocket;
-
 const net = std.Io.net;
 
 const app = @import("app.zig");

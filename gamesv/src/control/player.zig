@@ -13,8 +13,7 @@ pub fn playerKick(
         operation.data.reason,
     ) orelse @enumFromInt(0);
 
-    const socket = context.sockets.get(app.SocketKind.game.toIndex());
-    server.kick(context.io, context.time, socket, index, reason);
+    server.kick(context.io, context.time, index, reason);
 }
 
 pub fn modAvatarMeta(

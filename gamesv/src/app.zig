@@ -2,27 +2,12 @@ const log = std.log.scoped(.@"remielle-gamesv");
 
 const mtu = kcp.mtu;
 
-pub const SocketKind = enum(usize) {
-    game = 0,
-    ctl = 1,
-
-    pub const count = 2;
-
-    pub fn toIndex(sk: SocketKind) usize {
-        return @intFromEnum(sk);
-    }
-
-    pub fn fromIndex(index: usize) SocketKind {
-        return @enumFromInt(index);
-    }
-};
-
 pub fn bind(
     io: Io,
     gpa: Allocator,
     csprng: Random,
     assets: *const Assets,
-    addresses: *const [SocketKind.count]net.IpAddress,
+    addresses: *const [Server.Socket.count]net.IpAddress,
     concurrent_session_limit: Io.Limit,
 ) Io.Cancelable!void {
     var persistent = Persistent.init(io, gpa, .cwd()) catch |err| switch (err) {
@@ -32,14 +17,14 @@ pub fn bind(
 
     defer persistent.deinit(gpa);
 
-    var receive_buffers: [SocketKind.count][mtu]u8 align(@alignOf(u64)) = undefined;
-    var sockets_buffer: MultiSocket.Buffer(SocketKind.count) = undefined;
+    var receive_buffers: [Server.Socket.count][mtu]u8 align(@alignOf(u64)) = undefined;
+    var sockets_buffer: MultiSocket.Buffer(Server.Socket.count) = undefined;
     var sockets: MultiSocket = undefined;
 
     sockets.init(sockets_buffer.toSockets(), &.{ &receive_buffers[0], &receive_buffers[1] });
     defer sockets.deinit(io);
 
-    for (addresses, std.enums.values(SocketKind)) |address, kind| {
+    for (addresses, std.enums.values(Server.Socket)) |address, socket| {
         const index = sockets.bind(io, address) catch |err| switch (err) {
             error.AddressInUse => fatal(
                 "the address {f} is already in use; another instance of this server might be already running",
@@ -48,14 +33,15 @@ pub fn bind(
             else => |e| fatal("bind: {t}", .{e}),
         };
 
-        std.debug.assert(index == @intFromEnum(kind));
+        std.debug.assert(index == socket.toIndex());
 
-        log.info("waiting for {t} clients at udp://{f}", .{ kind, address });
+        log.info("waiting for {t} clients at udp://{f}", .{ socket, address });
     }
 
     var server: Server = .init(
         gpa,
         csprng,
+        &sockets,
         assets,
         &persistent,
         concurrent_session_limit,
@@ -66,7 +52,7 @@ pub fn bind(
     recv_loop: while (sockets.receive(io)) |completion| {
         const current_time: Io.Timestamp = .now(io, .real);
 
-        switch (SocketKind.fromIndex(completion.index)) {
+        switch (Server.Socket.fromIndex(completion.index)) {
             .game => {
                 const message = completion.result catch |err| switch (err) {
                     error.MessageOversize => continue,
@@ -89,7 +75,7 @@ pub fn bind(
                     else => {},
                 };
             },
-            .ctl => {
+            .control => {
                 const message = completion.result catch |err| switch (err) {
                     error.MessageOversize => continue,
                     else => |e| {
@@ -100,16 +86,12 @@ pub fn bind(
 
                 const data = receive_buffers[completion.index][0..message.data.len];
 
-                control.process(io, current_time, &sockets, &server, &message.from, data) catch |err| switch (err) {
+                control.process(io, current_time, &server, &message.from, data) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
                     else => {},
                 };
 
-                server.drainOutgoingQueue(
-                    io,
-                    sockets.get(SocketKind.game.toIndex()),
-                    current_time,
-                ) catch |err| switch (err) {
+                server.drainOutgoingQueue(io, current_time) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
                 };
             },
@@ -123,12 +105,10 @@ pub fn bind(
     log.info("shutting down...", .{});
 
     const current_time: Io.Timestamp = .now(io, .real);
-    const game_udp_socket = sockets.get(SocketKind.game.toIndex());
 
     var session_index: u32 = 0;
-    while (session_index < server.conv_map.count()) : (session_index += 1) {
-        server.kick(io, current_time, game_udp_socket, session_index, .PlayerKickReason_ServerClose);
-    }
+    while (session_index < server.conv_map.count()) : (session_index += 1)
+        server.kick(io, current_time, session_index, .PlayerKickReason_ServerClose);
 }
 
 fn onGameMessageReceived(
@@ -272,7 +252,7 @@ fn onGameMessageReceived(
         },
     }
 
-    try server.drainOutgoingQueue(io, socket, current_time);
+    try server.drainOutgoingQueue(io, current_time);
 }
 
 fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
