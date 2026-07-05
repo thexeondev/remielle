@@ -28,16 +28,7 @@ pub fn playerKick(
         else => {},
     };
 
-    // TODO: this should be moved into `Server`.
-    app.savePlayer(
-        context.io,
-        &context.server.resettable_arena,
-        context.server.persistent,
-        &context.server.properties,
-        context.server.uid_map.keys()[index],
-        index,
-    );
-
+    server.savePlayer(context.io, index);
     server.release(server.conv_map.keys()[index]);
 }
 

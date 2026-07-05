@@ -132,14 +132,7 @@ pub fn bind(
     // Save all online players and, if possible, kick them out gracefully
     var session_index: u32 = 0;
     while (session_index < server.conv_map.count()) : (session_index += 1) {
-        savePlayer(
-            io,
-            &server.resettable_arena,
-            &persistent,
-            &server.properties,
-            server.uid_map.keys()[session_index],
-            session_index,
-        );
+        server.savePlayer(io, session_index);
 
         if (rmpb.features.isAvailable(.player_kick)) {
             notifyPlayerKick(
@@ -179,15 +172,7 @@ fn onGameMessageReceived(
 
                 log.debug("player from {f} disconnected", .{message.from});
 
-                savePlayer(
-                    io,
-                    &server.resettable_arena,
-                    server.persistent,
-                    &server.properties,
-                    server.uid_map.keys()[index],
-                    index,
-                );
-
+                server.savePlayer(io, index);
                 server.release(conv_id);
             },
         }
@@ -287,14 +272,7 @@ fn onGameMessageReceived(
                     @enumFromInt(player_index),
                 );
 
-                savePlayer(
-                    io,
-                    &server.resettable_arena,
-                    server.persistent,
-                    &server.properties,
-                    player_token.uid,
-                    player_index,
-                );
+                server.savePlayer(io, player_index);
             } else {
                 loadPlayer(
                     io,
@@ -333,37 +311,6 @@ fn onGameMessageReceived(
     ) catch |err| switch (err) {
         error.Canceled => |e| return e,
         else => {},
-    };
-}
-
-pub fn savePlayer(
-    io: Io,
-    resettable_arena: *heap.ArenaAllocator,
-    persistent: *Persistent,
-    properties: *logic.Properties.List,
-    uid: u32,
-    index: u32,
-) void {
-    defer _ = resettable_arena.reset(.retain_capacity);
-
-    const player_save = logic.Properties.toPlayerSave(
-        properties,
-        resettable_arena.allocator(),
-        @enumFromInt(index),
-    ) catch |err| switch (err) {
-        error.OutOfMemory => {
-            // TODO: get rid of protobuf for saves to avoid this error.
-            log.err("ran out of memory while constructing save for UID {d}", .{uid});
-            return;
-        },
-    };
-
-    const old_cancel_protection = io.swapCancelProtection(.blocked);
-    defer _ = io.swapCancelProtection(old_cancel_protection);
-
-    persistent.savePlayer(io, uid, player_save) catch |err| switch (err) {
-        error.Canceled => unreachable, // blocked
-        else => |e| log.err("failed to save player with UID {d}: {t}", .{ uid, e }),
     };
 }
 

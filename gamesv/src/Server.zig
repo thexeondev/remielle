@@ -47,6 +47,16 @@ pub const Client = struct {
     xorpad: messaging.Xorpad,
     /// The remote address of the client.
     addr: net.IpAddress,
+
+    pub const PacketCounter = enum(u32) {
+        init = 1,
+        _,
+
+        pub fn nextId(counter: *PacketCounter) u32 {
+            defer counter.* = @enumFromInt(1 +% @intFromEnum(counter.*));
+            return @intFromEnum(counter.*);
+        }
+    };
 };
 
 pub const Clients = rmmem.RemielleArrayList(rmmem.suggestBucketSize(64, Client), Client, u32);
@@ -292,16 +302,38 @@ pub fn release(server: *Server, id: kcp.ConvId) void {
     server.increaseLimit();
 }
 
-pub const PacketCounter = enum(u32) {
-    init = 1,
-    _,
+pub fn savePlayer(
+    server: *Server,
+    io: Io,
+    index: u32,
+) void {
+    const arena = server.resettable_arena.allocator();
+    defer _ = server.resettable_arena.reset(.retain_capacity);
 
-    pub fn nextId(counter: *PacketCounter) u32 {
-        defer counter.* = @enumFromInt(1 +% @intFromEnum(counter.*));
-        return @intFromEnum(counter.*);
-    }
-};
+    const uid = server.uid_map.keys()[index];
 
+    const player_save = logic.Properties.toPlayerSave(
+        &server.properties,
+        arena,
+        @enumFromInt(index),
+    ) catch |err| switch (err) {
+        error.OutOfMemory => {
+            // TODO: get rid of protobuf for saves to avoid this error.
+            log.err("ran out of memory while constructing save for UID {d}", .{uid});
+            return;
+        },
+    };
+
+    const old_cancel_protection = io.swapCancelProtection(.blocked);
+    defer _ = io.swapCancelProtection(old_cancel_protection);
+
+    server.persistent.savePlayer(io, uid, player_save) catch |err| switch (err) {
+        error.Canceled => unreachable, // blocked
+        else => |e| log.err("failed to save player with UID {d}: {t}", .{ uid, e }),
+    };
+}
+
+const Io = std.Io;
 const Random = std.Random;
 const Limit = std.Io.Limit;
 const Timestamp = std.Io.Timestamp;
