@@ -19,8 +19,34 @@ pub const Offset = enum(usize) {
 pub const Key = enum(u64) {
     _,
 
-    pub inline fn init(client: u64, server: u64) Key {
-        return @enumFromInt(client ^ server);
+    pub const DeriveError = error{
+        RandKeyDecryptFail,
+    };
+
+    pub fn derive(server_rand_key: u64, client_rand_key_b64: []const u8) DeriveError!Key {
+        const client_rand_key = decryptClientRandKey(client_rand_key_b64) orelse
+            return error.RandKeyDecryptFail;
+
+        return @enumFromInt(client_rand_key ^ server_rand_key);
+    }
+
+    fn decryptClientRandKey(b64: []const u8) ?u64 {
+        if (b64.len != block_size_base64)
+            return null;
+
+        var ciphertext: [rmcrypt.rsa.block_size]u8 = undefined;
+
+        base64.Decoder.decode(&ciphertext, b64) catch
+            return null;
+
+        var plaintext_buf: [rmcrypt.rsa.block_size]u8 = undefined;
+        const plaintext = rmcrypt.rsa.server_private_key.decrypt(&ciphertext, &plaintext_buf) orelse
+            return null;
+
+        if (plaintext.len != @sizeOf(u64))
+            return null;
+
+        return std.mem.readInt(u64, plaintext[0..@sizeOf(u64)], .little);
     }
 };
 
@@ -193,8 +219,12 @@ pub const Reader = struct {
     }
 };
 
-const Io = std.Io;
-const rmcrypt = @import("rmcrypt");
+const block_size_base64 = base64.Encoder.calcSize(rmcrypt.rsa.block_size);
 
+const Io = std.Io;
+
+const base64 = std.base64.standard;
+
+const rmcrypt = @import("rmcrypt");
 const std = @import("std");
 const Xorpad = @This();

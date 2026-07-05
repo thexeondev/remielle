@@ -203,19 +203,24 @@ fn onGameMessageReceived(
                 => return,
             };
 
-            var response_string_buffer: [messaging.auth.string_buffer_size]u8 = undefined;
-
-            const player_token = messaging.auth.playerGetToken(
-                gpa,
-                csprng,
-                server.persistent,
-                &request,
-                &response_string_buffer,
+            const server_rand_key = csprng.int(u64);
+            const rand_key = messaging.Xorpad.Key.derive(
+                server_rand_key,
+                request.client_rand_key,
             ) catch |err| switch (err) {
-                error.OutOfMemory,
-                error.InvalidUidString,
-                error.RandKeyDecryptFail,
-                => |e| {
+                error.RandKeyDecryptFail => return,
+            };
+
+            const account_uid = Persistent.AccountUid.fromString(request.account_uid) orelse
+                return;
+
+            const get_or_create = server.persistent.getOrCreatePlayerUid(
+                io,
+                account_uid,
+                gpa,
+            ) catch |err| switch (err) {
+                error.Canceled => |e| return e,
+                error.OutOfMemory, error.WriteFileFailed => |e| {
                     log.err(
                         "failed to authenticate client from {f}: {t}",
                         .{ message.from, e },
@@ -224,14 +229,23 @@ fn onGameMessageReceived(
                 },
             };
 
+            var encryption_buffer: rmcrypt.EncryptAndSignBuffer = undefined;
+            rmcrypt.encryptAndSign(@ptrCast(&server_rand_key), &encryption_buffer);
+
+            const response: rmpb.main.PlayerGetTokenScRsp = .{
+                .uid = get_or_create.player_uid,
+                .server_rand_key = &encryption_buffer.ciphertext,
+                .sign = &encryption_buffer.sign,
+            };
+
             const player_index = server.onAuthSucceeded(
                 &message.from,
                 message.data,
                 input.header.conv_id,
                 input.token,
                 current_time,
-                player_token.key,
-                player_token.response,
+                rand_key,
+                response,
             ) catch |err| switch (err) {
                 error.MessageOversize,
                 error.OutOfMemory,
@@ -241,14 +255,9 @@ fn onGameMessageReceived(
                 => return,
             };
 
-            if (player_token.is_first_login) {
+            if (get_or_create.created) {
                 const old_cancel_protection = io.swapCancelProtection(.blocked);
                 defer _ = io.swapCancelProtection(old_cancel_protection);
-
-                server.persistent.saveAccountUidMap(io) catch |err| switch (err) {
-                    error.Canceled => unreachable, // blocked
-                    else => |e| fatal("failed to save account uid map: {t}", .{e}),
-                };
 
                 logic.Properties.setDefaultsAt(
                     &server.properties,
@@ -258,7 +267,7 @@ fn onGameMessageReceived(
 
                 server.savePlayer(io, player_index);
             } else {
-                try server.loadPlayerProperties(io, current_time, player_token.uid, player_index);
+                try server.loadPlayerProperties(io, current_time, get_or_create.player_uid, player_index);
             }
         },
     }
@@ -287,6 +296,7 @@ const control = @import("control.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
+const rmcrypt = @import("rmcrypt");
 const rmpb = @import("rmpb");
 const rmio = @import("rmio");
 const std = @import("std");

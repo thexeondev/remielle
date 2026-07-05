@@ -22,26 +22,47 @@ pub fn deinit(persistent: *Persistent, gpa: Allocator) void {
 pub const AccountUid = enum(u64) {
     _,
 
-    pub const Error = error{InvalidUidString};
-
-    pub fn fromString(account_uid: []const u8) Error!AccountUid {
+    pub fn fromString(account_uid: []const u8) ?AccountUid {
         return @enumFromInt(std.fmt.parseInt(u64, account_uid, 10) catch
-            return error.InvalidUidString);
+            return null);
     }
 };
 
-pub fn getPlayerUidByAccountUid(persistent: *Persistent, uid: AccountUid) ?u32 {
-    return if (persistent.account_uid_map.getIndex(uid)) |index|
+pub fn getPlayerUid(persistent: *Persistent, account_uid: AccountUid) ?u32 {
+    return if (persistent.account_uid_map.getIndex(account_uid)) |index|
         @intCast(base_player_uid + index)
     else
         null;
 }
 
-/// It's caller's responsibility to check if it doesn't already exist.
-/// After this, `saveAccountUidMap` should be called as well.
-pub fn createPlayerUidForAccountUid(persistent: *Persistent, gpa: Allocator, uid: AccountUid) !u32 {
-    try persistent.account_uid_map.put(gpa, uid, {});
-    return @intCast(base_player_uid + (persistent.account_uid_map.count() - 1));
+pub const GetOrCreatePlayerUid = struct {
+    player_uid: u32,
+    created: bool,
+};
+
+pub fn getOrCreatePlayerUid(
+    persistent: *Persistent,
+    io: Io,
+    account_uid: AccountUid,
+    gpa: Allocator,
+) (Io.Cancelable || Allocator.Error || error{WriteFileFailed})!GetOrCreatePlayerUid {
+    if (persistent.getPlayerUid(account_uid)) |player_uid|
+        return .{ .player_uid = player_uid, .created = false };
+
+    try persistent.account_uid_map.put(gpa, account_uid, {});
+
+    persistent.root.writeFile(io, .{
+        .sub_path = account_uid_map_path,
+        .data = @ptrCast(persistent.account_uid_map.keys()),
+    }) catch |err| switch (err) {
+        error.Canceled => |e| return e,
+        else => return error.WriteFileFailed,
+    };
+
+    return .{
+        .player_uid = @intCast(base_player_uid + (persistent.account_uid_map.count() - 1)),
+        .created = true,
+    };
 }
 
 fn loadAccountUidMap(io: Io, gpa: Allocator, root: Io.Dir) !AccountUidMap {
@@ -56,13 +77,6 @@ fn loadAccountUidMap(io: Io, gpa: Allocator, root: Io.Dir) !AccountUidMap {
     try map.reinit(gpa, @ptrCast(bytes), &.{});
 
     return map;
-}
-
-pub fn saveAccountUidMap(persistent: *const Persistent, io: Io) !void {
-    try persistent.root.writeFile(io, .{
-        .sub_path = account_uid_map_path,
-        .data = @ptrCast(persistent.account_uid_map.keys()),
-    });
 }
 
 pub fn loadPlayer(

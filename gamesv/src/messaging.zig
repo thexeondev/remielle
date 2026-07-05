@@ -1,6 +1,5 @@
 const log = std.log.scoped(.@"remielle-gamesv::messaging");
 
-pub const auth = @import("messaging/auth.zig");
 pub const handlers = @import("messaging/handlers.zig");
 pub const notifiers = @import("messaging/notifiers.zig");
 pub const Xorpad = @import("messaging/Xorpad.zig");
