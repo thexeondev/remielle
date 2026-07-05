@@ -229,7 +229,7 @@
         .primary_suit_ability = 0,
         .secondary_condition = 4,
         .secondary_suit_ability = 124,
-        .primary_suit_propertys = .{.{ .property = 12102, .value = 1000 }},
+        .primary_suit_propertys = .{.{ .property = 31203, .value = 30 }},
     },
     .{
         .id = 34200,

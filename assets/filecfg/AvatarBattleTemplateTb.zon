@@ -3338,6 +3338,7 @@
             "AidTypeParry",
             "Pyrois",
             "EtherEyesSize2",
+            "ZenkovPyrois",
         },
         .weapon_type = 1,
         .element = .{205},

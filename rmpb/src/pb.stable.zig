@@ -100,22 +100,6 @@ pub const BasicSave = struct {
     pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
 };
 
-pub const PlayerAccessorySave = struct {
-    pub const init: @This() = .{};
-    pub const pb_desc_name = "PlayerAccessorySave";
-    avatars: std.ArrayList(PlayerAccessoryItemSave) = .empty,
-    pub const avatars_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-};
-
-pub const PlayerAccessoryItemSave = struct {
-    pub const init: @This() = .{};
-    pub const pb_desc_name = "PlayerAccessoryItemSave";
-    id: u32 = 0,
-    skin_id: u32 = 0,
-    pub const id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const skin_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
-};
-
 pub const AvatarSave = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "AvatarSave";
@@ -270,6 +254,29 @@ pub const MainCityTimeSave = struct {
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
 
+pub const PlayerAccessorySave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "PlayerAccessorySave";
+    avatars: std.ArrayList(PlayerAccessoryItemSave) = .empty,
+    pub const avatars_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+};
+
+pub const PlayerAccessoryItemSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "PlayerAccessoryItemSave";
+    id: u32 = 0,
+    skin_id: u32 = 0,
+    pub const id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const skin_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+};
+
+pub const QuickTeamSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "QuickTeamSave";
+    teams: std.ArrayList(QuickTeamItemSave) = .empty,
+    pub const teams_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+};
+
 pub const QuickTeamItemSave = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "QuickTeamItemSave";
@@ -281,9 +288,3 @@ pub const QuickTeamItemSave = struct {
     pub const buddy_id_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
 
-pub const QuickTeamSave = struct {
-    pub const init: @This() = .{};
-    pub const pb_desc_name = "QuickTeamSave";
-    teams: std.ArrayList(QuickTeamItemSave) = .empty,
-    pub const teams_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-};

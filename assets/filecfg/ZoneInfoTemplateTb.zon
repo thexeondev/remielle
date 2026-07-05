@@ -4691,7 +4691,7 @@
     },
     .{
         .zone_id = 690442,
-        .name = "OfficialName_Monster_Girtablu_HC",
+        .name = "OfficialName_Monster_GraymaneCenturion_Cloned",
         .layer_id = 69044201,
         .layer_index = 1,
         .group_id = 1002,
@@ -5471,7 +5471,7 @@
     },
     .{
         .zone_id = 6904421,
-        .name = "OfficialName_Monster_Girtablu_HC",
+        .name = "OfficialName_Monster_GraymaneCenturion_Cloned",
         .layer_id = 69044201,
         .layer_index = 1,
         .group_id = 1002,
