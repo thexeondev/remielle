@@ -258,57 +258,12 @@ fn onGameMessageReceived(
 
                 server.savePlayer(io, player_index);
             } else {
-                loadPlayer(
-                    io,
-                    &server.resettable_arena,
-                    server.persistent,
-                    &server.properties,
-                    player_token.uid,
-                    player_index,
-                ) catch |err| switch (err) {
-                    error.Canceled => |e| return e,
-                    else => |e| {
-                        log.err(
-                            "failed to load player with uid {d}: {t}",
-                            .{ player_token.uid, e },
-                        );
-
-                        // Reset defaults for now.
-                        logic.Properties.setDefaultsAt(
-                            &server.properties,
-                            current_time,
-                            @enumFromInt(player_index),
-                        );
-                    },
-                };
+                try server.loadPlayerProperties(io, current_time, player_token.uid, player_index);
             }
         },
     }
 
     try server.drainOutgoingQueue(io, socket, current_time);
-}
-
-fn loadPlayer(
-    io: Io,
-    resettable_arena: *heap.ArenaAllocator,
-    persistent: *Persistent,
-    properties: *logic.Properties.List,
-    uid: u32,
-    index: u32,
-) !void {
-    defer _ = resettable_arena.reset(.retain_capacity);
-
-    const player_save = try persistent.loadPlayer(
-        io,
-        resettable_arena.allocator(),
-        uid,
-    );
-
-    try logic.Properties.fromPlayerSave(
-        properties,
-        @enumFromInt(index),
-        &player_save,
-    );
 }
 
 fn fatal(comptime fmt: []const u8, args: anytype) noreturn {

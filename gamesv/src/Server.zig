@@ -329,6 +329,40 @@ pub fn savePlayer(
     };
 }
 
+pub fn loadPlayerProperties(
+    server: *Server,
+    io: Io,
+    current_time: Io.Timestamp,
+    uid: u32,
+    index: u32,
+) Cancelable!void {
+    server.loadPlayerPropertiesFromSave(io, uid, index) catch |err| switch (err) {
+        error.Canceled => |e| return e,
+        else => |e| {
+            log.warn("failed to load properties from save for player with uid {d}: {t}", .{ uid, e });
+
+            logic.Properties.setDefaultsAt(
+                &server.properties,
+                current_time,
+                @enumFromInt(index),
+            );
+        },
+    };
+}
+
+fn loadPlayerPropertiesFromSave(server: *Server, io: Io, uid: u32, index: u32) !void {
+    const arena = server.resettable_arena.allocator();
+    defer _ = server.resettable_arena.reset(.retain_capacity);
+
+    const player_save = try server.persistent.loadPlayer(io, arena, uid);
+
+    try logic.Properties.fromPlayerSave(
+        &server.properties,
+        @enumFromInt(index),
+        &player_save,
+    );
+}
+
 pub fn drainOutgoingQueue(
     server: *Server,
     io: Io,

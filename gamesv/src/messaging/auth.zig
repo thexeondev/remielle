@@ -18,6 +18,13 @@ pub fn playerGetToken(
     request: *const PlayerGetTokenCsReq,
     string_buffer: *[string_buffer_size]u8,
 ) PlayerGetTokenError!PlayerToken {
+    // TODO: this is a weird function that has 2 responsibilities:
+    // * account uid lookup and creation
+    // * construction of PlayerGetTokenScRsp
+    //
+    // Due to its responsibility of creating accounts, it lies to itself.
+    // It creates an account entry but defers the actual save of the map.
+
     const client_rand_key = decryptClientRandKey(request.client_rand_key) orelse
         return error.RandKeyDecryptFail;
 
