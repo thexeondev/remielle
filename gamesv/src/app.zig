@@ -105,16 +105,12 @@ pub fn bind(
                     else => {},
                 };
 
-                while (server.multi_conversation.nextUndrained()) |index| drainOutgoingPackets(
+                server.drainOutgoingQueue(
                     io,
                     sockets.get(SocketKind.game.toIndex()),
                     current_time,
-                    &server.multi_conversation,
-                    index,
-                    &message.from,
                 ) catch |err| switch (err) {
                     error.Canceled => break :recv_loop,
-                    else => {},
                 };
             },
         }
@@ -301,17 +297,7 @@ fn onGameMessageReceived(
         },
     }
 
-    while (server.multi_conversation.nextUndrained()) |index| drainOutgoingPackets(
-        io,
-        socket,
-        current_time,
-        &server.multi_conversation,
-        index,
-        &message.from,
-    ) catch |err| switch (err) {
-        error.Canceled => |e| return e,
-        else => {},
-    };
+    try server.drainOutgoingQueue(io, socket, current_time);
 }
 
 fn loadPlayer(
@@ -343,7 +329,7 @@ fn loadPlayer(
 /// send this message, save the player, release the resources.
 pub fn notifyPlayerKick(
     io: Io,
-    udp_socket: net.Socket,
+    socket: net.Socket,
     server: *Server,
     current_time: Io.Timestamp,
     index: u32,
@@ -359,14 +345,7 @@ pub fn notifyPlayerKick(
         notify,
     );
 
-    try drainOutgoingPackets(
-        io,
-        udp_socket,
-        current_time,
-        &server.multi_conversation,
-        index,
-        server.clients.getPtr(.addr, index),
-    );
+    try server.drainOutgoingQueue(io, socket, current_time);
 
     var ctl: [kcp.Control.size]u8 = undefined;
     const identifier = server.multi_conversation.identifierAt(index);
@@ -379,28 +358,7 @@ pub fn notifyPlayerKick(
         404,
     );
 
-    try udp_socket.send(io, server.clients.getPtr(.addr, index), &ctl);
-}
-
-fn drainOutgoingPackets(
-    io: Io,
-    udp_socket: net.Socket,
-    current_time: Io.Timestamp,
-    multi_conversation: *kcp.MultiConversation,
-    index: u32,
-    destination: *const net.IpAddress,
-) !void {
-    multi_conversation.updateAt(index, current_time);
-
-    var output_buf: [kcp.mtu]u8 = undefined;
-    var it: kcp.MultiConversation.DrainIterator = .init;
-
-    while (!it.isAtEnd()) {
-        const n_send = multi_conversation.drainAt(index, &it, &output_buf);
-        if (n_send == 0) continue;
-
-        try udp_socket.send(io, destination, output_buf[0..n_send]);
-    }
+    try socket.send(io, server.clients.getPtr(.addr, index), &ctl);
 }
 
 fn fatal(comptime fmt: []const u8, args: anytype) noreturn {

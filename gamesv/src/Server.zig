@@ -333,6 +333,44 @@ pub fn savePlayer(
     };
 }
 
+pub fn drainOutgoingQueue(
+    server: *Server,
+    io: Io,
+    socket: net.Socket,
+    current_time: Io.Timestamp,
+) Io.Cancelable!void {
+    while (server.multi_conversation.nextUndrained()) |index| try server.drainConversation(
+        io,
+        socket,
+        current_time,
+        index,
+    );
+}
+
+fn drainConversation(
+    server: *Server,
+    io: Io,
+    socket: net.Socket,
+    current_time: Io.Timestamp,
+    index: u32,
+) Io.Cancelable!void {
+    server.multi_conversation.updateAt(index, current_time);
+
+    const destination = server.clients.getPtr(.addr, index);
+    var output_buf: [kcp.mtu]u8 = undefined;
+    var it: kcp.MultiConversation.DrainIterator = .init;
+
+    while (!it.isAtEnd()) {
+        const n_send = server.multi_conversation.drainAt(index, &it, &output_buf);
+        if (n_send == 0) continue;
+
+        socket.send(io, destination, output_buf[0..n_send]) catch |err| switch (err) {
+            error.Canceled => |e| return e,
+            else => {},
+        };
+    }
+}
+
 const Io = std.Io;
 const Random = std.Random;
 const Limit = std.Io.Limit;
