@@ -15277,7 +15277,7 @@ pub const HallRefreshScNotify = struct {
     pub const npc_list_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
     pub const MCEPOCNFLGE_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
     pub const CJAINLNEFAA_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
-    pub const DPHMKIPEHLI_field_desc: FieldDesc = .{ .number = 57, .xor = 5336 };
+    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 57, .xor = 5336 };
     pub const CBBEGMGIICO_field_desc: FieldDesc = .{ .number = 121, .xor = 0 };
     pub const BCFOHMCIAIF_field_desc: FieldDesc = .{ .number = 157, .xor = 0 };
     pub const GNDOIJFHLNB_field_desc: FieldDesc = .{ .number = 175, .xor = 0 };
@@ -15288,7 +15288,7 @@ pub const HallRefreshScNotify = struct {
     pub const EFHNJGCIJBF_field_desc: FieldDesc = .{ .number = 575, .xor = 0 };
     pub const IKBMJIHKPFA_field_desc: FieldDesc = .{ .number = 703, .xor = 0 };
     pub const NGPHEDLLFDB_field_desc: FieldDesc = .{ .number = 767, .xor = 0 };
-    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 971, .xor = 5529 };
+    pub const ALIJELGKFIL_field_desc: FieldDesc = .{ .number = 971, .xor = 5529 };
     pub const BJNHLNLKMIC_field_desc: FieldDesc = .{ .number = 1020, .xor = 0 };
     pub const CJGGGJIHBEB_field_desc: FieldDesc = .{ .number = 1047, .xor = 0 };
     pub const OIAGNDBHMEG_field_desc: FieldDesc = .{ .number = 1115, .xor = 0 };
@@ -23110,14 +23110,14 @@ pub const HallSceneData = struct {
     pub const CMKHJKLHKNE_field_desc: FieldDesc = .{ .number = 5, .xor = 7722 };
     pub const section_id_field_desc: FieldDesc = .{ .number = 6, .xor = 16189 };
     pub const DHFCMLLGHLH_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
-    pub const DPHMKIPEHLI_field_desc: FieldDesc = .{ .number = 8, .xor = 1025 };
+    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 8, .xor = 1025 };
     pub const NGFLPPHECKL_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
     pub const KABGELDMOJB_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
     pub const AFOIEMCLAKG_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const IFNPIMANHCK_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
     pub const position_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
     pub const IFHAOHBGAOG_field_desc: FieldDesc = .{ .number = 14, .xor = 11089 };
-    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 15, .xor = 789 };
+    pub const ALIJELGKFIL_field_desc: FieldDesc = .{ .number = 15, .xor = 789 };
     pub const KEOOMKGGNKI_field_desc: FieldDesc = .{ .number = 57, .xor = 3504 };
     pub const LDCAHCBLHJB_field_desc: FieldDesc = .{ .number = 109, .xor = 0 };
     pub const NHCACDBCGBP_field_desc: FieldDesc = .{ .number = 359, .xor = 11554 };
