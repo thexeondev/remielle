@@ -4,6 +4,7 @@ pub const Tag = enum(u16) {
     nop = 0,
     player_kick = 1,
     mod_avatar_meta = 2,
+    create_weapon = 3,
     _,
 };
 
@@ -49,6 +50,33 @@ pub const ModAvatarMeta = extern struct {
     field: Field,
 };
 
+/// Trailing:
+/// * `entries: [count]CreateWeapon.Entry`
+pub const CreateWeapon = extern struct {
+    pub const tag: Tag = .create_weapon;
+    pub const version: Version = 0;
+
+    player_uid: u32,
+    count: u32,
+
+    pub const Entry = extern struct {
+        id: u16,
+        meta: Meta,
+
+        pub const Meta = packed struct(u16) {
+            level: u6,
+            star: u3,
+            refine: u3,
+            reserved: u4, // reserved.
+        };
+    };
+
+    pub const trailing = struct {
+        pub const entries_count_field = "count";
+        pub const Entry = CreateWeapon.Entry;
+    };
+};
+
 pub fn Message(comptime Op: type) type {
     return extern struct {
         header: rmnet.ClientHeader,
@@ -70,4 +98,42 @@ pub fn Message(comptime Op: type) type {
     };
 }
 
+/// Used for constructing `Operation`s with dynamically-sized trailing data.
+pub fn ExtendedMessageBuffer(comptime Op: type, comptime buffer_size: usize) type {
+    return extern struct {
+        base: Base,
+        entries: [buffer_size]Op.trailing.Entry,
+
+        pub const Base = Message(Op);
+
+        pub fn init(base: Base) @This() {
+            return .{
+                .base = base,
+                .entries = @splat(std.mem.zeroes(Op.trailing.Entry)),
+            };
+        }
+
+        pub inline fn countPtr(buffer: *@This()) *u32 {
+            return &@field(buffer.base.operation, Op.trailing.entries_count_field);
+        }
+
+        pub fn appendAssumeCapacity(buffer: *@This(), entry: Op.trailing.Entry) void {
+            const count = buffer.countPtr();
+
+            buffer.entries[count.*] = entry;
+            count.* += 1;
+        }
+
+        pub fn payload(buffer: *const @This()) []const u8 {
+            const entries_count = @field(buffer.base.operation, Op.trailing.entries_count_field);
+            const entries_end = (&buffer.entries).ptr + entries_count;
+            const len = @intFromPtr(entries_end) - @intFromPtr(buffer);
+            return @as([*]const u8, @ptrCast(buffer))[0..len];
+        }
+    };
+}
+
+const alignForward = std.mem.alignForward;
+
 const rmnet = @import("root.zig");
+const std = @import("std");

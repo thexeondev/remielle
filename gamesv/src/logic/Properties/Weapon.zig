@@ -1,4 +1,4 @@
-const capacity = 2_000;
+pub const capacity = 2_000;
 
 pub const Id = templates.weapon.Id;
 
@@ -45,6 +45,13 @@ pub const Level = enum(u8) {
     pub fn toInt(level: Level) u8 {
         return @intFromEnum(level);
     }
+
+    pub fn fromInt(int: u8) ?Level {
+        if (int < Level.init.toInt() or int > Level.max.toInt())
+            return null;
+
+        return @enumFromInt(int);
+    }
 };
 
 pub const Star = enum(u8) {
@@ -55,6 +62,13 @@ pub const Star = enum(u8) {
     pub fn toInt(star: Star) u8 {
         return @intFromEnum(star);
     }
+
+    pub fn fromInt(int: u8) ?Star {
+        if (int < Star.init.toInt() or int > Star.max.toInt())
+            return null;
+
+        return @enumFromInt(int);
+    }
 };
 
 pub const Refine = enum(u8) {
@@ -64,6 +78,13 @@ pub const Refine = enum(u8) {
 
     pub fn toInt(refine: Refine) u8 {
         return @intFromEnum(refine);
+    }
+
+    pub fn fromInt(int: u8) ?Refine {
+        if (int < Refine.init.toInt() or int > Refine.max.toInt())
+            return null;
+
+        return @enumFromInt(int);
     }
 };
 

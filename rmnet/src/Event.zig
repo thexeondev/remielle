@@ -21,6 +21,7 @@ pub const Nak = extern struct {
         unknown_operation_tag = 3,
         invalid_parameter = 4,
         no_entry = 5,
+        no_space_left = 6, // extra: amount of space left
         _,
     };
 

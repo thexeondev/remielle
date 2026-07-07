@@ -41,7 +41,7 @@ pub fn main(init: Init) void {
 
     switch (command) {
         .@"kick-player" => |kick_player| {
-            const kick_message: rmnet.Operation.Message(rmnet.Operation.PlayerKick) = .init(userdata, .{
+            const kick_message: Operation.Message(Operation.PlayerKick) = .init(userdata, .{
                 .uid = kick_player.uid,
                 .reason = kick_player.reason,
             });
@@ -56,7 +56,7 @@ pub fn main(init: Init) void {
             const value: u64 = switch (mod_avatar_meta.field) {
                 _ => unreachable,
                 .skill_level => skill_level: {
-                    const skill: rmnet.Operation.ModAvatarMeta.Skill = .{
+                    const skill: Operation.ModAvatarMeta.Skill = .{
                         .skill = mod_avatar_meta.value,
                         .level = mod_avatar_meta.value_extra,
                     };
@@ -66,7 +66,7 @@ pub fn main(init: Init) void {
                 inline else => mod_avatar_meta.value,
             };
 
-            const mod_message: rmnet.Operation.Message(rmnet.Operation.ModAvatarMeta) = .init(userdata, .{
+            const mod_message: Operation.Message(Operation.ModAvatarMeta) = .init(userdata, .{
                 .player_uid = mod_avatar_meta.uid,
                 .avatar_id = mod_avatar_meta.id,
                 .field = mod_avatar_meta.field,
@@ -74,6 +74,31 @@ pub fn main(init: Init) void {
             });
 
             socket.send(io, &destination, @ptrCast(&mod_message)) catch |err|
+                fatal("send: {t}", .{err});
+
+            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            _ = ack;
+        },
+        .@"create-weapon" => |create_weapon| {
+            var creation_message: Operation.ExtendedMessageBuffer(Operation.CreateWeapon, 1) = .init(.init(
+                userdata,
+                .{
+                    .player_uid = create_weapon.player_uid,
+                    .count = 0, // Initial value must be zero. Will be incremented by appendAssumeCapacity.
+                },
+            ));
+
+            creation_message.appendAssumeCapacity(.{
+                .id = create_weapon.item_id,
+                .meta = .{
+                    .level = create_weapon.level,
+                    .star = create_weapon.star,
+                    .refine = create_weapon.refine,
+                    .reserved = 0,
+                },
+            });
+
+            socket.send(io, &destination, creation_message.payload()) catch |err|
                 fatal("send: {t}", .{err});
 
             const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
@@ -140,6 +165,8 @@ fn receive(
 }
 
 const fatal = std.process.fatal;
+
+const Operation = rmnet.Operation;
 
 const Io = std.Io;
 const Init = std.process.Init;

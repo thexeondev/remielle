@@ -12,6 +12,13 @@ pub const Command = union(enum) {
         value: u32,
         value_extra: u32 = 0,
     },
+    @"create-weapon": struct {
+        player_uid: u32,
+        item_id: u16,
+        level: u6,
+        star: u3,
+        refine: u3,
+    },
 
     /// Exits on invalid input.
     pub fn parse(

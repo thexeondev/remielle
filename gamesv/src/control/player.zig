@@ -123,7 +123,62 @@ pub fn modAvatarMeta(
     try context.sendEvent(rmnet.Event.Ack, .{});
 }
 
+pub fn createWeapon(
+    extended: control.ExtendedOperation(rmnet.Operation.CreateWeapon),
+    context: *const control.Context,
+) !void {
+    const server = context.server;
+
+    const player_index: u32 = @intCast(server.uid_map.getIndex(extended.operation.player_uid) orelse {
+        // TODO: offline changes.
+        return context.sendEvent(rmnet.Event.Nak, .{ .reason = .no_entry, .extra = 0 });
+    });
+
+    const weapon = server.properties.getPtr(.weapon, player_index);
+
+    if (weapon.count + extended.entries.len > Weapon.capacity)
+        return context.sendEvent(rmnet.Event.Nak, .{
+            .reason = .no_space_left,
+            .extra = Weapon.capacity - weapon.count,
+        });
+
+    const arena = server.resettable_arena.allocator();
+
+    var changes: logic.Changes = .init;
+    const weapons = try arena.alloc(logic.Changes.Weapon, extended.entries.len);
+
+    for (weapons, extended.entries, 0..) |*change, *entry, i|
+        change.* = .{
+            .uid = @enumFromInt(@as(u16, @intCast(weapon.count + i))),
+            .id = std.enums.fromInt(Weapon.Id, entry.id) orelse
+                return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
+            .level = Weapon.Level.fromInt(entry.meta.level) orelse
+                return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
+            .star = Weapon.Star.fromInt(entry.meta.star) orelse
+                return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
+            .refine = Weapon.Refine.fromInt(entry.meta.refine) orelse
+                return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
+        };
+
+    changes.weapons = weapons;
+
+    const frame: Server.Frame = .{
+        .target_index = player_index,
+        .time = context.time,
+        .clients = &server.clients,
+        .assets = server.assets,
+        .properties = &server.properties,
+        .multi_conversation = &server.multi_conversation,
+    };
+
+    try logic.mutators.dispatchLogicChanges(&frame, &changes);
+    try messaging.notifiers.notifyLogicChanges(arena, &frame, &changes);
+
+    try context.sendEvent(rmnet.Event.Ack, .{});
+}
+
 const Avatar = logic.Properties.Avatar;
+const Weapon = logic.Properties.Weapon;
 
 const templates = Assets.templates;
 

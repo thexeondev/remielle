@@ -6,6 +6,7 @@ pub fn playerSync(
         logic.Changes.ControlAvatar,
         logic.Changes.ControlGuiseAvatar,
         logic.Changes.Avatar,
+        logic.Changes.Weapon,
         logic.Changes.PlayerAccessory,
         logic.Changes.QuickTeam,
     }),
@@ -32,7 +33,7 @@ pub fn playerSync(
         .quick_team = try buildQuickTeamSync(notify.allocator, changes.quick_teams),
     };
 
-    sync.item = try buildItemSync(notify.allocator, changes.avatars);
+    sync.item = try buildItemSync(notify.allocator, changes.avatars, changes.weapons);
 
     notify.one(sync);
 }
@@ -92,21 +93,41 @@ fn buildPlayerAccessory(
     return sync;
 }
 
-fn buildItemSync(allocator: Allocator, avatar_changes: []const logic.Changes.Avatar) !?pb.ItemSync {
-    if (avatar_changes.len == 0) return null;
+fn buildItemSync(
+    allocator: Allocator,
+    avatar_changes: []const logic.Changes.Avatar,
+    weapon_changes: []const logic.Changes.Weapon,
+) !?pb.ItemSync {
+    if (avatar_changes.len == 0 and weapon_changes.len == 0) return null;
 
-    var sync: pb.ItemSync = .{
-        .material_list = try .initCapacity(allocator, avatar_changes.len),
+    return .{
+        .material_list = material_list: {
+            var list: ArrayList(pb.MaterialInfo) = try .initCapacity(allocator, avatar_changes.len);
+
+            for (avatar_changes) |avatar_change| {
+                list.appendAssumeCapacity(.{
+                    .id = 20_000 + @divFloor(@intFromEnum(avatar_change.id), 10),
+                    .count = avatar_change.awake_material_count.toInt(),
+                });
+            }
+
+            break :material_list list;
+        },
+        .weapon_list = weapon_list: {
+            var list: ArrayList(pb.WeaponInfo) = try .initCapacity(allocator, weapon_changes.len);
+
+            for (weapon_changes) |change|
+                list.appendAssumeCapacity(.{
+                    .uid = change.uid.toInt(),
+                    .id = @intFromEnum(change.id),
+                    .level = change.level.toInt(),
+                    .star = change.star.toInt(),
+                    .refine_level = change.refine.toInt(),
+                });
+
+            break :weapon_list list;
+        },
     };
-
-    for (avatar_changes) |avatar_change| {
-        sync.material_list.appendAssumeCapacity(.{
-            .id = 20_000 + @divFloor(@intFromEnum(avatar_change.id), 10),
-            .count = avatar_change.awake_material_count.toInt(),
-        });
-    }
-
-    return sync;
 }
 
 fn buildQuickTeamSync(allocator: Allocator, quick_teams: []const logic.Changes.QuickTeam) !?pb.QuickTeamSync {
@@ -114,6 +135,7 @@ fn buildQuickTeamSync(allocator: Allocator, quick_teams: []const logic.Changes.Q
 }
 
 const Notify = notifiers.Notify;
+const ArrayList = std.ArrayList;
 
 const Avatar = Properties.Avatar;
 const Allocator = std.mem.Allocator;

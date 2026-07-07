@@ -5,10 +5,21 @@ const namespaces: []const type = &.{
 };
 
 pub fn Operation(comptime T: type) type {
+    if (@hasDecl(T, "trailing")) @compileError("use `ExtendedOperation` instead");
+
     return struct {
         pub const Data = T;
 
         data: *const Data,
+    };
+}
+
+pub fn ExtendedOperation(comptime T: type) type {
+    return struct {
+        pub const Data = T;
+
+        operation: *const Data,
+        entries: []const Data.trailing.Entry,
     };
 }
 
@@ -81,21 +92,64 @@ pub fn process(
                         .extra = OperationParam.Data.version,
                     });
 
-                const ExpectedMessage = rmnet.Operation.Message(OperationParam.Data);
+                if (@hasField(OperationParam, "entries")) {
+                    // ExtendedOperation.
 
-                if (data.len != @sizeOf(ExpectedMessage))
-                    return error.InvalidPacket;
+                    const BaseMessage = rmnet.Operation.Message(OperationParam.Data);
 
-                const message: *ExpectedMessage = @ptrCast(data);
-                try @field(ns, decl.name)(.{ .data = &message.operation }, &.{
-                    .io = io,
-                    .time = current_time,
-                    .server = server,
-                    .from = from,
-                    .userdata = header.userdata,
-                });
+                    if (data.len < @sizeOf(BaseMessage))
+                        return error.InvalidPacket;
 
-                break :lookup;
+                    const base: *const BaseMessage = @ptrCast(data[0..@sizeOf(BaseMessage)]);
+                    const Entry = OperationParam.Data.trailing.Entry;
+
+                    const entries_base: [*]const Entry = @ptrFromInt(std.mem.alignForward(
+                        usize,
+                        @intFromPtr(base) + @sizeOf(BaseMessage),
+                        @alignOf(Entry),
+                    ));
+
+                    const entries_count = @field(
+                        base.operation,
+                        OperationParam.Data.trailing.entries_count_field,
+                    );
+
+                    const entries_end = @intFromPtr(entries_base + entries_count);
+                    if (entries_end - @intFromPtr(data.ptr) != data.len)
+                        return error.InvalidPacket;
+
+                    try @field(ns, decl.name)(
+                        .{
+                            .operation = &base.operation,
+                            .entries = entries_base[0..entries_count],
+                        },
+                        &.{
+                            .io = io,
+                            .time = current_time,
+                            .server = server,
+                            .from = from,
+                            .userdata = header.userdata,
+                        },
+                    );
+
+                    break :lookup;
+                } else {
+                    const ExpectedMessage = rmnet.Operation.Message(OperationParam.Data);
+
+                    if (data.len != @sizeOf(ExpectedMessage))
+                        return error.InvalidPacket;
+
+                    const message: *ExpectedMessage = @ptrCast(data);
+                    try @field(ns, decl.name)(.{ .data = &message.operation }, &.{
+                        .io = io,
+                        .time = current_time,
+                        .server = server,
+                        .from = from,
+                        .userdata = header.userdata,
+                    });
+
+                    break :lookup;
+                }
             }
         },
     }
