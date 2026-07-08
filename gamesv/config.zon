@@ -29,29 +29,6 @@
     // If you're expecting this to change your existing inventory,
     // you should remove your `Persistent` directory.
     .starting_items = .{
-        // Equipment. Also known as "drive discs".
-        .equipment = .{
-            .{
-                .id = 34243,
-                .level = 15,
-                .star = 5,
-
-                // Should have exactly 5 entries.
-                .properties = .{
-                    // Main property is required.
-                    .{ .key = 11103, .base_value = 550, .add_value = 0 },
-
-                    // Sub-property #1
-                    .{ .key = 31203, .base_value = 9, .add_value = 2 },
-
-                    // Rest of sub-properties. Zero key means absence of property.
-                    .{ .key = 0, .base_value = 0, .add_value = 0 },
-                    .{ .key = 0, .base_value = 0, .add_value = 0 },
-                    .{ .key = 0, .base_value = 0, .add_value = 0 },
-                },
-            },
-        },
-
         // The amount of random equipment (disc drives) to add to the account.
         .random_equipment = 250,
     },

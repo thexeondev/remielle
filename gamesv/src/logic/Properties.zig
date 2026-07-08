@@ -38,7 +38,6 @@ pub fn setDefaultsAt(list: *List, time: Io.Timestamp, at: Player) void {
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
-    addConfiguredEquipment(list, at);
     addRandomEquipment(list, time, at);
 }
 
@@ -120,28 +119,6 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
         weapon.levels[i] = .max;
         weapon.stars[i] = .max;
         weapon.refines[i] = .max;
-    }
-}
-
-// TODO: Remove after server control protocol is implemented.
-fn addConfiguredEquipment(props: *Properties.List, at: Player) void {
-    const equip: *Properties.Equipment = props.getPtr(.equip, at.toInt());
-
-    inline for (@import("config").starting_items.equipment) |entry| {
-        defer equip.count += 1;
-        const i = equip.count;
-
-        equip.uids[i] = @enumFromInt(i);
-        equip.ids[i] = entry.id;
-        equip.levels[i] = @enumFromInt(entry.level);
-        equip.stars[i] = @enumFromInt(entry.star);
-
-        inline for (entry.properties, &equip.properties[i]) |config, *property|
-            property.* = .{
-                .key = @enumFromInt(config.key),
-                .base_value = config.base_value,
-                .add_value = config.add_value,
-            };
     }
 }
 
@@ -814,7 +791,6 @@ pub fn fromPlayerSave(
         }
     } else {
         props.getPtr(.equip, index).* = .init;
-        addConfiguredEquipment(props, player);
     }
 
     props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
