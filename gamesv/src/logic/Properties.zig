@@ -36,7 +36,6 @@ pub fn setDefaultsAt(list: *List, time: Io.Timestamp, at: Player) void {
     list.getPtr(.quick_team, index).* = .init;
 
     unlockAllAvatars(list, at);
-    applyAvatarOverrides(list, at);
     unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
     addConfiguredWeapons(list, at);
@@ -83,32 +82,6 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
         const index = maybe_index orelse continue;
 
         avatar.awake_material_counts[index] = .add(avatar.awake_material_counts[index], 1);
-    }
-}
-
-fn applyAvatarOverrides(props: *Properties.List, at: Player) void {
-    const avatar = props.getPtr(.avatar, at.toInt());
-
-    inline for (@import("config").starting_items.avatar_overrides) |override| {
-        const Override = @TypeOf(override);
-
-        const index = avatar.indexes.get(override.id).?;
-        const meta = &avatar.meta[index];
-
-        if (@hasField(Override, "level"))
-            meta.level = @enumFromInt(override.level);
-
-        if (@hasField(Override, "rank"))
-            meta.rank = @enumFromInt(override.rank);
-
-        if (@hasField(Override, "talents"))
-            meta.talents = @enumFromInt(override.talents);
-
-        if (@hasField(Override, "awakening")) {
-            meta.awakening = @enumFromInt(override.awakening);
-            meta.flags.awake_available = true;
-            meta.flags.awake_enabled = true;
-        }
     }
 }
 
@@ -781,7 +754,6 @@ pub fn fromPlayerSave(
     } else {
         props.getPtr(.avatar, index).* = .init;
         unlockAllAvatars(props, player);
-        applyAvatarOverrides(props, player);
     }
 
     if (save.buddy) |buddy_save| {
