@@ -29,16 +29,6 @@
     // If you're expecting this to change your existing inventory,
     // you should remove your `Persistent` directory.
     .starting_items = .{
-        // Weapons. Also known as "w-engines".
-        .weapons = .{
-            .{
-                .id = .Weapon_S_1581,
-                .level = 60,
-                .star = 5,
-                .refine = 1, // also known as "overclock"
-            },
-        },
-
         // Equipment. Also known as "drive discs".
         .equipment = .{
             .{
