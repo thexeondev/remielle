@@ -137,6 +137,8 @@ pub fn build(b: *Build) void {
         }),
     });
 
+    StaticAsset.addAll(b, rmctl.root_module, rmctl_assets);
+
     b.step(
         "pb",
         "run a struct generation pass on `main.proto`",
@@ -252,6 +254,10 @@ const dpsv_assets: []const StaticAsset = &.{
 
 const sdksv_assets: []const StaticAsset = &.{
     .asset("config", "sdksv/config.zon"),
+};
+
+const rmctl_assets: []const StaticAsset = &.{
+    .asset("EquipmentSuitTemplateTb", "assets/filecfg/EquipmentSuitTemplateTb.zon"),
 };
 
 fn filesReadable(io: Io, dir: Io.Dir, path_list: []const []const u8) bool {

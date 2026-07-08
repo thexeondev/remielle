@@ -140,6 +140,52 @@ pub fn main(init: Init) void {
             const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
+        .@"random-equip" => |random_equip| {
+            const batch_size = 40;
+
+            var batch_message: Operation.ExtendedMessageBuffer(Operation.CreateEquip, batch_size) = .init(.init(
+                userdata,
+                .{
+                    .player_uid = random_equip.player_uid,
+                    .count = 0,
+                },
+            ));
+
+            const time: Io.Timestamp = .now(io, .awake);
+            var rng_impl: std.Random.DefaultPrng = .init(@bitCast(time.toSeconds()));
+            const rng = rng_impl.random();
+
+            var amount = random_equip.amount;
+            while (amount != 0) : (amount -= 1) {
+                const slot = (rng.int(u8) % 6) + 1;
+                const suit_index = rng.int(usize) % equipment_suit.entries.len;
+                const suit_id = equipment_suit.entries[suit_index].id;
+                const equip_id = suit_id + 40 + slot;
+
+                var properties: [5]Operation.CreateEquip.Entry.Property = undefined;
+                rand_properties.fill(rng, slot, &properties);
+
+                batch_message.appendAssumeCapacity(.{
+                    .id = @intCast(equip_id),
+                    .properties = properties,
+                    .meta = .{
+                        .level = 15,
+                        .star = 5,
+                        .reserved = 0,
+                    },
+                });
+
+                if (amount == 1 or batch_message.base.operation.count == batch_size) {
+                    socket.send(io, &destination, batch_message.payload()) catch |err|
+                        fatal("send: {t}", .{err});
+
+                    const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+                    _ = ack;
+
+                    batch_message.base.operation.count = 0;
+                }
+            }
+        },
     }
 }
 
@@ -210,6 +256,8 @@ const Init = std.process.Init;
 const net = std.Io.net;
 
 const cli = @import("cli.zig");
+const equipment_suit = @import("equipment_suit.zig");
+const rand_properties = @import("rand_properties.zig");
 
 const rmio = @import("rmio");
 const rmnet = @import("rmnet");

@@ -46,6 +46,10 @@ pub const Command = union(enum) {
         property_base_value_4: u12 = 0,
         property_add_value_4: u4 = 0,
     },
+    @"random-equip": struct {
+        player_uid: u32,
+        amount: u12,
+    },
 
     /// Exits on invalid input.
     pub fn parse(
