@@ -351,7 +351,6 @@ pub fn savePlayer(
 pub fn loadPlayerProperties(
     server: *Server,
     io: Io,
-    current_time: Io.Timestamp,
     uid: u32,
     index: u32,
 ) Cancelable!void {
@@ -362,7 +361,6 @@ pub fn loadPlayerProperties(
 
             logic.Properties.setDefaultsAt(
                 &server.properties,
-                current_time,
                 @enumFromInt(index),
             );
         },

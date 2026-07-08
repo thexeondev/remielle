@@ -241,13 +241,12 @@ fn onGameMessageReceived(
 
                 logic.Properties.setDefaultsAt(
                     &server.properties,
-                    current_time,
                     @enumFromInt(player_index),
                 );
 
                 server.savePlayer(io, player_index);
             } else {
-                try server.loadPlayerProperties(io, current_time, get_or_create.player_uid, player_index);
+                try server.loadPlayerProperties(io, get_or_create.player_uid, player_index);
             }
         },
     }

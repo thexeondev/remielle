@@ -25,13 +25,5 @@
         .{ .id = .boss_challenge_hard, .zone = 690422 },
     },
 
-    // Added to the inventory upon the first login.
-    // If you're expecting this to change your existing inventory,
-    // you should remove your `Persistent` directory.
-    .starting_items = .{
-        // The amount of random equipment (disc drives) to add to the account.
-        .random_equipment = 250,
-    },
-
     .dummy_cmd = "IECPJKNJHCF",
 }

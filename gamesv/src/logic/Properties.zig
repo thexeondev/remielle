@@ -22,7 +22,7 @@ pub const List = rmmem.RemielleArrayList(
     u32,
 );
 
-pub fn setDefaultsAt(list: *List, time: Io.Timestamp, at: Player) void {
+pub fn setDefaultsAt(list: *List, at: Player) void {
     const index = at.toInt();
 
     list.getPtr(.basic_info, index).* = .init;
@@ -38,7 +38,6 @@ pub fn setDefaultsAt(list: *List, time: Io.Timestamp, at: Player) void {
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
-    addRandomEquipment(list, time, at);
 }
 
 fn unlockAllAvatars(props: *Properties.List, at: Player) void {
@@ -119,136 +118,6 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
         weapon.levels[i] = .max;
         weapon.stars[i] = .max;
         weapon.refines[i] = .max;
-    }
-}
-
-fn addRandomEquipment(props: *Properties.List, time: Io.Timestamp, at: Player) void {
-    if (!@hasField(@TypeOf(@import("config").starting_items), "random_equipment"))
-        return;
-
-    const configured_count: u32 = @import("config").starting_items.random_equipment;
-    const equip = props.getPtr(.equip, at.toInt());
-
-    var add_count = @min(configured_count, Equipment.capacity - equip.count);
-
-    var rng_impl: Random.DefaultPrng = .init(@bitCast(time.toSeconds()));
-    const rng = rng_impl.random();
-
-    while (add_count > 0) : (add_count -= 1) {
-        const slot = (rng.int(u8) % 6) + 1;
-        const suit_index = rng.int(usize) % templates.equipment_suit.entries.len;
-        const suit_id = templates.equipment_suit.entries[suit_index].id;
-        const equip_id = suit_id + 40 + slot;
-
-        defer equip.count += 1;
-        const i = equip.count;
-
-        equip.uids[i] = @enumFromInt(i);
-        equip.ids[i] = equip_id;
-        equip.levels[i] = .max;
-        equip.stars[i] = .max;
-
-        genRandEquipmentProperties(rng, slot, &equip.properties[i]);
-    }
-}
-
-const rand_table: RandTable = .init(.{
-    .{ 11103, &.{1}, 550, 112 },
-    .{ 11102, &.{ 4, 5, 6 }, 750, 300 },
-    .{ 12103, &.{2}, 79, 19 },
-    .{ 12102, &.{ 4, 5, 6 }, 750, 300 },
-    .{ 13103, &.{3}, 46, 15 },
-    .{ 13102, &.{ 4, 5, 6 }, 1200, 480 },
-    .{ 23203, &.{}, 0, 9 },
-    .{ 23103, &.{5}, 600, null },
-    .{ 31402, &.{6}, 750, null },
-    .{ 31203, &.{4}, 23, 9 },
-    .{ 21103, &.{4}, 1200, 480 },
-    .{ 20103, &.{4}, 600, 240 },
-    .{ 30502, &.{6}, 1500, null },
-    .{ 12202, &.{6}, 450, null },
-    .{ 31803, &.{5}, 750, null },
-    .{ 31903, &.{5}, 750, null },
-    .{ 31603, &.{5}, 750, null },
-    .{ 31703, &.{5}, 750, null },
-    .{ 31503, &.{5}, 750, null },
-    .{ 32303, &.{5}, 750, null },
-});
-
-const RandTable = struct {
-    const count = 20;
-
-    keys: [count]u16,
-    main_property_slots: [count][]const u8,
-    main_base_value: [count]u16,
-    rand_base_value: [count]?u16,
-
-    pub fn init(values: [count]struct { u16, []const u8, u16, ?u16 }) RandTable {
-        var table: RandTable = undefined;
-
-        for (
-            values,
-            &table.keys,
-            &table.main_property_slots,
-            &table.main_base_value,
-            &table.rand_base_value,
-        ) |value, *key, *main_slots, *main_base_value, *rand_base_value| {
-            key.* = value[0];
-            main_slots.* = value[1];
-            main_base_value.* = value[2];
-            rand_base_value.* = value[3];
-        }
-
-        return table;
-    }
-};
-
-fn genRandEquipmentProperties(random: Random, slot: u8, out: *Equipment.Property.List) void {
-    var properties_buf: [RandTable.count]usize = undefined;
-    var main_properties: std.ArrayList(usize) = .initBuffer(&properties_buf);
-
-    for (&rand_table.main_property_slots, 0..) |main_property_slots, i| {
-        if (std.mem.findScalar(u8, main_property_slots, slot) != null)
-            main_properties.appendAssumeCapacity(i);
-    }
-
-    const main_property_i = main_properties.items[random.int(u8) % main_properties.items.len];
-
-    out[0] = .{
-        .key = @enumFromInt(rand_table.keys[main_property_i]),
-        .base_value = rand_table.main_base_value[main_property_i],
-        .add_value = 1,
-    };
-
-    var select_rand_properties: std.ArrayList(usize) = .initBuffer(&properties_buf);
-
-    for (&rand_table.rand_base_value, 0..) |rand_base_value, i| {
-        if (rand_base_value == null) continue;
-        if (i == main_property_i) continue;
-
-        select_rand_properties.appendAssumeCapacity(i);
-    }
-
-    var add_value_mod: u8 = 5;
-
-    for (out[1..], 1..) |*property, index| {
-        const selected = random.int(u8) % select_rand_properties.items.len;
-        const rand_i = select_rand_properties.items[selected];
-
-        const add_value = if (index == Equipment.Property.count - 1)
-            add_value_mod
-        else
-            random.int(u8) % add_value_mod;
-
-        add_value_mod -= add_value;
-
-        property.* = .{
-            .key = @enumFromInt(rand_table.keys[rand_i]),
-            .base_value = rand_table.rand_base_value[rand_i].?,
-            .add_value = 1 + add_value,
-        };
-
-        _ = select_rand_properties.swapRemove(selected);
     }
 }
 
@@ -831,7 +700,6 @@ pub fn fromPlayerSave(
 }
 
 const Io = std.Io;
-const Random = std.Random;
 const Allocator = std.mem.Allocator;
 
 const templates = Assets.templates;
