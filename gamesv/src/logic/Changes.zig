@@ -8,6 +8,7 @@ control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
 quick_teams: []const QuickTeam,
 weapons: []const Weapon,
+equipment: []const Equip,
 
 pub const init: Changes = .{
     .game_mode = null,
@@ -20,6 +21,7 @@ pub const init: Changes = .{
     .avatars = &.{},
     .quick_teams = &.{},
     .weapons = &.{},
+    .equipment = &.{},
 };
 
 /// Game mode switch.
@@ -225,6 +227,15 @@ pub const Weapon = struct {
     level: Properties.Weapon.Level,
     star: Properties.Weapon.Star,
     refine: Properties.Weapon.Refine,
+};
+
+pub const Equip = struct {
+    // Same problem as with `Weapon`.
+    uid: Properties.Equipment.Uid,
+    id: u32,
+    level: Properties.Equipment.Level,
+    star: Properties.Equipment.Star,
+    properties: Properties.Equipment.Property.List,
 };
 
 pub const subset_marker_name = "logic_changes_subset_marker";

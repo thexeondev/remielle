@@ -43,6 +43,13 @@ pub const Level = enum(u8) {
     pub fn toInt(level: Level) u8 {
         return @intFromEnum(level);
     }
+
+    pub fn fromInt(int: u8) ?Level {
+        if (int > Level.max.toInt())
+            return null;
+
+        return @enumFromInt(int);
+    }
 };
 
 pub const Star = enum(u8) {
@@ -52,6 +59,13 @@ pub const Star = enum(u8) {
 
     pub fn toInt(star: Star) u8 {
         return @intFromEnum(star);
+    }
+
+    pub fn fromInt(int: u8) ?Star {
+        if (int > Star.max.toInt())
+            return null;
+
+        return @enumFromInt(int);
     }
 };
 

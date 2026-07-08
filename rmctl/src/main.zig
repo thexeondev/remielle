@@ -104,6 +104,42 @@ pub fn main(init: Init) void {
             const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
+        .@"create-equip" => |create_equip| {
+            var creation_message: Operation.ExtendedMessageBuffer(Operation.CreateEquip, 1) = .init(.init(
+                userdata,
+                .{
+                    .player_uid = create_equip.player_uid,
+                    .count = 0, // Initial value must be zero. Will be incremented by appendAssumeCapacity.
+                },
+            ));
+
+            var properties: [5]Operation.CreateEquip.Entry.Property = undefined;
+
+            inline for (&properties, 0..) |*property, i| {
+                const index: u8 = @intCast(i);
+                property.* = .{
+                    .key = @field(create_equip, "property_key_" ++ .{'0' + index}),
+                    .base_value = @field(create_equip, "property_base_value_" ++ .{'0' + index}),
+                    .add_value = @field(create_equip, "property_add_value_" ++ .{'0' + index}),
+                };
+            }
+
+            creation_message.appendAssumeCapacity(.{
+                .id = create_equip.item_id,
+                .properties = properties,
+                .meta = .{
+                    .level = create_equip.level,
+                    .star = create_equip.star,
+                    .reserved = 0,
+                },
+            });
+
+            socket.send(io, &destination, creation_message.payload()) catch |err|
+                fatal("send: {t}", .{err});
+
+            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            _ = ack;
+        },
     }
 }
 

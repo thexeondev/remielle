@@ -5,6 +5,7 @@ pub const Tag = enum(u16) {
     player_kick = 1,
     mod_avatar_meta = 2,
     create_weapon = 3,
+    create_equip = 4,
     _,
 };
 
@@ -74,6 +75,37 @@ pub const CreateWeapon = extern struct {
     pub const trailing = struct {
         pub const entries_count_field = "count";
         pub const Entry = CreateWeapon.Entry;
+    };
+};
+
+pub const CreateEquip = extern struct {
+    pub const tag: Tag = .create_equip;
+    pub const version: Version = 0;
+
+    player_uid: u32,
+    count: u32,
+
+    pub const Entry = extern struct {
+        properties: [5]Property,
+        id: u16,
+        meta: Meta,
+
+        pub const Meta = packed struct(u16) {
+            level: u4,
+            star: u3,
+            reserved: u9, // reserved.
+        };
+
+        pub const Property = packed struct(u32) {
+            key: u16,
+            base_value: u12,
+            add_value: u4,
+        };
+    };
+
+    pub const trailing = struct {
+        pub const entries_count_field = "count";
+        pub const Entry = CreateEquip.Entry;
     };
 };
 

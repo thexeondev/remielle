@@ -19,6 +19,33 @@ pub const Command = union(enum) {
         star: u3,
         refine: u3,
     },
+    @"create-equip": struct {
+        player_uid: u32,
+        item_id: u16,
+        level: u4,
+        star: u3,
+
+        // TODO: should we support arrays here?
+        property_key_0: u16,
+        property_base_value_0: u12,
+        property_add_value_0: u4,
+
+        property_key_1: u16 = 0,
+        property_base_value_1: u12 = 0,
+        property_add_value_1: u4 = 0,
+
+        property_key_2: u16 = 0,
+        property_base_value_2: u12 = 0,
+        property_add_value_2: u4 = 0,
+
+        property_key_3: u16 = 0,
+        property_base_value_3: u12 = 0,
+        property_add_value_3: u4 = 0,
+
+        property_key_4: u16 = 0,
+        property_base_value_4: u12 = 0,
+        property_add_value_4: u4 = 0,
+    },
 
     /// Exits on invalid input.
     pub fn parse(

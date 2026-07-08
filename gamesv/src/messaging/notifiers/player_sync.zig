@@ -7,6 +7,7 @@ pub fn playerSync(
         logic.Changes.ControlGuiseAvatar,
         logic.Changes.Avatar,
         logic.Changes.Weapon,
+        logic.Changes.Equip,
         logic.Changes.PlayerAccessory,
         logic.Changes.QuickTeam,
     }),
@@ -33,7 +34,12 @@ pub fn playerSync(
         .quick_team = try buildQuickTeamSync(notify.allocator, changes.quick_teams),
     };
 
-    sync.item = try buildItemSync(notify.allocator, changes.avatars, changes.weapons);
+    sync.item = try buildItemSync(
+        notify.allocator,
+        changes.avatars,
+        changes.weapons,
+        changes.equipment,
+    );
 
     notify.one(sync);
 }
@@ -97,8 +103,11 @@ fn buildItemSync(
     allocator: Allocator,
     avatar_changes: []const logic.Changes.Avatar,
     weapon_changes: []const logic.Changes.Weapon,
+    equip_changes: []const logic.Changes.Equip,
 ) !?pb.ItemSync {
-    if (avatar_changes.len == 0 and weapon_changes.len == 0) return null;
+    if (avatar_changes.len == 0 and
+        weapon_changes.len == 0 and
+        equip_changes.len == 0) return null;
 
     return .{
         .material_list = material_list: {
@@ -126,6 +135,21 @@ fn buildItemSync(
                 });
 
             break :weapon_list list;
+        },
+        .equip_list = equip_list: {
+            var list: ArrayList(pb.EquipInfo) = try .initCapacity(allocator, equip_changes.len);
+
+            for (equip_changes) |change|
+                list.appendAssumeCapacity(try packers.packEquipmentInfo(
+                    allocator,
+                    change.uid,
+                    change.id,
+                    change.level,
+                    change.star,
+                    &change.properties,
+                ));
+
+            break :equip_list list;
         },
     };
 }

@@ -177,8 +177,76 @@ pub fn createWeapon(
     try context.sendEvent(rmnet.Event.Ack, .{});
 }
 
+pub fn createEquip(
+    extended: control.ExtendedOperation(rmnet.Operation.CreateEquip),
+    context: *const control.Context,
+) !void {
+    const server = context.server;
+
+    const player_index: u32 = @intCast(server.uid_map.getIndex(extended.operation.player_uid) orelse {
+        // TODO: offline changes.
+        return context.sendEvent(rmnet.Event.Nak, .{ .reason = .no_entry, .extra = 0 });
+    });
+
+    const equip = server.properties.getPtr(.equip, player_index);
+
+    if (equip.count + extended.entries.len > Equipment.capacity)
+        return context.sendEvent(rmnet.Event.Nak, .{
+            .reason = .no_space_left,
+            .extra = Equipment.capacity - equip.count,
+        });
+
+    const arena = server.resettable_arena.allocator();
+
+    var changes: logic.Changes = .init;
+    const equipment = try arena.alloc(logic.Changes.Equip, extended.entries.len);
+
+    for (equipment, extended.entries, 0..) |*change, *entry, i| {
+        for (templates.equipment.entries) |template| {
+            if (template.item_id == entry.id) break;
+        } else return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
+
+        change.* = .{
+            .uid = @enumFromInt(@as(u16, @intCast(equip.count + i))),
+            .id = entry.id,
+            .level = Equipment.Level.fromInt(entry.meta.level) orelse
+                return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
+            .star = Equipment.Star.fromInt(entry.meta.star) orelse
+                return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
+            .properties = properties: {
+                var properties: Equipment.Property.List = undefined;
+                for (&properties, &entry.properties) |*property, *input|
+                    property.* = .{
+                        .key = @enumFromInt(input.key),
+                        .base_value = input.base_value,
+                        .add_value = input.add_value,
+                    };
+
+                break :properties properties;
+            },
+        };
+    }
+
+    changes.equipment = equipment;
+
+    const frame: Server.Frame = .{
+        .target_index = player_index,
+        .time = context.time,
+        .clients = &server.clients,
+        .assets = server.assets,
+        .properties = &server.properties,
+        .multi_conversation = &server.multi_conversation,
+    };
+
+    try logic.mutators.dispatchLogicChanges(&frame, &changes);
+    try messaging.notifiers.notifyLogicChanges(arena, &frame, &changes);
+
+    try context.sendEvent(rmnet.Event.Ack, .{});
+}
+
 const Avatar = logic.Properties.Avatar;
 const Weapon = logic.Properties.Weapon;
+const Equipment = logic.Properties.Equipment;
 
 const templates = Assets.templates;
 
