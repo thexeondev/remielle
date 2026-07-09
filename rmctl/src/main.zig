@@ -186,6 +186,25 @@ pub fn main(init: Init) void {
                 }
             }
         },
+        .@"mod-hadal-entrance" => |mod_hadal_entrance| {
+            var mod_message: Operation.ExtendedMessageBuffer(Operation.ModHadalZoneSchedule, 1) = .init(.init(
+                userdata,
+                .{
+                    .count = 0, // Initial value must be zero. Will be incremented by appendAssumeCapacity.
+                },
+            ));
+
+            mod_message.appendAssumeCapacity(.{
+                .entrance_id = @intFromEnum(mod_hadal_entrance.entrance),
+                .zone_id = mod_hadal_entrance.zone_id,
+            });
+
+            socket.send(io, &destination, mod_message.payload()) catch |err|
+                fatal("send: {t}", .{err});
+
+            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            _ = ack;
+        },
     }
 }
 

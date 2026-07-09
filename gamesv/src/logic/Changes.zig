@@ -9,6 +9,7 @@ avatars: []const Avatar,
 quick_teams: []const QuickTeam,
 weapons: []const Weapon,
 equipment: []const Equip,
+hadal_zone: ?HadalZoneSchedule,
 
 pub const init: Changes = .{
     .game_mode = null,
@@ -22,6 +23,7 @@ pub const init: Changes = .{
     .quick_teams = &.{},
     .weapons = &.{},
     .equipment = &.{},
+    .hadal_zone = null,
 };
 
 /// Game mode switch.
@@ -237,6 +239,8 @@ pub const Equip = struct {
     star: Properties.Equipment.Star,
     properties: Properties.Equipment.Property.List,
 };
+
+pub const HadalZoneSchedule = struct {};
 
 pub const subset_marker_name = "logic_changes_subset_marker";
 

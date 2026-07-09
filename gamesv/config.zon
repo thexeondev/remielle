@@ -16,14 +16,5 @@
     // All created account UIDs will be relative to this.
     .base_player_uid = 666, // the number of the beast
 
-    // Also known as "Shiyu Defense" and "Deadly Assault".
-    .hadal_zone_entrances = .{
-        .{ .id = .hadal_zone_scheduled, .zone = 620561 },
-        .{ .id = .hadal_zone_stable, .zone = 61001 },
-        .{ .id = .hadal_zone_defensive, .zone = 61002 },
-        .{ .id = .boss_challenge_normal, .zone = 6904211 },
-        .{ .id = .boss_challenge_hard, .zone = 690422 },
-    },
-
     .dummy_cmd = "IECPJKNJHCF",
 }

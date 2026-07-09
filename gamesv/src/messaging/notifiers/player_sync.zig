@@ -1,4 +1,6 @@
 pub fn playerSync(
+    rtc: logic.RealTimeClock,
+    calendar: *const logic.Calendar,
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
     }),
@@ -10,6 +12,7 @@ pub fn playerSync(
         logic.Changes.Equip,
         logic.Changes.PlayerAccessory,
         logic.Changes.QuickTeam,
+        logic.Changes.HadalZoneSchedule,
     }),
     notify: Notify(pb.PlayerSyncScNotify),
 ) !void {
@@ -39,6 +42,13 @@ pub fn playerSync(
         changes.avatars,
         changes.weapons,
         changes.equipment,
+    );
+
+    sync.hadal_zone = try buildHadalZoneSync(
+        notify.allocator,
+        rtc,
+        calendar,
+        changes.hadal_zone,
     );
 
     notify.one(sync);
@@ -156,6 +166,35 @@ fn buildItemSync(
 
 fn buildQuickTeamSync(allocator: Allocator, quick_teams: []const logic.Changes.QuickTeam) !?pb.QuickTeamSync {
     return if (quick_teams.len == 0) null else try packers.packQuickTeamSync(allocator, quick_teams);
+}
+
+fn buildHadalZoneSync(
+    allocator: Allocator,
+    rtc: logic.RealTimeClock,
+    calendar: *const logic.Calendar,
+    change: ?*const logic.Changes.HadalZoneSchedule,
+) !?pb.HadalZoneSync {
+    if (change == null) return null;
+
+    var sync: pb.HadalZoneSync = .init;
+    try sync.sync_entrance_list.ensureTotalCapacity(
+        allocator,
+        calendar.hadal_zone.entrance_zones.len,
+    );
+
+    for (
+        std.enums.values(logic.Calendar.HadalZone.Entrance),
+    ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toInt()].unwrap()) |zone_id| {
+        const entrance_type: pb.EntranceType = entrance.toEntranceType();
+
+        sync.sync_entrance_list.appendAssumeCapacity(.{
+            .entrance_id = entrance.toInt(),
+            .state = @enumFromInt(3),
+            .cur_zone_record_sync = try packers.packZoneRecord(allocator, rtc.time, entrance_type, zone_id),
+        });
+    };
+
+    return sync;
 }
 
 const Notify = notifiers.Notify;

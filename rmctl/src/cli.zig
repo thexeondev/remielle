@@ -50,6 +50,16 @@ pub const Command = union(enum) {
         player_uid: u32,
         amount: u12,
     },
+    @"mod-hadal-entrance": struct {
+        entrance: enum(u32) {
+            hadal_zone_scheduled = 1,
+            hadal_zone_stable = 2,
+            hadal_zone_defensive = 3,
+            boss_challenge_normal = 9,
+            boss_challenge_hard = 16,
+        },
+        zone_id: u32,
+    },
 
     /// Exits on invalid input.
     pub fn parse(

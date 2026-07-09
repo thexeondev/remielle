@@ -41,6 +41,19 @@ pub const HadalZone = extern struct {
         pub fn toInt(e: Entrance) u32 {
             return @intFromEnum(e);
         }
+
+        pub fn toEntranceType(e: Entrance) pb.EntranceType {
+            return switch (e) {
+                .hadal_zone_stable,
+                .hadal_zone_defensive,
+                => .CONSTANT,
+
+                .hadal_zone_scheduled,
+                .boss_challenge_normal,
+                .boss_challenge_hard,
+                => .SCHEDULED,
+            };
+        }
     };
 
     pub const OptionalZone = enum(u32) {
@@ -69,6 +82,8 @@ pub fn save(calendar: *const Calendar, writer: *Io.Writer) !void {
 }
 
 const Io = std.Io;
+
+const pb = @import("rmpb").main;
 
 const std = @import("std");
 const Calendar = @This();

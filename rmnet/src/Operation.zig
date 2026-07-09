@@ -6,6 +6,7 @@ pub const Tag = enum(u16) {
     mod_avatar_meta = 2,
     create_weapon = 3,
     create_equip = 4,
+    mod_hadal_zone_schedule = 5,
     _,
 };
 
@@ -106,6 +107,23 @@ pub const CreateEquip = extern struct {
     pub const trailing = struct {
         pub const entries_count_field = "count";
         pub const Entry = CreateEquip.Entry;
+    };
+};
+
+pub const ModHadalZoneSchedule = extern struct {
+    pub const tag: Tag = .mod_hadal_zone_schedule;
+    pub const version: Version = 0;
+
+    count: u32,
+
+    pub const Entry = extern struct {
+        entrance_id: u32,
+        zone_id: u32,
+    };
+
+    pub const trailing = struct {
+        pub const entries_count_field = "count";
+        pub const Entry = ModHadalZoneSchedule.Entry;
     };
 };
 

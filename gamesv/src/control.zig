@@ -2,6 +2,7 @@ pub const mtu: usize = 1200;
 
 const namespaces: []const type = &.{
     @import("control/player.zig"),
+    @import("control/calendar.zig"),
 };
 
 pub fn Operation(comptime T: type) type {

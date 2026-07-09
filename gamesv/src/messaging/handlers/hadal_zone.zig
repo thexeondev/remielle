@@ -14,44 +14,13 @@ pub fn getHadalZoneData(
     for (
         std.enums.values(Calendar.HadalZone.Entrance),
     ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toInt()].unwrap()) |zone_id| {
-        const entrance_type: pb.EntranceType = switch (entrance) {
-            .hadal_zone_stable,
-            .hadal_zone_defensive,
-            => .CONSTANT,
-
-            .hadal_zone_scheduled,
-            .boss_challenge_normal,
-            .boss_challenge_hard,
-            => .SCHEDULED,
-        };
+        const entrance_type: pb.EntranceType = entrance.toEntranceType();
 
         entrance_list.appendAssumeCapacity(.{
             .entrance_type = entrance_type,
             .entrance_id = entrance.toInt(),
             .state = @enumFromInt(3),
-            .cur_zone_record = .{
-                .zone_id = zone_id,
-                .begin_timestamp = switch (entrance_type) {
-                    .NONE, .CONSTANT => 0,
-                    .SCHEDULED => @intCast(rtc.time.toSeconds() - 3600 * 24),
-                },
-                .end_timestamp = switch (entrance_type) {
-                    .NONE, .CONSTANT => 0,
-                    .SCHEDULED => @intCast(rtc.time.toSeconds() + 3600 * 24 * 14),
-                },
-                .layer_record_list = layer_record_list: {
-                    var list: ArrayList(pb.LayerRecord) = .empty;
-
-                    for (templates.zone_info.entries) |zone_info| if (zone_info.zone_id == zone_id) {
-                        try list.append(response.allocator, .{
-                            .layer_index = zone_info.layer_index,
-                            .status = @enumFromInt(4),
-                        });
-                    };
-
-                    break :layer_record_list list;
-                },
-            },
+            .cur_zone_record = try packers.packZoneRecord(response.allocator, rtc.time, entrance_type, zone_id),
         });
     };
 
@@ -68,6 +37,7 @@ const templates = Assets.templates;
 
 const pb = @import("rmpb").main;
 const logic = @import("../../logic.zig");
+const packers = @import("../packers.zig");
 const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 const std = @import("std");

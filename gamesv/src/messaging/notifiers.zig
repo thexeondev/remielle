@@ -32,6 +32,19 @@ pub fn notifyLogicChanges(
                     continue;
                 }
 
+                if (ArgType == logic.RealTimeClock) {
+                    arg.* = .{
+                        .time = frame.time,
+                        .utc_offset = 3, // TODO: configuration field + cli option
+                    };
+                    continue;
+                }
+
+                if (ArgType == *const logic.Calendar) {
+                    arg.* = frame.calendar;
+                    continue;
+                }
+
                 if (@hasField(ArgType, logic.Changes.subset_marker_name)) {
                     arg.* = changes.extract(ArgType) orelse break :call_notifier;
                     continue;

@@ -250,6 +250,38 @@ pub fn packQuickTeamSync(arena: Allocator, quick_teams: []const logic.Changes.Qu
     return .{ .quick_team_list = quick_team_list };
 }
 
+pub fn packZoneRecord(
+    arena: Allocator,
+    timestamp: Timestamp,
+    entrance_type: pb.EntranceType,
+    zone_id: u32,
+) !pb.ZoneRecord {
+    return .{
+        .zone_id = zone_id,
+        .begin_timestamp = switch (entrance_type) {
+            .NONE, .CONSTANT => 0,
+            .SCHEDULED => @intCast(timestamp.toSeconds() - 3600 * 24),
+        },
+        .end_timestamp = switch (entrance_type) {
+            .NONE, .CONSTANT => 0,
+            .SCHEDULED => @intCast(timestamp.toSeconds() + 3600 * 24 * 14),
+        },
+        .layer_record_list = layer_record_list: {
+            var list: ArrayList(pb.LayerRecord) = .empty;
+
+            for (Assets.templates.zone_info.entries) |zone_info| if (zone_info.zone_id == zone_id) {
+                try list.append(arena, .{
+                    .layer_index = zone_info.layer_index,
+                    .status = @enumFromInt(4),
+                });
+            };
+
+            break :layer_record_list list;
+        },
+    };
+}
+
+const Timestamp = std.Io.Timestamp;
 const ArrayList = std.ArrayList;
 const GameMode = logic.Changes.GameMode;
 const Avatar = Properties.Avatar;
@@ -259,6 +291,7 @@ const Properties = logic.Properties;
 const Allocator = std.mem.Allocator;
 
 const logic = @import("../logic.zig");
+const Assets = @import("../Assets.zig");
 
 const pb = @import("rmpb").main;
 const std = @import("std");
