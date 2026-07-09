@@ -109,6 +109,9 @@ pub fn bind(
     var session_index: u32 = 0;
     while (session_index < server.conv_map.count()) : (session_index += 1)
         server.kick(io, current_time, session_index, .PlayerKickReason_ServerClose);
+
+    persistent.saveCalendar(io) catch |err|
+        log.err("failed to save calendar: {t}", .{err});
 }
 
 fn onGameMessageReceived(

@@ -114,6 +114,7 @@ pub fn modAvatarMeta(
         .clients = &server.clients,
         .assets = server.assets,
         .properties = &server.properties,
+        .calendar = &server.persistent.calendar,
         .multi_conversation = &server.multi_conversation,
     };
 
@@ -168,6 +169,7 @@ pub fn createWeapon(
         .clients = &server.clients,
         .assets = server.assets,
         .properties = &server.properties,
+        .calendar = &server.persistent.calendar,
         .multi_conversation = &server.multi_conversation,
     };
 
@@ -235,6 +237,7 @@ pub fn createEquip(
         .clients = &server.clients,
         .assets = server.assets,
         .properties = &server.properties,
+        .calendar = &server.persistent.calendar,
         .multi_conversation = &server.multi_conversation,
     };
 

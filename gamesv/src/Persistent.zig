@@ -1,10 +1,14 @@
+const log = std.log.scoped(.@"remielle-gamesv::persistent");
+
 const account_uid_map_path = "Persistent/LocalStorage/GENERAL_DATA.bin";
+const calendar_path = "Persistent/LocalStorage/CALENDAR.bin";
 
 const AccountUidMap = std.array_hash_map.Auto(AccountUid, void);
 const base_player_uid = @import("config").base_player_uid;
 
 root: Io.Dir,
 account_uid_map: AccountUidMap,
+calendar: logic.Calendar,
 
 pub fn init(io: Io, gpa: Allocator, root: Io.Dir) !Persistent {
     try ensureDirectories(io, root);
@@ -12,6 +16,7 @@ pub fn init(io: Io, gpa: Allocator, root: Io.Dir) !Persistent {
     return .{
         .root = root,
         .account_uid_map = try loadAccountUidMap(io, gpa, root),
+        .calendar = try loadCalendar(io, root),
     };
 }
 
@@ -118,6 +123,40 @@ pub fn savePlayer(
     try fw.interface.flush();
 }
 
+fn loadCalendar(io: Io, root: Io.Dir) !logic.Calendar {
+    const file = root.openFile(io, calendar_path, .{}) catch |err| return switch (err) {
+        error.FileNotFound => .init,
+        else => |e| e,
+    };
+
+    defer file.close(io);
+
+    var fr_buf: [1024]u8 = undefined;
+    var fr = file.reader(io, &fr_buf);
+
+    var calendar: logic.Calendar = undefined;
+    calendar.load(&fr.interface) catch |err| return switch (err) {
+        error.VersionMismatch => reset: {
+            log.warn("calendar version mismatch, resetting defaults", .{});
+            break :reset .init;
+        },
+        else => |e| e,
+    };
+
+    return calendar;
+}
+
+pub fn saveCalendar(persistent: *const Persistent, io: Io) !void {
+    const file = try persistent.root.createFile(io, calendar_path, .{});
+    defer file.close(io);
+
+    var fw_buf: [1024]u8 = undefined;
+    var fw = file.writer(io, &fw_buf);
+
+    try persistent.calendar.save(&fw.interface);
+    try fw.interface.flush();
+}
+
 fn ensureDirectories(io: Io, root: Io.Dir) !void {
     try root.createDirPath(io, "Persistent/LocalStorage/");
 }
@@ -126,6 +165,7 @@ const Io = std.Io;
 const Allocator = std.mem.Allocator;
 const PlayerSave = rmpb.stable.PlayerSave;
 
+const logic = @import("logic.zig");
 const rmpb = @import("rmpb");
 const std = @import("std");
 const Persistent = @This();

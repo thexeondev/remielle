@@ -87,6 +87,8 @@ pub const Frame = struct {
     clients: *Clients,
     /// Same as `Server.assets`
     assets: *const Assets,
+    /// Same as `Server.persistent.calendar`
+    calendar: *const logic.Calendar,
     /// Same as `Server.properties`
     properties: *logic.Properties.List,
     /// Same as `Server.multi_conversation`
@@ -262,6 +264,7 @@ pub fn receiveKcpPacket(
         .assets = server.assets,
         .clients = &server.clients,
         .properties = &server.properties,
+        .calendar = &server.persistent.calendar,
         .multi_conversation = &server.multi_conversation,
     };
 

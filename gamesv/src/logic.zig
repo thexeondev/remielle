@@ -5,6 +5,8 @@ pub const mutators = @import("logic/mutators.zig");
 
 pub const battle = @import("logic/battle.zig");
 
+pub const Calendar = @import("logic/Calendar.zig");
+
 pub const RealTimeClock = struct {
     time: std.Io.Timestamp,
     utc_offset: i32,

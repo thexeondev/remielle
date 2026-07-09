@@ -1,12 +1,20 @@
-const EntranceId = enum(u32) {
-    hadal_zone_scheduled = 1,
-    hadal_zone_stable = 2,
-    hadal_zone_defensive = 3,
-    boss_challenge_normal = 9,
-    boss_challenge_hard = 16,
+pub fn getHadalZoneData(
+    rtc: RealTimeClock,
+    calendar: *const Calendar,
+    message: Message(pb.GetHadalZoneDataCsReq),
+    response: Response(pb.GetHadalZoneDataScRsp),
+) !void {
+    _ = message;
 
-    pub fn entranceType(id: EntranceId) pb.EntranceType {
-        return switch (id) {
+    var entrance_list: ArrayList(pb.HadalEntranceInfo) = try .initCapacity(
+        response.allocator,
+        calendar.hadal_zone.entrance_zones.len,
+    );
+
+    for (
+        std.enums.values(Calendar.HadalZone.Entrance),
+    ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toInt()].unwrap()) |zone_id| {
+        const entrance_type: pb.EntranceType = switch (entrance) {
             .hadal_zone_stable,
             .hadal_zone_defensive,
             => .CONSTANT,
@@ -16,38 +24,18 @@ const EntranceId = enum(u32) {
             .boss_challenge_hard,
             => .SCHEDULED,
         };
-    }
-};
-
-const configured_entrances = @import("config").hadal_zone_entrances;
-
-pub fn getHadalZoneData(
-    rtc: RealTimeClock,
-    message: Message(pb.GetHadalZoneDataCsReq),
-    response: Response(pb.GetHadalZoneDataScRsp),
-) !void {
-    _ = message;
-
-    var entrance_list: ArrayList(pb.HadalEntranceInfo) = try .initCapacity(
-        response.allocator,
-        configured_entrances.len,
-    );
-
-    inline for (configured_entrances) |configured_entrance| {
-        const id: EntranceId = configured_entrance.id;
-        const zone_id = configured_entrance.zone;
 
         entrance_list.appendAssumeCapacity(.{
-            .entrance_type = id.entranceType(),
-            .entrance_id = @intFromEnum(id),
+            .entrance_type = entrance_type,
+            .entrance_id = entrance.toInt(),
             .state = @enumFromInt(3),
             .cur_zone_record = .{
                 .zone_id = zone_id,
-                .begin_timestamp = switch (id.entranceType()) {
+                .begin_timestamp = switch (entrance_type) {
                     .NONE, .CONSTANT => 0,
                     .SCHEDULED => @intCast(rtc.time.toSeconds() - 3600 * 24),
                 },
-                .end_timestamp = switch (id.entranceType()) {
+                .end_timestamp = switch (entrance_type) {
                     .NONE, .CONSTANT => 0,
                     .SCHEDULED => @intCast(rtc.time.toSeconds() + 3600 * 24 * 14),
                 },
@@ -65,7 +53,7 @@ pub fn getHadalZoneData(
                 },
             },
         });
-    }
+    };
 
     response.set(.{ .hadal_entrance_list = entrance_list });
 }
@@ -73,6 +61,7 @@ pub fn getHadalZoneData(
 const ArrayList = std.ArrayList;
 const Message = handlers.Message;
 const Response = handlers.Response;
+const Calendar = logic.Calendar;
 const RealTimeClock = logic.RealTimeClock;
 
 const templates = Assets.templates;

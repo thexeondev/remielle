@@ -111,6 +111,7 @@ pub fn process(
                     switch (arg_info.type) {
                         InMessage => arg.* = message,
                         *const Assets => arg.* = frame.assets,
+                        *const logic.Calendar => arg.* = frame.calendar,
 
                         logic.RealTimeClock => arg.* = .{
                             .time = frame.time,
