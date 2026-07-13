@@ -221,6 +221,9 @@ fn onGameMessageReceived(
                 .sign = &encryption_buffer.sign,
             };
 
+            if (server.uid_map.getIndex(get_or_create.player_uid)) |index|
+                server.kick(io, current_time, @intCast(index), .PlayerKickReason_ServerClose);
+
             const player_index = server.onAuthSucceeded(
                 &message.from,
                 message.data,
