@@ -1496,11 +1496,11 @@ pub const JCJEHJBIGDF = struct {
     HOPGAFFDCLH: std.ArrayList(u32) = .empty,
 };
 
-pub const CombatDataInfo = struct {
+pub const BattleDataRecord = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "CombatDataInfo";
-    avatar_combat_data_list: std.ArrayList(CombatEntityDataInfo) = .empty,
-    buddy_combat_data: ?CombatEntityDataInfo = null,
+    pub const pb_desc_name = "BattleDataRecord";
+    avatar_member_list: std.ArrayList(BattleRecordMemberData) = .empty,
+    buddy_member_data: ?BattleRecordMemberData = null,
 };
 
 pub const NKOGPDHHAIF = struct {
@@ -1614,7 +1614,7 @@ pub const ODMBAEEFCNK = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "ODMBAEEFCNK";
     GIKGEDHLMIJ: bool = false,
-    PLFBHFOCHOM: ?CombatDataInfo = null,
+    PLFBHFOCHOM: ?BattleDataRecord = null,
     GLDJLFOCMFA: u32 = 0,
     is_unlocked: bool = false,
     NHFDPPPEHAB: u32 = 0,
@@ -10691,7 +10691,7 @@ pub const LayerRecord = struct {
     room_index: u32 = 0,
     PECPPOGAFCH: std.ArrayList(u32) = .empty,
     IIEDFIKOEKL: std.ArrayList(u32) = .empty,
-    LAJMPNJCKFN: std.ArrayList(MapEntry(u32, CombatDataInfo)) = .empty,
+    LAJMPNJCKFN: std.ArrayList(MapEntry(u32, BattleDataRecord)) = .empty,
 };
 
 pub const LHFMLICLPEG = struct {
@@ -11755,7 +11755,7 @@ pub const EPMFCJKJMND = struct {
     pub const pb_desc_name = "EPMFCJKJMND";
     total_time: u32 = 0,
     JKKDEFMHOOO: u32 = 0,
-    PLFBHFOCHOM: ?CombatDataInfo = null,
+    PLFBHFOCHOM: ?BattleDataRecord = null,
     ONIBPHMNDEH: u32 = 0,
 };
 
@@ -15203,7 +15203,7 @@ pub const FightResult = struct {
     BFGBCOMLIIL: ?KAGFFDCAANO = null,
     JLENDFAGHOG: ?IKPMGOPMION = null,
     MKCBFIHLNNE: ?HEECFMMJLOI = null,
-    combat_data: ?CombatDataInfo = null,
+    battle_data_record: ?BattleDataRecord = null,
     KCEMBGEGGKC: ?PLGKJBMDODJ = null,
     JAMCDBPIGOD: ?EMKGNBBMKMH = null,
     CFALHPCIDCD: ?OJLLKHOBBIC = null,
@@ -21796,7 +21796,7 @@ pub const EBEALPOEKAL = struct {
 pub const PPAMGEFOAGD = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "PPAMGEFOAGD";
-    LAJMPNJCKFN: std.ArrayList(MapEntry(u32, CombatDataInfo)) = .empty,
+    LAJMPNJCKFN: std.ArrayList(MapEntry(u32, BattleDataRecord)) = .empty,
 };
 
 pub const FIIIPFIHHIK = struct {
@@ -32755,15 +32755,15 @@ pub const PostEffectType = enum(i32) {
     PostEffectType_COLOR_ADJUSTMENTS = 5,
 };
 
-pub const CombatEntityDataInfo = struct {
+pub const BattleRecordMemberData = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "CombatEntityDataInfo";
+    pub const pb_desc_name = "BattleRecordMemberData";
     avatar_id: u32 = 0,
     buddy_id: u32 = 0,
     damage: u32 = 0,
-    daze: u32 = 0,
-    anomaly_buildup: u32 = 0,
-    heal: u32 = 0,
+    stun: u32 = 0,
+    element_abnormal_accumulation: u32 = 0,
+    recover: u32 = 0,
     shield: u32 = 0,
 };
 
@@ -38094,7 +38094,7 @@ pub const JCEOGIAPHEM = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "JCEOGIAPHEM";
     total_time: u32 = 0,
-    PLFBHFOCHOM: ?CombatDataInfo = null,
+    PLFBHFOCHOM: ?BattleDataRecord = null,
 };
 
 pub const MGGIIIJMCBC = struct {
