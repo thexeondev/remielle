@@ -68,7 +68,7 @@ pub fn main(init: Init) void {
 
             const mod_message: Operation.Message(Operation.ModAvatarMeta) = .init(userdata, .{
                 .player_uid = mod_avatar_meta.uid,
-                .avatar_id = mod_avatar_meta.id,
+                .avatar_id = @intFromEnum(mod_avatar_meta.id),
                 .field = mod_avatar_meta.field,
                 .value = value,
             });
@@ -275,7 +275,8 @@ const Init = std.process.Init;
 const net = std.Io.net;
 
 const cli = @import("cli.zig");
-const equipment_suit = @import("equipment_suit.zig");
+const equipment_suit = @import("assets/equipment_suit.zig");
+const avatar_base = @import("assets/avatar_base.zig");
 const rand_properties = @import("rand_properties.zig");
 
 const rmio = @import("rmio");

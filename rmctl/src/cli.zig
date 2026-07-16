@@ -8,7 +8,7 @@ pub const Command = union(enum) {
     @"mod-avatar-meta": struct {
         field: rmnet.Operation.ModAvatarMeta.Field,
         uid: u32,
-        id: u32,
+        id: avatar_base.Id,
         value: u32,
         value_extra: u32 = 0,
     },
@@ -96,8 +96,17 @@ pub const Command = union(enum) {
                                 @field(params, field.name) = int;
                             },
                             .@"enum" => {
-                                const e = std.meta.stringToEnum(field.type, string) orelse
-                                    fatal("invalid value for " ++ field.name, .{});
+                                const e = blk: {
+                                    if (std.fmt.parseInt(
+                                        std.meta.Tag(field.type),
+                                        string,
+                                        10,
+                                    )) |int| {
+                                        break :blk std.enums.fromInt(field.type, int);
+                                    } else |_| {
+                                        break :blk std.meta.stringToEnum(field.type, string);
+                                    }
+                                } orelse fatal("invalid value for " ++ field.name, .{});
 
                                 @field(params, field.name) = e;
                             },
@@ -113,6 +122,8 @@ pub const Command = union(enum) {
 };
 
 const fatal = std.process.fatal;
+
+const avatar_base = @import("assets/avatar_base.zig");
 
 const rmnet = @import("rmnet");
 const std = @import("std");

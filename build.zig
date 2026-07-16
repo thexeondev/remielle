@@ -257,6 +257,7 @@ const sdksv_assets: []const StaticAsset = &.{
 };
 
 const rmctl_assets: []const StaticAsset = &.{
+    .asset("AvatarBaseTemplateTb", "assets/filecfg/AvatarBaseTemplateTb.zon"),
     .asset("EquipmentSuitTemplateTb", "assets/filecfg/EquipmentSuitTemplateTb.zon"),
 };
 
