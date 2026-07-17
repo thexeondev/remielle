@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const rsa = remielle.rsa;
+
 const log = std.log.scoped(.@"remielle-gamesv");
 
 const mtu = kcp.mtu;
@@ -212,8 +215,8 @@ fn onGameMessageReceived(
                 },
             };
 
-            var encryption_buffer: rmcrypt.EncryptAndSignBuffer = undefined;
-            rmcrypt.encryptAndSign(@ptrCast(&server_rand_key), &encryption_buffer);
+            var encryption_buffer: rsa.EncryptAndSignBuffer = undefined;
+            rsa.encryptAndSign(&encryption_buffer, @ptrCast(&server_rand_key));
 
             const response: rmpb.main.PlayerGetTokenScRsp = .{
                 .uid = get_or_create.player_uid,
@@ -281,7 +284,6 @@ const control = @import("control.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
-const rmcrypt = @import("rmcrypt");
 const rmpb = @import("rmpb");
 const rmio = @import("rmio");
 const std = @import("std");

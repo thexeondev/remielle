@@ -1,3 +1,11 @@
+const Xorpad = @This();
+const std = @import("std");
+const Io = std.Io;
+const base64 = std.base64.standard;
+
+const remielle = @import("remielle");
+const rsa = remielle.rsa;
+
 bytes: [size]u8,
 
 pub const size: usize = 4096;
@@ -30,17 +38,19 @@ pub const Key = enum(u64) {
         return @enumFromInt(client_rand_key ^ server_rand_key);
     }
 
+    const block_size_base64 = base64.Encoder.calcSize(rsa.block_size);
+
     fn decryptClientRandKey(b64: []const u8) ?u64 {
         if (b64.len != block_size_base64)
             return null;
 
-        var ciphertext: [rmcrypt.rsa.block_size]u8 = undefined;
+        var ciphertext: [rsa.block_size]u8 = undefined;
 
         base64.Decoder.decode(&ciphertext, b64) catch
             return null;
 
-        var plaintext_buf: [rmcrypt.rsa.block_size]u8 = undefined;
-        const plaintext = rmcrypt.rsa.server_private_key.decrypt(&ciphertext, &plaintext_buf) orelse
+        var plaintext_buf: [rsa.block_size]u8 = undefined;
+        const plaintext = rsa.server_private_key.decrypt(&ciphertext, &plaintext_buf) orelse
             return null;
 
         if (plaintext.len != @sizeOf(u64))
@@ -64,7 +74,7 @@ pub fn wrapReader(xp: *const Xorpad, reader: *Io.Reader, limit: usize) Reader {
 }
 
 pub fn fillSeeded(xp: *Xorpad, key: Key) void {
-    var mt: rmcrypt.prng.MT19937 = .init(@intFromEnum(key));
+    var mt: remielle.prng.MT19937 = .init(@intFromEnum(key));
     for (0..size >> 3) |i|
         std.mem.writeInt(u64, xp.bytes[i * 8 ..][0..8], mt.get(), .big);
 }
@@ -218,13 +228,3 @@ pub const Reader = struct {
         wrapped.remaining -|= to_xor.len;
     }
 };
-
-const block_size_base64 = base64.Encoder.calcSize(rmcrypt.rsa.block_size);
-
-const Io = std.Io;
-
-const base64 = std.base64.standard;
-
-const rmcrypt = @import("rmcrypt");
-const std = @import("std");
-const Xorpad = @This();

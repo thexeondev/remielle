@@ -1,3 +1,12 @@
+const Data = @This();
+const std = @import("std");
+const json = std.json;
+const Allocator = std.mem.Allocator;
+const Base64Encoder = std.base64.standard.Encoder;
+
+const remielle = @import("remielle");
+const rsa = remielle.rsa;
+
 const config = @import("config");
 
 const RegionListMap = std.array_hash_map.String([]const u8);
@@ -98,22 +107,22 @@ fn buildGatewayMap(arena: Allocator) Allocator.Error!GatewayMap {
                 .cdn_conf_ext = version.cdn_conf,
             });
 
-            const num_blocks = std.math.divCeil(usize, plaintext.len, rmcrypt.rsa.max_unpadded_size) catch
+            const num_blocks = std.math.divCeil(usize, plaintext.len, rsa.max_unpadded_size) catch
                 unreachable; // `max_unpadded_size` is nonzero.
 
-            const blocks = try arena.alloc(u8, num_blocks * rmcrypt.rsa.block_size);
+            const blocks = try arena.alloc(u8, num_blocks * rsa.block_size);
             for (0..num_blocks) |n| {
-                var plain_block = plaintext[n * rmcrypt.rsa.max_unpadded_size ..];
-                plain_block.len = @min(plain_block.len, rmcrypt.rsa.max_unpadded_size);
+                var plain_block = plaintext[n * rsa.max_unpadded_size ..];
+                plain_block.len = @min(plain_block.len, rsa.max_unpadded_size);
 
-                rmcrypt.rsa.client_public_key.encrypt(
+                rsa.client_public_key.encrypt(
                     plain_block,
-                    blocks[n * rmcrypt.rsa.block_size ..][0..rmcrypt.rsa.block_size],
+                    blocks[n * rsa.block_size ..][0..rsa.block_size],
                 );
             }
 
-            var sign: [rmcrypt.rsa.block_size]u8 = undefined;
-            rmcrypt.rsa.server_private_key.sign(plaintext, &sign);
+            var sign: [rsa.block_size]u8 = undefined;
+            rsa.server_private_key.sign(plaintext, &sign);
 
             const before_content =
                 \\{"content": "
@@ -168,12 +177,3 @@ fn stringify(allocator: Allocator, data: anytype) Allocator.Error![]const u8 {
 
     return string;
 }
-
-const Allocator = std.mem.Allocator;
-const Base64Encoder = std.base64.standard.Encoder;
-
-const json = std.json;
-
-const rmcrypt = @import("rmcrypt");
-const std = @import("std");
-const Data = @This();

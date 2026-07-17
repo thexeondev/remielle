@@ -1,3 +1,13 @@
+const std = @import("std");
+const Base64Decoder = std.base64.standard.Decoder;
+
+const remielle = @import("remielle");
+const rsa = remielle.rsa;
+
+const json = @import("../json.zig");
+const routes = @import("../routes.zig");
+const Passwd = @import("../Passwd.zig");
+
 const decrypt_fail_message = "Login failed. Your client patch might be unsupported.";
 const name_too_long_message = "Username is too long";
 const password_mismatch_message = "Account or password error";
@@ -198,14 +208,3 @@ fn respondSuccess(
         \\@xeondev.com","is_email_verify":0,"area_code":"**","mobile":"","safe_area_code":"","safe_mobile":"","realname":"","identity_code":"","rebind_area_code":"","rebind_mobile":"","rebind_mobile_time":"228","links":[],"country":"RU","password_time":"1337","is_adult":1,"unmasked_email":"","unmasked_email_type":0},"ext_user_info":{"guardian_email":"","birth":"0"},"reactivate_action_ticket":"","bind_email_action_ticket":""}}
     );
 }
-
-const rsa = rmcrypt.rsa;
-
-const Base64Decoder = std.base64.standard.Decoder;
-
-const json = @import("../json.zig");
-const routes = @import("../routes.zig");
-const Passwd = @import("../Passwd.zig");
-
-const rmcrypt = @import("rmcrypt");
-const std = @import("std");

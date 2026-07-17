@@ -1,3 +1,6 @@
+const std = @import("std");
+const math = std.math;
+
 pub const MT19937 = MersenneTwister(
     u64,
     312,
@@ -86,6 +89,3 @@ pub fn MersenneTwister(
         }
     };
 }
-
-const math = std.math;
-const std = @import("std");
