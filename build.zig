@@ -5,7 +5,10 @@ const stable_protos: []const []const u8 = &.{
 };
 
 pub fn build(b: *Build) void {
-    const remielle = b.createModule(.{ .root_source_file = b.path("src/remielle.zig") });
+    const remielle = b.addModule(
+        "remielle",
+        .{ .root_source_file = b.path("src/remielle.zig") },
+    );
 
     const io = b.graph.io;
     const host = b.graph.host;
