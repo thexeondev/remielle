@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn playerLogin(
     message: Message(pb.PlayerLoginCsReq),
     response: Response(pb.PlayerLoginScRsp),
@@ -97,7 +100,6 @@ const Properties = logic.Properties;
 
 const templates = Assets.templates;
 
-const pb = @import("rmpb").main;
 const logic = @import("../../logic.zig");
 const packers = @import("../packers.zig");
 const Assets = @import("../../Assets.zig");

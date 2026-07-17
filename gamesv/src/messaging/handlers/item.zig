@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn getWeaponData(
     message: Message(pb.GetWeaponDataCsReq),
     properties: Properties.Immutable(.{
@@ -105,5 +108,4 @@ const logic = @import("../../logic.zig");
 const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

@@ -1,4 +1,5 @@
 const remielle = @import("remielle");
+const protobuf = remielle.protobuf;
 
 pub fn playerKick(
     operation: control.Operation(remielle.control.Operation.PlayerKick),
@@ -10,8 +11,8 @@ pub fn playerKick(
 
     const index: u32 = @intCast(server.uid_map.getIndex(operation.data.uid) orelse return);
 
-    const reason: rmpb.main.PlayerKickReason = std.enums.fromInt(
-        rmpb.main.PlayerKickReason,
+    const reason: protobuf.main.PlayerKickReason = std.enums.fromInt(
+        protobuf.main.PlayerKickReason,
         operation.data.reason,
     ) orelse @enumFromInt(0);
 
@@ -261,7 +262,5 @@ const Server = @import("../Server.zig");
 const Assets = @import("../Assets.zig");
 const control = @import("../control.zig");
 const messaging = @import("../messaging.zig");
-
-const rmpb = @import("rmpb");
 
 const std = @import("std");

@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn packBuddyInfo(arena: Allocator, id: logic.Properties.Buddy.Id, meta: *const logic.Properties.Buddy.Meta) !pb.BuddyInfo {
     const Buddy = logic.Properties.Buddy;
     var skill_levels: ArrayList(pb.BuddySkillLevel) = try .initCapacity(arena, Buddy.Skill.Levels.len);
@@ -293,5 +296,4 @@ const Allocator = std.mem.Allocator;
 const logic = @import("../logic.zig");
 const Assets = @import("../Assets.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

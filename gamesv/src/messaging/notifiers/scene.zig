@@ -1,3 +1,8 @@
+const remielle = @import("remielle");
+const protobuf = remielle.protobuf;
+const pb = protobuf.main;
+const pb_stable = protobuf.stable;
+
 const default_interact_target_list: []const pb.InteractTarget = &.{.InteractTarget_NPC};
 
 pub fn switchGameMode(
@@ -286,7 +291,7 @@ pub fn npcInteraction(
 
             try action_list.append(notify.allocator, .{
                 .action_type = .ActionType_SWITCH_SECTION,
-                .body = try rmpb.encodeAlloc(.stable, notify.allocator, info),
+                .body = try protobuf.encodeAlloc(.stable, notify.allocator, info),
             });
         },
 
@@ -300,7 +305,7 @@ pub fn npcInteraction(
 
             try action_list.append(notify.allocator, .{
                 .action_type = .ActionType_OPEN_UI,
-                .body = try rmpb.encodeAlloc(.stable, notify.allocator, info),
+                .body = try protobuf.encodeAlloc(.stable, notify.allocator, info),
             });
         },
     };
@@ -341,8 +346,4 @@ const packers = @import("../packers.zig");
 const notifiers = @import("../notifiers.zig");
 const Properties = @import("../../logic/Properties.zig");
 
-const pb = rmpb.main;
-const pb_stable = rmpb.stable;
-
-const rmpb = @import("rmpb");
 const std = @import("std");

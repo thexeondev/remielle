@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const mem = remielle.mem;
+const protobuf = remielle.protobuf;
 const MultiSocket = remielle.io.MultiSocket;
 
 const log = std.log.scoped(.@"remielle-gamesv");
@@ -185,7 +186,7 @@ pub fn onAuthSucceeded(
     token: kcp.Token,
     current_time: Timestamp,
     key: messaging.Xorpad.Key,
-    auth_response: rmpb.main.PlayerGetTokenScRsp,
+    auth_response: protobuf.main.PlayerGetTokenScRsp,
 ) !u32 {
     server.session_limit = switch (server.session_limit) {
         .unlimited => .unlimited,
@@ -212,7 +213,7 @@ pub fn onAuthSucceeded(
     const length = messaging.encodingLength(.init, auth_response);
     var writer = try server.multi_conversation.writer(client, length);
 
-    const cmd_id = comptime rmpb.cmdId(rmpb.main.PlayerGetTokenScRsp).?;
+    const cmd_id = comptime protobuf.cmdId(protobuf.main.PlayerGetTokenScRsp).?;
     messaging.encode(&writer.interface, .initial, cmd_id, .init, auth_response) catch unreachable;
 
     try server.conv_map.put(resource_arena, conv_id, {});
@@ -407,7 +408,7 @@ pub fn kick(
     io: Io,
     time: Io.Timestamp,
     index: u32,
-    reason: rmpb.main.PlayerKickReason,
+    reason: protobuf.main.PlayerKickReason,
 ) void {
     server.savePlayer(io, index);
     defer server.release(index);
@@ -415,8 +416,8 @@ pub fn kick(
     const old_cancel_protection = io.swapCancelProtection(.blocked);
     defer _ = io.swapCancelProtection(old_cancel_protection);
 
-    if (rmpb.features.isAvailable(.player_kick)) {
-        const notify: rmpb.main.PlayerKickScNotify = .{ .reason = reason };
+    if (protobuf.features.isAvailable(.player_kick)) {
+        const notify: protobuf.main.PlayerKickScNotify = .{ .reason = reason };
 
         if (messaging.send(
             &server.multi_conversation,
@@ -491,8 +492,6 @@ const logic = @import("logic.zig");
 const Assets = @import("Assets.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
-
-const rmpb = @import("rmpb");
 
 const std = @import("std");
 const Server = @This();

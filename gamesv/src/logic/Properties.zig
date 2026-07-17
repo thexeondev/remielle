@@ -1,5 +1,14 @@
+const Properties = @This();
+const std = @import("std");
+const Io = std.Io;
+const Allocator = std.mem.Allocator;
+
 const remielle = @import("remielle");
 const mem = remielle.mem;
+const pb = remielle.protobuf.stable;
+
+const Assets = @import("../Assets.zig");
+const templates = Assets.templates;
 
 pub const Avatar = @import("Properties/Avatar.zig");
 pub const PlayerAccessory = @import("Properties/PlayerAccessory.zig");
@@ -701,15 +710,3 @@ pub fn fromPlayerSave(
         props.getPtr(.quick_team, index).* = .init;
     }
 }
-
-const Io = std.Io;
-const Allocator = std.mem.Allocator;
-
-const templates = Assets.templates;
-
-const Assets = @import("../Assets.zig");
-
-const pb = @import("rmpb").stable;
-const std = @import("std");
-
-const Properties = @This();

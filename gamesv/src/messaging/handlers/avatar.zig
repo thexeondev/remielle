@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn getAvatarData(
     message: Message(pb.GetAvatarDataCsReq),
     properties: Properties.Immutable(.{
@@ -662,5 +665,4 @@ const packers = @import("../packers.zig");
 const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

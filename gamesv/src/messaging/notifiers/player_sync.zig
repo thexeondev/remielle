@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn playerSync(
     rtc: logic.RealTimeClock,
     calendar: *const logic.Calendar,
@@ -211,5 +214,4 @@ const packers = @import("../packers.zig");
 const Assets = @import("../../Assets.zig");
 const notifiers = @import("../notifiers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

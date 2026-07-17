@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 hadal_zone: HadalZone,
 
 pub const init: Calendar = .{
@@ -82,8 +85,6 @@ pub fn save(calendar: *const Calendar, writer: *Io.Writer) !void {
 }
 
 const Io = std.Io;
-
-const pb = @import("rmpb").main;
 
 const std = @import("std");
 const Calendar = @This();

@@ -6,6 +6,7 @@ pub const rsa = @import("rsa.zig");
 pub const prng = @import("prng.zig");
 pub const mem = @import("mem.zig");
 pub const control = @import("control.zig");
+pub const protobuf = @import("protobuf.zig");
 
 test {
     _ = io;

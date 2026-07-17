@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn enterWorld(
     message: Message(pb.EnterWorldCsReq),
     properties: Properties.Immutable(.{
@@ -170,5 +173,4 @@ const logic = @import("../../logic.zig");
 const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const protobuf = remielle.protobuf;
+
 const log = std.log.scoped(.@"remielle-gamesv::messaging");
 
 pub const handlers = @import("messaging/handlers.zig");
@@ -28,30 +31,30 @@ pub const Header = struct {
     }
 };
 
-pub fn encodingLength(head: rmpb.stable.PacketHead, body: anytype) usize {
-    return rmpb.encodingLength(.stable, head) + rmpb.encodingLength(.main, body) + 16;
+pub fn encodingLength(head: protobuf.stable.PacketHead, body: anytype) usize {
+    return protobuf.encodingLength(.stable, head) + protobuf.encodingLength(.main, body) + 16;
 }
 
-pub fn decodePacketHead(bytes: []const u8) ?rmpb.stable.PacketHead {
+pub fn decodePacketHead(bytes: []const u8) ?protobuf.stable.PacketHead {
     var reader: Io.Reader = .fixed(bytes);
-    return rmpb.decode(.stable, rmpb.stable.PacketHead, .failing, &reader) catch null;
+    return protobuf.decode(.stable, protobuf.stable.PacketHead, .failing, &reader) catch null;
 }
 
 pub fn encode(
     writer: *Io.Writer,
     xorpad: *const Xorpad,
     cmd_id: u16,
-    head: rmpb.stable.PacketHead,
+    head: protobuf.stable.PacketHead,
     body: anytype,
 ) Io.Writer.Error!void {
     try writer.writeAll(&Header.magic);
     try writer.writeInt(u16, cmd_id, .big);
-    try writer.writeInt(u16, @intCast(rmpb.encodingLength(.stable, head)), .big);
-    try writer.writeInt(u32, @intCast(rmpb.encodingLength(.main, body)), .big);
-    try rmpb.encode(.stable, writer, head);
+    try writer.writeInt(u16, @intCast(protobuf.encodingLength(.stable, head)), .big);
+    try writer.writeInt(u32, @intCast(protobuf.encodingLength(.main, body)), .big);
+    try protobuf.encode(.stable, writer, head);
 
     var xw = xorpad.wrapWriter(writer);
-    try rmpb.encode(.main, &xw.interface, body);
+    try protobuf.encode(.main, &xw.interface, body);
     xw.deinit();
 
     try writer.writeInt(u32, 0x89ABCDEF, .big);
@@ -64,7 +67,7 @@ pub fn expectFirstPacket(
     string_buffer: []u8,
     /// Packet contents, *not* including kcp header
     data: []u8,
-) !rmpb.main.PlayerGetTokenCsReq {
+) !protobuf.main.PlayerGetTokenCsReq {
     if (data.len < Header.size)
         return error.SizeMismatch;
 
@@ -72,7 +75,7 @@ pub fn expectFirstPacket(
     if (header.head_len + header.body_len > data.len - Header.size)
         return error.SizeMismatch;
 
-    if (header.cmd_id != rmpb.main_desc.PlayerGetTokenCsReq.cmd_id) {
+    if (header.cmd_id != protobuf.main_desc.PlayerGetTokenCsReq.cmd_id) {
         log.debug("received unexpected first cmd_id: {d}", .{header.cmd_id});
         return error.UnexpectedCmdId;
     }
@@ -83,7 +86,7 @@ pub fn expectFirstPacket(
     var fba: heap.FixedBufferAllocator = .init(string_buffer);
     var br: Io.Reader = .fixed(body);
 
-    return rmpb.decode(.main, rmpb.main.PlayerGetTokenCsReq, fba.allocator(), &br) catch
+    return protobuf.decode(.main, protobuf.main.PlayerGetTokenCsReq, fba.allocator(), &br) catch
         return error.MalformedPayload;
 }
 
@@ -105,9 +108,9 @@ pub fn send(
     ack: Ack,
     message: anytype,
 ) SendError!void {
-    const cmd_id = (comptime rmpb.cmdId(@TypeOf(message))) orelse return;
+    const cmd_id = (comptime protobuf.cmdId(@TypeOf(message))) orelse return;
 
-    const head: rmpb.stable.PacketHead = .{
+    const head: protobuf.stable.PacketHead = .{
         .packet_id = clients.getPtr(.packet_counter, destination_index).nextId(),
         .ack_packet_id = @intFromEnum(ack),
     };
@@ -131,7 +134,7 @@ pub fn sendDummy(
     ack: Ack,
 ) SendError!void {
     const DummyCmd = comptime DummyCmd: {
-        const ns = rmpb.Descriptors.main.namespace();
+        const ns = protobuf.Descriptors.main.namespace();
         const name = @import("config").dummy_cmd;
         if (!@hasDecl(ns, name))
             @compileError("the `dummy_cmd` is invalid");
@@ -154,5 +157,4 @@ const kcp = @import("kcp.zig");
 const Server = @import("Server.zig");
 
 const rmcrypt = @import("rmcrypt");
-const rmpb = @import("rmpb");
 const std = @import("std");

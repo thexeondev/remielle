@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn quickTeamEdit(
     message: Message(pb.QuickTeamEditCsReq),
     changes: Changes.Builder(.{
@@ -59,5 +62,4 @@ const Properties = logic.Properties;
 const logic = @import("../../logic.zig");
 const handlers = @import("../handlers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

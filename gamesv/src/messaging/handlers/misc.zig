@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn getServerTimestamp(
     rtc: RealTimeClock,
     message: Message(pb.GetServerTimestampCsReq),
@@ -89,5 +92,4 @@ const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 const packers = @import("../packers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

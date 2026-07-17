@@ -1,3 +1,10 @@
+const std = @import("std");
+const Io = std.Io;
+const Init = std.process.Init;
+const exit = std.process.exit;
+const fatal = std.process.fatal;
+const Allocator = std.mem.Allocator;
+
 const CompilationMode = enum {
     full,
     structures,
@@ -36,7 +43,7 @@ pub fn main(init: Init) noreturn {
     writeOutputFileHeader(&fw.interface) catch
         fatal("write failed: {t}", .{fw.err.?});
 
-    var file_arena: ArenaAllocator = .init(gpa);
+    var file_arena: std.heap.ArenaAllocator = .init(gpa);
     defer file_arena.deinit();
 
     for (args[1..]) |arg| switch (arg[0]) {
@@ -678,13 +685,3 @@ const Lexer = struct {
         }
     };
 };
-
-const Io = std.Io;
-const Init = std.process.Init;
-const Allocator = std.mem.Allocator;
-const ArenaAllocator = std.heap.ArenaAllocator;
-
-const exit = std.process.exit;
-const fatal = std.process.fatal;
-
-const std = @import("std");

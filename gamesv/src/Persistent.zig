@@ -1,3 +1,7 @@
+const remielle = @import("remielle");
+const protobuf = remielle.protobuf;
+const PlayerSave = protobuf.stable.PlayerSave;
+
 const log = std.log.scoped(.@"remielle-gamesv::persistent");
 
 const account_uid_map_path = "Persistent/LocalStorage/GENERAL_DATA.bin";
@@ -100,7 +104,7 @@ pub fn loadPlayer(
     var reader_buf: [1024]u8 = undefined;
     var fr = file.reader(io, &reader_buf);
 
-    return try rmpb.decode(.stable, PlayerSave, arena, &fr.interface);
+    return try protobuf.decode(.stable, PlayerSave, arena, &fr.interface);
 }
 
 pub fn savePlayer(
@@ -119,7 +123,7 @@ pub fn savePlayer(
     var writer_buf: [1024]u8 = undefined;
     var fw = file.writer(io, &writer_buf);
 
-    try rmpb.encode(.stable, &fw.interface, save);
+    try protobuf.encode(.stable, &fw.interface, save);
     try fw.interface.flush();
 }
 
@@ -163,9 +167,7 @@ fn ensureDirectories(io: Io, root: Io.Dir) !void {
 
 const Io = std.Io;
 const Allocator = std.mem.Allocator;
-const PlayerSave = rmpb.stable.PlayerSave;
 
 const logic = @import("logic.zig");
-const rmpb = @import("rmpb");
 const std = @import("std");
 const Persistent = @This();

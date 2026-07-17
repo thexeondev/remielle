@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn getBuddyData(
     message: Message(pb.GetBuddyDataCsReq),
     properties: Properties.Immutable(.{
@@ -25,5 +28,4 @@ const logic = @import("../../logic.zig");
 const packers = @import("../packers.zig");
 const handlers = @import("../handlers.zig");
 
-const pb = @import("rmpb").main;
 const std = @import("std");

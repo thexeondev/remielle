@@ -1,3 +1,7 @@
+const remielle = @import("remielle");
+const protobuf = remielle.protobuf;
+const pb = protobuf.main;
+
 const log = std.log.scoped(.@"remielle-gamesv::messaging");
 
 const namespaces: []const type = &.{
@@ -21,7 +25,7 @@ const CmdId = CmdId: {
         const Fn = @TypeOf(@field(ns, decl.name));
         const Msg = MessageOf(Fn);
 
-        values = values ++ .{rmpb.cmdId(Msg.Data) orelse continue};
+        values = values ++ .{protobuf.cmdId(Msg.Data) orelse continue};
         names = names ++ .{Msg.Data.pb_desc_name};
     };
 
@@ -80,9 +84,9 @@ pub fn process(
                 const Fn = @TypeOf(@field(ns, decl.name));
 
                 const InMessage = MessageOf(Fn);
-                if (@intFromEnum(id) != rmpb.cmdId(InMessage.Data)) continue;
+                if (@intFromEnum(id) != protobuf.cmdId(InMessage.Data)) continue;
 
-                const data = rmpb.decode(
+                const data = protobuf.decode(
                     .main,
                     InMessage.Data,
                     arena,
@@ -173,7 +177,7 @@ pub fn process(
 
                 if (OutResponse) |Rsp| {
                     if (out_response.data) |out_message| {
-                        if (rmpb.cmdId(Rsp.Data) != null) {
+                        if (protobuf.cmdId(Rsp.Data) != null) {
                             try messaging.send(
                                 frame.multi_conversation,
                                 frame.clients,
@@ -288,5 +292,4 @@ const Assets = @import("../Assets.zig");
 const messaging = @import("../messaging.zig");
 
 const rmio = @import("rmio");
-const rmpb = @import("rmpb");
 const std = @import("std");

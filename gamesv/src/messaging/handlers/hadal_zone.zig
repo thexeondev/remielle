@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const pb = remielle.protobuf.main;
+
 pub fn getHadalZoneData(
     rtc: RealTimeClock,
     calendar: *const Calendar,
@@ -35,7 +38,6 @@ const RealTimeClock = logic.RealTimeClock;
 
 const templates = Assets.templates;
 
-const pb = @import("rmpb").main;
 const logic = @import("../../logic.zig");
 const packers = @import("../packers.zig");
 const Assets = @import("../../Assets.zig");

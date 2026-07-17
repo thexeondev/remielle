@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const rsa = remielle.rsa;
+const protobuf = remielle.protobuf;
 const MultiSocket = remielle.io.MultiSocket;
 
 const log = std.log.scoped(.@"remielle-gamesv");
@@ -219,7 +220,7 @@ fn onGameMessageReceived(
             var encryption_buffer: rsa.EncryptAndSignBuffer = undefined;
             rsa.encryptAndSign(&encryption_buffer, @ptrCast(&server_rand_key));
 
-            const response: rmpb.main.PlayerGetTokenScRsp = .{
+            const response: protobuf.main.PlayerGetTokenScRsp = .{
                 .uid = get_or_create.player_uid,
                 .server_rand_key = &encryption_buffer.ciphertext,
                 .sign = &encryption_buffer.sign,
@@ -284,5 +285,4 @@ const control = @import("control.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
-const rmpb = @import("rmpb");
 const std = @import("std");

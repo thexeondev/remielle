@@ -1,25 +1,21 @@
 const stable_protos: []const []const u8 = &.{
-    "rmpb/cs_proto/head.proto",
-    "rmpb/cs_proto/action.proto",
-    "rmpb/cs_proto/persistence.proto",
+    "lib/proto/head.proto",
+    "lib/proto/action.proto",
+    "lib/proto/persistence.proto",
 };
 
 pub fn build(b: *Build) void {
     const remielle = b.createModule(.{ .root_source_file = b.path("src/remielle.zig") });
 
-    const rmpb = b.createModule(.{ .root_source_file = b.path("rmpb/src/root.zig") });
-
+    const io = b.graph.io;
     const host = b.graph.host;
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const io = b.graph.io;
-    const cwd: Io.Dir = .cwd();
-
     const rmprotoc = b.addExecutable(.{
         .name = "rmprotoc",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("rmpb/compiler/main.zig"),
+            .root_source_file = b.path("lib/build/compile-proto.zig"),
             .target = host,
             .optimize = optimize,
             .single_threaded = true,
@@ -30,29 +26,29 @@ pub fn build(b: *Build) void {
     const compile_main_descriptors = b.addUpdateSourceFiles();
     const compile_stable_definitions = b.addUpdateSourceFiles();
 
-    if (cwd.access(io, "rmpb/cs_proto/main.proto", .{ .read = true })) {
+    if (b.build_root.handle.access(io, "lib/proto/main.proto", .{ .read = true })) {
         const rmprotoc_descs_pass = b.addRunArtifact(rmprotoc);
         rmprotoc_descs_pass.expectExitCode(0);
         rmprotoc_descs_pass.addArg("-descriptors");
-        rmprotoc_descs_pass.addFileArg(b.path("rmpb/cs_proto/main.proto"));
+        rmprotoc_descs_pass.addFileArg(b.path("lib/proto/main.proto"));
 
         compile_main_descriptors.addCopyFileToSource(
             rmprotoc_descs_pass.captureStdOut(.{ .basename = "pb.main.desc.zig" }),
-            "rmpb/src/pb.main.desc.zig",
+            "src/protobuf/pb.main.desc.zig",
         );
 
         const rmprotoc_structs_pass = b.addRunArtifact(rmprotoc);
         rmprotoc_structs_pass.expectExitCode(0);
         rmprotoc_structs_pass.addArg("-structures");
-        rmprotoc_structs_pass.addFileArg(b.path("rmpb/cs_proto/main.proto"));
+        rmprotoc_structs_pass.addFileArg(b.path("lib/proto/main.proto"));
 
         compile_main_structs.addCopyFileToSource(
             rmprotoc_structs_pass.captureStdOut(.{ .basename = "pb.main.zig" }),
-            "rmpb/src/pb.main.zig",
+            "src/protobuf/pb.main.zig",
         );
     } else |_| {}
 
-    if (filesReadable(io, cwd, stable_protos)) {
+    if (filesReadable(io, b.build_root.handle, stable_protos)) {
         const rmprotoc_stable_pass = b.addRunArtifact(rmprotoc);
         rmprotoc_stable_pass.expectExitCode(0);
         rmprotoc_stable_pass.addArg("-full");
@@ -62,7 +58,7 @@ pub fn build(b: *Build) void {
 
         compile_stable_definitions.addCopyFileToSource(
             rmprotoc_stable_pass.captureStdOut(.{ .basename = "pb.stable.zig" }),
-            "rmpb/src/pb.stable.zig",
+            "src/protobuf/pb.stable.zig",
         );
     }
 
@@ -100,7 +96,6 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("gamesv/src/main.zig"),
             .imports = &.{
                 .{ .name = "remielle", .module = remielle },
-                .{ .name = "rmpb", .module = rmpb },
             },
             .target = target,
             .optimize = optimize,

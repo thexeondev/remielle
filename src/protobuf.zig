@@ -1,13 +1,18 @@
+const std = @import("std");
+const Io = std.Io;
+const Type = std.builtin.Type;
+const Allocator = std.mem.Allocator;
+
 /// Main protocol types. Stable.
-pub const main = @import("pb.main.zig");
+pub const main = @import("protobuf/pb.main.zig");
 
 /// Protobuf descriptors for main protocol types. Unstable.
-pub const main_desc = @import("pb.main.desc.zig");
+pub const main_desc = @import("protobuf/pb.main.desc.zig");
 
 /// Exports a subset of protocol types with their descriptors baked in. Stable.
-pub const stable = @import("pb.stable.zig");
+pub const stable = @import("protobuf/pb.stable.zig");
 
-pub const features = @import("features.zig");
+pub const features = @import("protobuf/features.zig");
 
 pub const Descriptors = enum {
     main,
@@ -446,9 +451,3 @@ const FieldKind = union(enum) {
         };
     }
 };
-
-const Io = std.Io;
-const Type = std.builtin.Type;
-const Allocator = std.mem.Allocator;
-
-const std = @import("std");
