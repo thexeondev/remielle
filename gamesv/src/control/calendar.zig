@@ -34,7 +34,7 @@ pub fn modHadalZoneSchedule(
             .target_index = session_index,
             .time = context.time,
             .clients = &server.clients,
-            .assets = server.assets,
+            .asset_lookup = server.asset_lookup,
             .properties = &server.properties,
             .calendar = &server.persistent.calendar,
             .multi_conversation = &server.multi_conversation,

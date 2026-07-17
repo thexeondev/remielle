@@ -27,8 +27,8 @@ pub fn notifyLogicChanges(
                     continue;
                 }
 
-                if (ArgType == *const Assets) {
-                    arg.* = frame.assets;
+                if (ArgType == *const Assets.Lookup) {
+                    arg.* = frame.asset_lookup;
                     continue;
                 }
 

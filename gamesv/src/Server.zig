@@ -28,7 +28,7 @@ resettable_arena: heap.ArenaAllocator,
 /// Set of connectionless sockets, as defined by `Socket`.
 sockets: *MultiSocket,
 /// Initialized at startup.
-assets: *const Assets,
+asset_lookup: *const Assets.Lookup,
 persistent: *Persistent,
 /// Indexes into arrays in this structure correspond to indexes in `conv_map`.
 multi_conversation: kcp.MultiConversation,
@@ -90,8 +90,8 @@ pub const Frame = struct {
     time: Timestamp,
     /// Same as `Server.clients`
     clients: *Clients,
-    /// Same as `Server.assets`
-    assets: *const Assets,
+    /// Same as `Server.asset_lookup`
+    asset_lookup: *const Assets.Lookup,
     /// Same as `Server.persistent.calendar`
     calendar: *const logic.Calendar,
     /// Same as `Server.properties`
@@ -108,7 +108,7 @@ pub fn init(
     gpa: Allocator,
     csprng: Random,
     sockets: *MultiSocket,
-    assets: *const Assets,
+    asset_lookup: *const Assets.Lookup,
     persistent: *Persistent,
     session_limit: Limit,
 ) Server {
@@ -116,7 +116,7 @@ pub fn init(
         .resource_arena = .init(gpa),
         .resettable_arena = .init(gpa),
         .sockets = sockets,
-        .assets = assets,
+        .asset_lookup = asset_lookup,
         .multi_conversation = .init,
         .conv_counter = .init,
         .conv_map = .empty,
@@ -266,7 +266,7 @@ pub fn receiveKcpPacket(
     const frame: Frame = .{
         .target_index = client,
         .time = time,
-        .assets = server.assets,
+        .asset_lookup = server.asset_lookup,
         .clients = &server.clients,
         .properties = &server.properties,
         .calendar = &server.persistent.calendar,

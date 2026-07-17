@@ -6,7 +6,7 @@ const pb_stable = protobuf.stable;
 const default_interact_target_list: []const pb.InteractTarget = &.{.InteractTarget_NPC};
 
 pub fn switchGameMode(
-    assets: *const Assets,
+    asset_lookup: *const Assets.Lookup,
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
         logic.Properties.Avatar,
@@ -59,7 +59,7 @@ pub fn switchGameMode(
                         for (main_city.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
                             .create_npc => {
                                 const create_npc = action.data.create_npc;
-                                const tmpl_index = assets.main_city_object_map.getIndex(create_npc.tag_id) orelse
+                                const tmpl_index = asset_lookup.main_city_object_map.getIndex(create_npc.tag_id) orelse
                                     continue;
 
                                 try npc_id_list.append(notify.allocator, create_npc.tag_id);
@@ -100,7 +100,7 @@ pub fn switchGameMode(
                                     change_interact.tag_id,
                                 ) orelse continue;
 
-                                const tmpl_index = assets.main_city_object_map.getIndex(change_interact.tag_id) orelse
+                                const tmpl_index = asset_lookup.main_city_object_map.getIndex(change_interact.tag_id) orelse
                                     continue;
 
                                 const name = templates.main_city_object.interact_names[tmpl_index];

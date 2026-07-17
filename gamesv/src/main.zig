@@ -71,13 +71,13 @@ pub fn main(init: Init.Minimal) void {
         else => |limit| .limited64(limit),
     };
 
-    var assets = Assets.init(gpa) catch |err| switch (err) {
+    var asset_lookup = Assets.Lookup.init(gpa) catch |err| switch (err) {
         error.OutOfMemory => fatal("out of memory", .{}),
     };
 
-    defer assets.deinit(gpa);
+    defer asset_lookup.deinit(gpa);
 
-    const bind_args = .{ io, gpa, csprng, &assets, &addresses, concurrent_sessions_limit };
+    const bind_args = .{ io, gpa, csprng, &asset_lookup, &addresses, concurrent_sessions_limit };
 
     var app_future = io.concurrent(app.bind, bind_args) catch |concurrent_err| switch (concurrent_err) {
         error.ConcurrencyUnavailable => {

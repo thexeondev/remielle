@@ -11,7 +11,7 @@ pub fn bind(
     io: Io,
     gpa: Allocator,
     csprng: Random,
-    assets: *const Assets,
+    asset_lookup: *const Assets.Lookup,
     addresses: *const [Server.Socket.count]net.IpAddress,
     concurrent_session_limit: Io.Limit,
 ) Io.Cancelable!void {
@@ -47,7 +47,7 @@ pub fn bind(
         gpa,
         csprng,
         &sockets,
-        assets,
+        asset_lookup,
         &persistent,
         concurrent_session_limit,
     );
