@@ -5,10 +5,11 @@ const stable_protos: []const []const u8 = &.{
 };
 
 pub fn build(b: *Build) void {
+    const remielle = b.createModule(.{ .root_source_file = b.path("src/remielle.zig") });
+
     const rmio = b.createModule(.{ .root_source_file = b.path("rmio/src/root.zig") });
     const rmnet = b.createModule(.{ .root_source_file = b.path("rmnet/src/root.zig") });
     const rmmem = b.createModule(.{ .root_source_file = b.path("rmmem/src/root.zig") });
-    const rmcli = b.createModule(.{ .root_source_file = b.path("rmcli/src/root.zig") });
     const rmcrypt = b.createModule(.{ .root_source_file = b.path("rmcrypt/src/root.zig") });
 
     const rmpb = b.createModule(.{ .root_source_file = b.path("rmpb/src/root.zig") });
@@ -75,8 +76,8 @@ pub fn build(b: *Build) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("dpsv/src/main.zig"),
             .imports = &.{
+                .{ .name = "remielle", .module = remielle },
                 .{ .name = "rmio", .module = rmio },
-                .{ .name = "rmcli", .module = rmcli },
                 .{ .name = "rmcrypt", .module = rmcrypt },
             },
             .target = target,
@@ -91,9 +92,9 @@ pub fn build(b: *Build) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("sdksv/src/main.zig"),
             .imports = &.{
+                .{ .name = "remielle", .module = remielle },
                 .{ .name = "rmio", .module = rmio },
                 .{ .name = "rmmem", .module = rmmem },
-                .{ .name = "rmcli", .module = rmcli },
                 .{ .name = "rmcrypt", .module = rmcrypt },
             },
             .target = target,
@@ -108,10 +109,10 @@ pub fn build(b: *Build) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("gamesv/src/main.zig"),
             .imports = &.{
+                .{ .name = "remielle", .module = remielle },
                 .{ .name = "rmio", .module = rmio },
                 .{ .name = "rmnet", .module = rmnet },
                 .{ .name = "rmmem", .module = rmmem },
-                .{ .name = "rmcli", .module = rmcli },
                 .{ .name = "rmcrypt", .module = rmcrypt },
                 .{ .name = "rmpb", .module = rmpb },
             },

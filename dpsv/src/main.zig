@@ -1,3 +1,5 @@
+const remielle = @import("remielle");
+
 const log = std.log.scoped(.@"remielle-dpsv");
 
 pub const Options = struct {
@@ -15,10 +17,10 @@ pub fn main(init: Init.Minimal) void {
     const args = init.args.toSlice(arena.allocator()) catch |err|
         fatal("failed to collect cli arguments: {t}", .{err});
 
-    var options_err: rmcli.opt.ErrorDescription = undefined;
-    const options = rmcli.opt.parse(Options, args[1..], &options_err) orelse fatal(
+    var options_err: remielle.cli.ErrorDescription = undefined;
+    const options = remielle.cli.parseOptions(Options, args[1..], &options_err) orelse fatal(
         "{f}\nusage: {s} {f}",
-        .{ options_err, args[0], rmcli.opt.Usage(Options) },
+        .{ options_err, args[0], remielle.cli.Usage(Options) },
     );
 
     const listen_address = net.IpAddress.parseLiteral(options.listen_address) catch |err|

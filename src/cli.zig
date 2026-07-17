@@ -1,4 +1,7 @@
-pub fn parse(
+const std = @import("std");
+const Io = std.Io;
+
+pub fn parseOptions(
     comptime Options: type,
     /// Must not include argv0
     args: []const []const u8,
@@ -121,6 +124,3 @@ pub fn Usage(comptime Args: type) type {
         }
     };
 }
-
-const Io = std.Io;
-const std = @import("std");
