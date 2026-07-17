@@ -1,5 +1,21 @@
+const builtin = @import("builtin");
+const std = @import("std");
+const Io = std.Io;
+const net = std.Io.net;
+const Init = std.process.Init;
+const fatal = std.process.fatal;
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+const Operation = remielle.control.Operation;
+const Event = remielle.control.Event;
+const ServerHeader = remielle.control.ServerHeader;
+
+const cli = @import("cli.zig");
+const rand_properties = @import("rand_properties.zig");
+
 pub const std_options: std.Options = .{
-    .logFn = rmio.log.logFn,
+    .logFn = remielle.log.logFn,
 };
 
 const mtu = 1200;
@@ -49,7 +65,7 @@ pub fn main(init: Init) void {
             socket.send(io, &destination, @ptrCast(&kick_message)) catch |err|
                 fatal("send: {t}", .{err});
 
-            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            const ack = receive(Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
         .@"mod-avatar-meta" => |mod_avatar_meta| {
@@ -76,7 +92,7 @@ pub fn main(init: Init) void {
             socket.send(io, &destination, @ptrCast(&mod_message)) catch |err|
                 fatal("send: {t}", .{err});
 
-            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            const ack = receive(Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
         .@"create-weapon" => |create_weapon| {
@@ -101,7 +117,7 @@ pub fn main(init: Init) void {
             socket.send(io, &destination, creation_message.payload()) catch |err|
                 fatal("send: {t}", .{err});
 
-            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            const ack = receive(Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
         .@"create-equip" => |create_equip| {
@@ -137,7 +153,7 @@ pub fn main(init: Init) void {
             socket.send(io, &destination, creation_message.payload()) catch |err|
                 fatal("send: {t}", .{err});
 
-            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            const ack = receive(Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
         .@"random-equip" => |random_equip| {
@@ -158,8 +174,8 @@ pub fn main(init: Init) void {
             var amount = random_equip.amount;
             while (amount != 0) : (amount -= 1) {
                 const slot = (rng.int(u8) % 6) + 1;
-                const suit_index = rng.int(usize) % equipment_suit.entries.len;
-                const suit_id = equipment_suit.entries[suit_index].id;
+                const suit_index = rng.int(usize) % templates.equipment_suit.entries.len;
+                const suit_id = templates.equipment_suit.entries[suit_index].id;
                 const equip_id = suit_id + 40 + slot;
 
                 var properties: [5]Operation.CreateEquip.Entry.Property = undefined;
@@ -179,7 +195,7 @@ pub fn main(init: Init) void {
                     socket.send(io, &destination, batch_message.payload()) catch |err|
                         fatal("send: {t}", .{err});
 
-                    const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+                    const ack = receive(Event.Ack, io, &socket, &recv_buffer);
                     _ = ack;
 
                     batch_message.base.operation.count = 0;
@@ -202,7 +218,7 @@ pub fn main(init: Init) void {
             socket.send(io, &destination, mod_message.payload()) catch |err|
                 fatal("send: {t}", .{err});
 
-            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            const ack = receive(Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
     }
@@ -219,12 +235,12 @@ fn receive(
 
     const data = buf[0..udp_message.data.len];
 
-    if (data.len < @sizeOf(rmnet.ServerHeader))
+    if (data.len < @sizeOf(ServerHeader))
         fatal("invalid packet received from the server", .{});
 
-    const header: *rmnet.ServerHeader = @ptrCast(data[0..@sizeOf(rmnet.ServerHeader)]);
+    const header: *ServerHeader = @ptrCast(data[0..@sizeOf(ServerHeader)]);
 
-    if (header.protocol_version != rmnet.Version.current)
+    if (header.protocol_version != remielle.control.Version.current)
         fatal("server protocol version did not match: {d}", .{header.protocol_version});
 
     switch (header.event_tag) {
@@ -232,7 +248,7 @@ fn receive(
             if (header.event_version != ExpectedEvent.version)
                 fatal("server {t} event version doesn't match: {d}", .{ header.event_tag, header.event_version });
 
-            const ExpectedMessage = rmnet.Event.Message(ExpectedEvent);
+            const ExpectedMessage = Event.Message(ExpectedEvent);
 
             if (data.len != @sizeOf(ExpectedMessage))
                 fatal(
@@ -245,10 +261,10 @@ fn receive(
             return &message.event;
         },
         .nak => {
-            if (header.event_version != rmnet.Event.Nak.version)
+            if (header.event_version != Event.Nak.version)
                 fatal("server {t} event version doesn't match: {d}", .{ header.event_tag, header.event_version });
 
-            const NakMessage = rmnet.Event.Message(rmnet.Event.Nak);
+            const NakMessage = Event.Message(Event.Nak);
 
             if (data.len != @sizeOf(NakMessage))
                 fatal("received negative acknowledgement from server", .{});
@@ -264,23 +280,3 @@ fn receive(
         // else => |unexpected| fatal("received unexpected event ({t})", .{unexpected}),
     }
 }
-
-const fatal = std.process.fatal;
-
-const Operation = rmnet.Operation;
-
-const Io = std.Io;
-const Init = std.process.Init;
-
-const net = std.Io.net;
-
-const cli = @import("cli.zig");
-const equipment_suit = @import("assets/equipment_suit.zig");
-const avatar_base = @import("assets/avatar_base.zig");
-const rand_properties = @import("rand_properties.zig");
-
-const rmio = @import("rmio");
-const rmnet = @import("rmnet");
-
-const builtin = @import("builtin");
-const std = @import("std");

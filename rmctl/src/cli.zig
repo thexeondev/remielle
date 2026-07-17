@@ -1,3 +1,9 @@
+const std = @import("std");
+const fatal = std.process.fatal;
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
 pub const Command = union(enum) {
     pub const Tag = @typeInfo(Command).@"union".tag_type.?;
 
@@ -6,9 +12,9 @@ pub const Command = union(enum) {
         reason: u31 = 3,
     },
     @"mod-avatar-meta": struct {
-        field: rmnet.Operation.ModAvatarMeta.Field,
+        field: remielle.control.Operation.ModAvatarMeta.Field,
         uid: u32,
-        id: avatar_base.Id,
+        id: templates.avatar_base.Id,
         value: u32,
         value_extra: u32 = 0,
     },
@@ -120,10 +126,3 @@ pub const Command = union(enum) {
         }
     }
 };
-
-const fatal = std.process.fatal;
-
-const avatar_base = @import("assets/avatar_base.zig");
-
-const rmnet = @import("rmnet");
-const std = @import("std");

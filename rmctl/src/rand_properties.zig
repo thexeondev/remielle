@@ -1,3 +1,9 @@
+const std = @import("std");
+const Random = std.Random;
+
+const remielle = @import("remielle");
+const CreateEquip = remielle.control.Operation.CreateEquip;
+
 const table: Table = .init(.{
     .{ 11103, &.{1}, 550, 112 },
     .{ 11102, &.{ 4, 5, 6 }, 750, 300 },
@@ -97,9 +103,3 @@ pub fn fill(random: Random, slot: u8, out: *[5]CreateEquip.Entry.Property) void 
         _ = select_rand_properties.swapRemove(selected);
     }
 }
-
-const Random = std.Random;
-const CreateEquip = rmnet.Operation.CreateEquip;
-
-const rmnet = @import("rmnet");
-const std = @import("std");
