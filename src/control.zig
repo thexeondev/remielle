@@ -1,5 +1,9 @@
-pub const Operation = @import("Operation.zig");
-pub const Event = @import("Event.zig");
+//! The server control protocol type definitions.
+
+const std = @import("std");
+
+pub const Operation = @import("control/Operation.zig");
+pub const Event = @import("control/Event.zig");
 
 /// The protocol version.
 pub const Version = enum(u8) {
@@ -29,5 +33,3 @@ comptime {
     std.debug.assert(@sizeOf(ServerHeader) == @sizeOf(u64));
     std.debug.assert(@sizeOf(ClientHeader) == @sizeOf(u64));
 }
-
-const std = @import("std");

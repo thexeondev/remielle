@@ -1,3 +1,9 @@
+const std = @import("std");
+const alignForward = std.mem.alignForward;
+
+const remielle = @import("../remielle.zig");
+const ClientHeader = remielle.control.ClientHeader;
+
 pub const Version = u8;
 
 pub const Tag = enum(u16) {
@@ -129,7 +135,7 @@ pub const ModHadalZoneSchedule = extern struct {
 
 pub fn Message(comptime Op: type) type {
     return extern struct {
-        header: rmnet.ClientHeader,
+        header: ClientHeader,
         operation: Operation,
 
         pub const Operation = Op;
@@ -182,8 +188,3 @@ pub fn ExtendedMessageBuffer(comptime Op: type, comptime buffer_size: usize) typ
         }
     };
 }
-
-const alignForward = std.mem.alignForward;
-
-const rmnet = @import("root.zig");
-const std = @import("std");

@@ -1,3 +1,13 @@
+const std = @import("std");
+const Io = std.Io;
+const net = std.Io.net;
+
+const remielle = @import("remielle");
+const ClientHeader = remielle.control.ClientHeader;
+
+const app = @import("app.zig");
+const Server = @import("Server.zig");
+
 pub const mtu: usize = 1200;
 
 const namespaces: []const type = &.{
@@ -33,7 +43,7 @@ pub const Context = struct {
     userdata: u32,
 
     pub fn sendEvent(context: *const Context, comptime Event: type, event: Event) !void {
-        const message: rmnet.Event.Message(Event) = .init(context.userdata, event);
+        const message: remielle.control.Event.Message(Event) = .init(context.userdata, event);
 
         const socket = context.server.sockets.get(Server.Socket.control.toIndex());
         try socket.send(context.io, context.from, @ptrCast(&message));
@@ -47,31 +57,31 @@ pub fn process(
     from: *const net.IpAddress,
     data: []align(@alignOf(u64)) u8,
 ) !void {
-    if (data.len < @sizeOf(rmnet.ClientHeader))
+    if (data.len < @sizeOf(ClientHeader))
         return error.InvalidPacket;
 
     const socket = server.sockets.get(Server.Socket.control.toIndex());
 
-    const header: *rmnet.ClientHeader = @ptrCast(data[0..@sizeOf(rmnet.ClientHeader)]);
-    if (header.protocol_version != rmnet.Version.current)
-        return send(rmnet.Event.Nak, io, socket, from, header.userdata, .{
+    const header: *ClientHeader = @ptrCast(data[0..@sizeOf(ClientHeader)]);
+    if (header.protocol_version != remielle.control.Version.current)
+        return send(remielle.control.Event.Nak, io, socket, from, header.userdata, .{
             .reason = .protocol_version_mismatch,
-            .extra = @intFromEnum(rmnet.Version.current),
+            .extra = @intFromEnum(remielle.control.Version.current),
         });
 
     switch (header.operation_tag) {
-        _ => return send(rmnet.Event.Nak, io, socket, from, header.userdata, .{
+        _ => return send(remielle.control.Event.Nak, io, socket, from, header.userdata, .{
             .reason = .unknown_operation_tag,
             .extra = 0,
         }),
         .nop => {
-            if (header.operation_version != rmnet.Operation.Nop.version)
-                return send(rmnet.Event.Nak, io, socket, from, header.userdata, .{
+            if (header.operation_version != remielle.control.Operation.Nop.version)
+                return send(remielle.control.Event.Nak, io, socket, from, header.userdata, .{
                     .reason = .operation_version_mismatch,
-                    .extra = rmnet.Operation.Nop.version,
+                    .extra = remielle.control.Operation.Nop.version,
                 });
 
-            try send(rmnet.Event.Ack, io, socket, from, header.userdata, .{});
+            try send(remielle.control.Event.Ack, io, socket, from, header.userdata, .{});
         },
         inline else => |operation_tag| lookup: inline for (namespaces) |ns| {
             inline for (@typeInfo(ns).@"struct".decls) |decl| {
@@ -87,8 +97,8 @@ pub fn process(
                 if (OperationParam.Data.tag != operation_tag)
                     continue;
 
-                if (header.operation_version != rmnet.Operation.Nop.version)
-                    return send(rmnet.Event.Nak, io, socket, from, header.userdata, .{
+                if (header.operation_version != remielle.control.Operation.Nop.version)
+                    return send(remielle.control.Event.Nak, io, socket, from, header.userdata, .{
                         .reason = .operation_version_mismatch,
                         .extra = OperationParam.Data.version,
                     });
@@ -96,7 +106,7 @@ pub fn process(
                 if (@hasField(OperationParam, "entries")) {
                     // ExtendedOperation.
 
-                    const BaseMessage = rmnet.Operation.Message(OperationParam.Data);
+                    const BaseMessage = remielle.control.Operation.Message(OperationParam.Data);
 
                     if (data.len < @sizeOf(BaseMessage))
                         return error.InvalidPacket;
@@ -135,7 +145,7 @@ pub fn process(
 
                     break :lookup;
                 } else {
-                    const ExpectedMessage = rmnet.Operation.Message(OperationParam.Data);
+                    const ExpectedMessage = remielle.control.Operation.Message(OperationParam.Data);
 
                     if (data.len != @sizeOf(ExpectedMessage))
                         return error.InvalidPacket;
@@ -164,17 +174,6 @@ fn send(
     userdata: u32,
     event: Event,
 ) !void {
-    const message: rmnet.Event.Message(Event) = .init(userdata, event);
+    const message: remielle.control.Event.Message(Event) = .init(userdata, event);
     try socket.send(io, destination, @ptrCast(&message));
 }
-
-const Io = std.Io;
-const net = std.Io.net;
-
-const app = @import("app.zig");
-const Server = @import("Server.zig");
-
-const rmnet = @import("rmnet");
-const rmpb = @import("rmpb");
-const rmio = @import("rmio");
-const std = @import("std");

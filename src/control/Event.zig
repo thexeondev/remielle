@@ -1,3 +1,6 @@
+const remielle = @import("../remielle.zig");
+const ServerHeader = remielle.control.ServerHeader;
+
 pub const Version = u8;
 
 pub const Tag = enum(u16) {
@@ -31,7 +34,7 @@ pub const Nak = extern struct {
 
 pub fn Message(comptime Event: type) type {
     return extern struct {
-        header: rmnet.ServerHeader,
+        header: ServerHeader,
         event: Event,
 
         pub fn init(userdata: u32, event: Event) @This() {
@@ -47,5 +50,3 @@ pub fn Message(comptime Event: type) type {
         }
     };
 }
-
-const rmnet = @import("root.zig");

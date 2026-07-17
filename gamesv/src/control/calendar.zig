@@ -1,5 +1,7 @@
+const remielle = @import("remielle");
+
 pub fn modHadalZoneSchedule(
-    extended: control.ExtendedOperation(rmnet.Operation.ModHadalZoneSchedule),
+    extended: control.ExtendedOperation(remielle.control.Operation.ModHadalZoneSchedule),
     context: *const control.Context,
 ) !void {
     const server = context.server;
@@ -7,18 +9,18 @@ pub fn modHadalZoneSchedule(
 
     for (extended.entries) |*entry| {
         const entrance = std.enums.fromInt(Calendar.HadalZone.Entrance, entry.entrance_id) orelse
-            return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
+            return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
         for (templates.zone_info.entries) |zone_info| {
             if (zone_info.zone_id == entry.zone_id)
                 break;
-        } else return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
+        } else return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
         hadal_zone.entrance_zones[entrance.toInt()] = @enumFromInt(entry.zone_id);
     }
 
     server.persistent.calendar.hadal_zone = hadal_zone;
-    try context.sendEvent(rmnet.Event.Ack, .{});
+    try context.sendEvent(remielle.control.Event.Ack, .{});
 
     var session_index: u32 = 0;
     while (session_index < server.conv_map.count()) : (session_index += 1) {
@@ -55,6 +57,5 @@ const control = @import("../control.zig");
 const messaging = @import("../messaging.zig");
 
 const rmpb = @import("rmpb");
-const rmnet = @import("rmnet");
 
 const std = @import("std");
