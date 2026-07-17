@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const rsa = remielle.rsa;
+const assets = remielle.assets;
 const protobuf = remielle.protobuf;
 const MultiSocket = remielle.io.MultiSocket;
 
@@ -11,7 +12,7 @@ pub fn bind(
     io: Io,
     gpa: Allocator,
     csprng: Random,
-    asset_lookup: *const Assets.Lookup,
+    asset_lookup: *const assets.Lookup,
     addresses: *const [Server.Socket.count]net.IpAddress,
     concurrent_session_limit: Io.Limit,
 ) Io.Cancelable!void {
@@ -279,7 +280,6 @@ const net = std.Io.net;
 
 const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
-const Assets = @import("Assets.zig");
 const Server = @import("Server.zig");
 const control = @import("control.zig");
 const messaging = @import("messaging.zig");

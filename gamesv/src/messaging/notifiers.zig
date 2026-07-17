@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const assets = remielle.assets;
+
 const namespaces: []const type = &.{
     @import("notifiers/player_sync.zig"),
     @import("notifiers/scene.zig"),
@@ -27,7 +30,7 @@ pub fn notifyLogicChanges(
                     continue;
                 }
 
-                if (ArgType == *const Assets.Lookup) {
+                if (ArgType == *const assets.Lookup) {
                     arg.* = frame.asset_lookup;
                     continue;
                 }
@@ -132,7 +135,6 @@ fn NotifyOf(Fn: type) type {
 const Allocator = std.mem.Allocator;
 
 const Server = @import("../Server.zig");
-const Assets = @import("../Assets.zig");
 const logic = @import("../logic.zig");
 const messaging = @import("../messaging.zig");
 

@@ -1,3 +1,11 @@
+const Avatar = @This();
+const std = @import("std");
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
+const Properties = @import("../Properties.zig");
+
 const size = templates.avatar_base.entries.len;
 
 pub const equipment_slots: usize = 6;
@@ -208,11 +216,3 @@ pub const MindscapeTabState = enum(u6) {
         return tab_count - @clz(int);
     }
 };
-
-const templates = Assets.templates;
-
-const Assets = @import("../../Assets.zig");
-const Properties = @import("../Properties.zig");
-
-const std = @import("std");
-const Avatar = @This();

@@ -7,6 +7,7 @@ pub const prng = @import("prng.zig");
 pub const mem = @import("mem.zig");
 pub const control = @import("control.zig");
 pub const protobuf = @import("protobuf.zig");
+pub const assets = @import("assets.zig");
 
 test {
     _ = io;

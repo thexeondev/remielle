@@ -10,6 +10,8 @@ pub fn build(b: *Build) void {
         .{ .root_source_file = b.path("src/remielle.zig") },
     );
 
+    StaticAsset.addAll(b, remielle, shared_assets);
+
     const io = b.graph.io;
     const host = b.graph.host;
     const target = b.standardTargetOptions(.{});
@@ -195,10 +197,7 @@ pub fn build(b: *Build) void {
     b.step("test", "run unit tests").dependOn(&b.addRunArtifact(tests).step);
 }
 
-const gamesv_assets: []const StaticAsset = &.{
-    .asset("config", "gamesv/config.zon"),
-    .asset("initial_xorpad", "gamesv/initial_xorpad.bytes"),
-
+const shared_assets: []const StaticAsset = &.{
     // Filecfg
     .asset("AvatarBaseTemplateTb", "assets/filecfg/AvatarBaseTemplateTb.zon"),
     .asset("BuddyBaseTemplateTb", "assets/filecfg/BuddyBaseTemplateTb.zon"),
@@ -229,6 +228,11 @@ const gamesv_assets: []const StaticAsset = &.{
     .asset("main_city_object_template_tb.remi", "assets/bincfg/main_city_object_template_tb.remi"),
     .asset("main_city.remi", "assets/graphs/main_city.remi"),
     .asset("interacts.remi", "assets/graphs/interacts.remi"),
+};
+
+const gamesv_assets: []const StaticAsset = &.{
+    .asset("config", "gamesv/config.zon"),
+    .asset("initial_xorpad", "gamesv/initial_xorpad.bytes"),
 };
 
 const dpsv_assets: []const StaticAsset = &.{

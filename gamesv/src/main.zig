@@ -1,4 +1,5 @@
 const remielle = @import("remielle");
+const assets = remielle.assets;
 
 const log = std.log.scoped(.@"remielle-gamesv");
 
@@ -71,7 +72,7 @@ pub fn main(init: Init.Minimal) void {
         else => |limit| .limited64(limit),
     };
 
-    var asset_lookup = Assets.Lookup.init(gpa) catch |err| switch (err) {
+    var asset_lookup = assets.Lookup.init(gpa) catch |err| switch (err) {
         error.OutOfMemory => fatal("out of memory", .{}),
     };
 
@@ -113,7 +114,6 @@ const net = std.Io.net;
 const exit = std.process.exit;
 
 const app = @import("app.zig");
-const Assets = @import("Assets.zig");
 const Server = @import("Server.zig");
 
 const std = @import("std");

@@ -1,8 +1,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-pub const templates = @import("Assets/templates.zig");
-pub const graphs = @import("Assets/graphs.zig");
+pub const templates = @import("assets/templates.zig");
+pub const graphs = @import("assets/graphs.zig");
 
 pub const Lookup = struct {
     main_city_object_map: templates.main_city_object.Map,

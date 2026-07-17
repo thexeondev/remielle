@@ -1,3 +1,9 @@
+const Equipment = @This();
+const std = @import("std");
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
 pub const capacity = 3_000;
 
 count: u16,
@@ -115,10 +121,3 @@ pub const Property = struct {
         }
     };
 };
-
-const templates = Assets.templates;
-
-const Assets = @import("../../Assets.zig");
-
-const std = @import("std");
-const Equipment = @This();

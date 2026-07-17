@@ -1,3 +1,9 @@
+const Buddy = @This();
+const std = @import("std");
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
 const size = templates.buddy_base.entries.len;
 
 pub const Id = templates.buddy_base.Id;
@@ -91,10 +97,3 @@ pub const Skill = enum(u8) {
         return @intFromEnum(skill);
     }
 };
-
-const templates = Assets.templates;
-
-const Assets = @import("../../Assets.zig");
-
-const std = @import("std");
-const Buddy = @This();

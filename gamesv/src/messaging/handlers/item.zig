@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const templates = remielle.assets.templates;
 
 pub fn getWeaponData(
     message: Message(pb.GetWeaponDataCsReq),
@@ -96,8 +97,6 @@ pub fn getWishlistData(
     response.set(.init);
 }
 
-const templates = Assets.templates;
-
 const ArrayList = std.ArrayList;
 const Message = handlers.Message;
 const Response = handlers.Response;
@@ -105,7 +104,6 @@ const Properties = logic.Properties;
 
 const packers = @import("../../messaging/packers.zig");
 const logic = @import("../../logic.zig");
-const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
 const std = @import("std");

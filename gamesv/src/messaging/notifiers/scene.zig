@@ -1,12 +1,25 @@
+const std = @import("std");
+const ArrayList = std.ArrayList;
+
 const remielle = @import("remielle");
 const protobuf = remielle.protobuf;
 const pb = protobuf.main;
 const pb_stable = protobuf.stable;
+const assets = remielle.assets;
+const templates = assets.templates;
+const main_city = assets.graphs.main_city;
+
+const notifiers = @import("../notifiers.zig");
+const Notify = notifiers.Notify;
+
+const logic = @import("../../logic.zig");
+const packers = @import("../packers.zig");
+const Properties = @import("../../logic/Properties.zig");
 
 const default_interact_target_list: []const pb.InteractTarget = &.{.InteractTarget_NPC};
 
 pub fn switchGameMode(
-    asset_lookup: *const Assets.Lookup,
+    asset_lookup: *const assets.Lookup,
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
         logic.Properties.Avatar,
@@ -273,7 +286,7 @@ pub fn npcInteraction(
 ) !void {
     var action_list: ArrayList(pb.ActionInfo) = .empty;
 
-    const interacts = Assets.graphs.interacts;
+    const interacts = assets.graphs.interacts;
     const event = &interacts.events[changes.npc_interaction.?.interact_index];
 
     for (interacts.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
@@ -332,18 +345,3 @@ pub fn hallRefresh(
         .day_of_week = @intFromEnum(changes.main_city_time.?.day_of_week),
     });
 }
-
-const templates = Assets.templates;
-
-const Notify = notifiers.Notify;
-const ArrayList = std.ArrayList;
-
-const main_city = Assets.graphs.main_city;
-
-const logic = @import("../../logic.zig");
-const Assets = @import("../../Assets.zig");
-const packers = @import("../packers.zig");
-const notifiers = @import("../notifiers.zig");
-const Properties = @import("../../logic/Properties.zig");
-
-const std = @import("std");

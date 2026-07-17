@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const templates = remielle.assets.templates;
 
 pub fn getQuestData(
     message: Message(pb.GetQuestDataCsReq),
@@ -162,15 +163,12 @@ pub fn endBattle(
     response.set(.{ .fight_settle = .init });
 }
 
-const templates = Assets.templates;
-
 const Changes = logic.Changes;
 const Message = handlers.Message;
 const Response = handlers.Response;
 const Properties = logic.Properties;
 
 const logic = @import("../../logic.zig");
-const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
 const std = @import("std");

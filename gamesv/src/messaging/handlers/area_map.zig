@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const templates = remielle.assets.templates;
 
 pub fn getAreaMapData(
     message: Message(pb.GetAreaMapDataCsReq),
@@ -44,8 +45,5 @@ const ArrayList = std.ArrayList;
 const Message = handlers.Message;
 const Response = handlers.Response;
 
-const templates = Assets.templates;
-
-const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 const std = @import("std");

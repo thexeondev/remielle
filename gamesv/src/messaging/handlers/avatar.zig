@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const templates = remielle.assets.templates;
 
 pub fn getAvatarData(
     message: Message(pb.GetAvatarDataCsReq),
@@ -652,7 +653,6 @@ pub fn avatarShowWeaponToggle(
 
 const Avatar = Properties.Avatar;
 const ArrayList = std.ArrayList;
-const templates = Assets.templates;
 
 const Changes = logic.Changes;
 const Properties = logic.Properties;
@@ -662,7 +662,6 @@ const Response = handlers.Response;
 
 const logic = @import("../../logic.zig");
 const packers = @import("../packers.zig");
-const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
 const std = @import("std");

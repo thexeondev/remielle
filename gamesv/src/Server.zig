@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const mem = remielle.mem;
+const assets = remielle.assets;
 const protobuf = remielle.protobuf;
 const MultiSocket = remielle.io.MultiSocket;
 
@@ -28,7 +29,7 @@ resettable_arena: heap.ArenaAllocator,
 /// Set of connectionless sockets, as defined by `Socket`.
 sockets: *MultiSocket,
 /// Initialized at startup.
-asset_lookup: *const Assets.Lookup,
+asset_lookup: *const assets.Lookup,
 persistent: *Persistent,
 /// Indexes into arrays in this structure correspond to indexes in `conv_map`.
 multi_conversation: kcp.MultiConversation,
@@ -91,7 +92,7 @@ pub const Frame = struct {
     /// Same as `Server.clients`
     clients: *Clients,
     /// Same as `Server.asset_lookup`
-    asset_lookup: *const Assets.Lookup,
+    asset_lookup: *const assets.Lookup,
     /// Same as `Server.persistent.calendar`
     calendar: *const logic.Calendar,
     /// Same as `Server.properties`
@@ -108,7 +109,7 @@ pub fn init(
     gpa: Allocator,
     csprng: Random,
     sockets: *MultiSocket,
-    asset_lookup: *const Assets.Lookup,
+    asset_lookup: *const assets.Lookup,
     persistent: *Persistent,
     session_limit: Limit,
 ) Server {
@@ -489,7 +490,6 @@ const array_hash_map = std.array_hash_map;
 
 const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
-const Assets = @import("Assets.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 

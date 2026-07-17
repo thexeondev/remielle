@@ -1,3 +1,11 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
+const logic = @import("../logic.zig");
+
 const rupture_weapon_type: u32 = 6;
 
 fn applyCoreSkillBonus(map: *Property.Map, id: u32, level: u32) void {
@@ -512,12 +520,3 @@ pub const Property = enum(u32) {
     AtkAdvance = 99991211,
     DefAdvance = 99991311,
 };
-
-const Allocator = std.mem.Allocator;
-
-const templates = Assets.templates;
-
-const logic = @import("../logic.zig");
-const Assets = @import("../Assets.zig");
-
-const std = @import("std");

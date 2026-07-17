@@ -1,5 +1,7 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const assets = remielle.assets;
+const templates = remielle.assets.templates;
 
 pub fn enterWorld(
     message: Message(pb.EnterWorldCsReq),
@@ -78,7 +80,7 @@ pub fn interactWithUnit(
     const interaction: Changes.NpcInteraction = .{
         .interact_index = @intCast(std.mem.findScalar(
             u32,
-            Assets.graphs.interacts.ids,
+            assets.graphs.interacts.ids,
             @bitCast(message.data.interact_id),
         ) orelse
             return response.fail(1)),
@@ -167,10 +169,7 @@ const Response = handlers.Response;
 const Changes = logic.Changes;
 const Properties = logic.Properties;
 
-const templates = Assets.templates;
-
 const logic = @import("../../logic.zig");
-const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 
 const std = @import("std");

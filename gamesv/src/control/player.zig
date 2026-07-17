@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const protobuf = remielle.protobuf;
+const templates = remielle.assets.templates;
 
 pub fn playerKick(
     operation: control.Operation(remielle.control.Operation.PlayerKick),
@@ -254,12 +255,9 @@ const Avatar = logic.Properties.Avatar;
 const Weapon = logic.Properties.Weapon;
 const Equipment = logic.Properties.Equipment;
 
-const templates = Assets.templates;
-
 const app = @import("../app.zig");
 const logic = @import("../logic.zig");
 const Server = @import("../Server.zig");
-const Assets = @import("../Assets.zig");
 const control = @import("../control.zig");
 const messaging = @import("../messaging.zig");
 

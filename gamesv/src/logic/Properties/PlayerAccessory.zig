@@ -1,3 +1,11 @@
+const PlayerAccessory = @This();
+const std = @import("std");
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
+const Properties = @import("../Properties.zig");
+
 pub const slots = 2;
 
 meta: std.EnumArray(Avatar, Meta),
@@ -24,11 +32,3 @@ pub const init: PlayerAccessory = .{
 pub const Meta = struct {
     skin: Properties.Avatar.Skin,
 };
-
-const templates = Assets.templates;
-
-const Properties = @import("../Properties.zig");
-const Assets = @import("../../Assets.zig");
-
-const std = @import("std");
-const PlayerAccessory = @This();

@@ -6,9 +6,7 @@ const Allocator = std.mem.Allocator;
 const remielle = @import("remielle");
 const mem = remielle.mem;
 const pb = remielle.protobuf.stable;
-
-const Assets = @import("../Assets.zig");
-const templates = Assets.templates;
+const templates = remielle.assets.templates;
 
 pub const Avatar = @import("Properties/Avatar.zig");
 pub const PlayerAccessory = @import("Properties/PlayerAccessory.zig");

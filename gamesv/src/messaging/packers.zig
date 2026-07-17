@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const assets = remielle.assets;
 
 pub fn packBuddyInfo(arena: Allocator, id: logic.Properties.Buddy.Id, meta: *const logic.Properties.Buddy.Meta) !pb.BuddyInfo {
     const Buddy = logic.Properties.Buddy;
@@ -272,7 +273,7 @@ pub fn packZoneRecord(
         .layer_record_list = layer_record_list: {
             var list: ArrayList(pb.LayerRecord) = .empty;
 
-            for (Assets.templates.zone_info.entries) |zone_info| if (zone_info.zone_id == zone_id) {
+            for (assets.templates.zone_info.entries) |zone_info| if (zone_info.zone_id == zone_id) {
                 try list.append(arena, .{
                     .layer_index = zone_info.layer_index,
                     .status = @enumFromInt(4),
@@ -294,6 +295,5 @@ const Properties = logic.Properties;
 const Allocator = std.mem.Allocator;
 
 const logic = @import("../logic.zig");
-const Assets = @import("../Assets.zig");
 
 const std = @import("std");

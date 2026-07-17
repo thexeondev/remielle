@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const templates = remielle.assets.templates;
 
 pub fn getServerTimestamp(
     rtc: RealTimeClock,
@@ -77,8 +78,6 @@ pub fn getMiscData(
     } });
 }
 
-const templates = Assets.templates;
-
 const ArrayList = std.ArrayList;
 
 const Message = handlers.Message;
@@ -88,7 +87,6 @@ const Properties = logic.Properties;
 const RealTimeClock = logic.RealTimeClock;
 
 const logic = @import("../../logic.zig");
-const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");
 const packers = @import("../packers.zig");
 

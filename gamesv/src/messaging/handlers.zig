@@ -1,4 +1,6 @@
 const remielle = @import("remielle");
+const assets = remielle.assets;
+const templates = assets.templates;
 const protobuf = remielle.protobuf;
 const pb = protobuf.main;
 
@@ -114,7 +116,7 @@ pub fn process(
                 inline for (&args, @typeInfo(Args).@"struct".fields) |*arg, arg_info| {
                     switch (arg_info.type) {
                         InMessage => arg.* = message,
-                        *const Assets => arg.* = frame.assets,
+                        *const assets.Lookup => arg.* = frame.asset_lookup,
                         *const logic.Calendar => arg.* = frame.calendar,
 
                         logic.RealTimeClock => arg.* = .{
@@ -288,7 +290,6 @@ const Server = @import("../Server.zig");
 
 const kcp = @import("../kcp.zig");
 const logic = @import("../logic.zig");
-const Assets = @import("../Assets.zig");
 const messaging = @import("../messaging.zig");
 
 const rmio = @import("rmio");

@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const templates = remielle.assets.templates;
 
 pub fn playerSync(
     rtc: logic.RealTimeClock,
@@ -207,11 +208,8 @@ const Avatar = Properties.Avatar;
 const Allocator = std.mem.Allocator;
 const Properties = logic.Properties;
 
-const templates = Assets.templates;
-
 const logic = @import("../../logic.zig");
 const packers = @import("../packers.zig");
-const Assets = @import("../../Assets.zig");
 const notifiers = @import("../notifiers.zig");
 
 const std = @import("std");

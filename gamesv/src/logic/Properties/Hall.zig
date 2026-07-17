@@ -1,9 +1,7 @@
 const Hall = @This();
 const remielle = @import("remielle");
+const templates = remielle.assets.templates;
 const LimitedString = remielle.mem.LimitedString;
-
-const Assets = @import("../../Assets.zig");
-const templates = Assets.templates;
 
 section_id: templates.section_config.Id,
 position: Position,

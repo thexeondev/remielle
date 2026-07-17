@@ -1,4 +1,5 @@
 const remielle = @import("remielle");
+const templates = remielle.assets.templates;
 
 pub fn modHadalZoneSchedule(
     extended: control.ExtendedOperation(remielle.control.Operation.ModHadalZoneSchedule),
@@ -47,15 +48,10 @@ pub fn modHadalZoneSchedule(
 
 const Calendar = logic.Calendar;
 
-const templates = Assets.templates;
-
 const app = @import("../app.zig");
 const logic = @import("../logic.zig");
 const Server = @import("../Server.zig");
-const Assets = @import("../Assets.zig");
 const control = @import("../control.zig");
 const messaging = @import("../messaging.zig");
-
-const rmpb = @import("rmpb");
 
 const std = @import("std");

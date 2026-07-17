@@ -1,3 +1,9 @@
+const Weapon = @This();
+const std = @import("std");
+
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
 pub const capacity = 2_000;
 
 pub const Id = templates.weapon.Id;
@@ -87,10 +93,3 @@ pub const Refine = enum(u8) {
         return @enumFromInt(int);
     }
 };
-
-const templates = Assets.templates;
-
-const Assets = @import("../../Assets.zig");
-
-const std = @import("std");
-const Weapon = @This();

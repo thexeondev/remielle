@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const templates = remielle.assets.templates;
+
 game_mode: ?GameMode,
 player_accessory: ?PlayerAccessory,
 main_city_time: ?MainCityTime,
@@ -361,9 +364,6 @@ pub fn extract(logic_changes: *const Changes, comptime Sub: type) ?Sub {
     return if (any_fulfilled != 0) subset else null;
 }
 
-const templates = Assets.templates;
-
-const Assets = @import("../Assets.zig");
 const Server = @import("../Server.zig");
 const Properties = @import("Properties.zig");
 
