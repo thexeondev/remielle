@@ -163,6 +163,7 @@ pub fn build(b: *Build) void {
     b.installArtifact(dpsv);
     b.installArtifact(sdksv);
     b.installArtifact(gamesv);
+    b.installArtifact(rmctl);
 
     const serve_all_exe = b.addExecutable(.{
         .name = "serve-all",
