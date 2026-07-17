@@ -1,3 +1,8 @@
+const builtin = @import("builtin");
+const native_os = builtin.os.tag;
+
+const std = @import("std");
+
 // We cannot use std.debug.print because that will pull std.Io.Threaded via debug_io.
 // So we're using direct syscalls instead.
 
@@ -16,10 +21,12 @@ pub fn print() void {
 
 fn writeAll(file: std.Io.File.Handle, content: []const u8) !void {
     if (native_os == .windows) {
-        var cursor = content;
-        var iosb: windows.IO_STATUS_BLOCK = undefined;
+        const w = std.os.windows;
 
-        while (cursor.len != 0) switch (windows.ntdll.NtWriteFile(
+        var cursor = content;
+        var iosb: w.IO_STATUS_BLOCK = undefined;
+
+        while (cursor.len != 0) switch (w.ntdll.NtWriteFile(
             file,
             null, // Event
             null, // ApcRoutine
@@ -37,18 +44,11 @@ fn writeAll(file: std.Io.File.Handle, content: []const u8) !void {
         var cursor = content;
 
         while (cursor.len != 0) {
-            const rc = posix.system.write(file, cursor.ptr, @truncate(cursor.len));
-            switch (posix.system.errno(rc)) {
+            const rc = std.posix.system.write(file, cursor.ptr, @truncate(cursor.len));
+            switch (std.posix.system.errno(rc)) {
                 .SUCCESS => cursor = cursor[@bitCast(rc)..],
                 else => return error.WriteFailed,
             }
         }
     }
 }
-
-const posix = std.posix;
-const windows = std.os.windows;
-const native_os = builtin.os.tag;
-
-const builtin = @import("builtin");
-const std = @import("std");

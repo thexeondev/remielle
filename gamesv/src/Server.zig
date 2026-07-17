@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const mem = remielle.mem;
+const MultiSocket = remielle.io.MultiSocket;
 
 const log = std.log.scoped(.@"remielle-gamesv");
 
@@ -480,7 +481,6 @@ const Limit = std.Io.Limit;
 const Timestamp = std.Io.Timestamp;
 const Allocator = std.mem.Allocator;
 const Cancelable = std.Io.Cancelable;
-const MultiSocket = rmio.MultiSocket;
 
 const heap = std.heap;
 const net = std.Io.net;
@@ -492,7 +492,6 @@ const Assets = @import("Assets.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
-const rmio = @import("rmio");
 const rmpb = @import("rmpb");
 
 const std = @import("std");

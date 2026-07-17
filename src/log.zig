@@ -1,3 +1,8 @@
+const builtin = @import("builtin");
+const native_os = builtin.os.tag;
+
+const std = @import("std");
+
 pub fn logFn(
     comptime level: std.log.Level,
     comptime scope: @EnumLiteral(),
@@ -26,10 +31,10 @@ const Writer = struct {
             .interface = .{
                 .buffer = buffer,
                 .vtable = &.{
-                    .drain = if (is_windows)
-                        drainWindows
-                    else
-                        drainPosix,
+                    .drain = switch (native_os) {
+                        .windows => drainWindows,
+                        else => drainPosix,
+                    },
                 },
             },
         };
@@ -39,7 +44,7 @@ const Writer = struct {
         const writer: *Writer = @alignCast(@fieldParentPtr("interface", io_w));
 
         var splat_backup_buffer: [64]u8 = undefined;
-        var iovecs_buffer: [16]posix.iovec_const = undefined;
+        var iovecs_buffer: [16]std.posix.iovec_const = undefined;
         var iovecs_count: usize = 0;
 
         if (io_w.end != 0)
@@ -81,8 +86,8 @@ const Writer = struct {
             return 0;
         }
 
-        const rc = posix.system.writev(writer.file, &iovecs_buffer, @intCast(iovecs_count));
-        const written: usize = switch (posix.errno(rc)) {
+        const rc = std.posix.system.writev(writer.file, &iovecs_buffer, @intCast(iovecs_count));
+        const written: usize = switch (std.posix.errno(rc)) {
             .SUCCESS => @intCast(rc),
             else => return error.WriteFailed,
         };
@@ -98,7 +103,7 @@ const Writer = struct {
         }
     }
 
-    fn addVec(iovecs: []posix.iovec_const, count: *usize, data: []const u8) bool {
+    fn addVec(iovecs: []std.posix.iovec_const, count: *usize, data: []const u8) bool {
         if (data.len == 0) return true;
         if (iovecs.len == count.*) return false;
 
@@ -128,8 +133,10 @@ const Writer = struct {
     }
 
     fn writeOneWindows(file: std.Io.File.Handle, buf: []const u8) std.Io.Writer.Error!usize {
-        var iosb: windows.IO_STATUS_BLOCK = undefined;
-        return switch (windows.ntdll.NtWriteFile(
+        const w = std.os.windows;
+
+        var iosb: w.IO_STATUS_BLOCK = undefined;
+        return switch (w.ntdll.NtWriteFile(
             file,
             null, // Event
             null, // ApcRoutine
@@ -145,10 +152,3 @@ const Writer = struct {
         };
     }
 };
-
-const is_windows = @import("builtin").os.tag == .windows;
-
-const posix = std.posix;
-const windows = std.os.windows;
-
-const std = @import("std");

@@ -1,5 +1,6 @@
 const remielle = @import("remielle");
 const rsa = remielle.rsa;
+const MultiSocket = remielle.io.MultiSocket;
 
 const log = std.log.scoped(.@"remielle-gamesv");
 
@@ -271,7 +272,6 @@ fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
 const Io = std.Io;
 const Random = std.Random;
 const Allocator = std.mem.Allocator;
-const MultiSocket = rmio.MultiSocket;
 
 const heap = std.heap;
 const net = std.Io.net;
@@ -285,5 +285,4 @@ const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
 const rmpb = @import("rmpb");
-const rmio = @import("rmio");
 const std = @import("std");

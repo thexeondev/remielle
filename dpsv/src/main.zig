@@ -8,7 +8,7 @@ pub const Options = struct {
 };
 
 pub const std_options: std.Options = .{
-    .logFn = rmio.log.logFn,
+    .logFn = remielle.log.logFn,
 };
 
 pub fn main(init: Init.Minimal) void {
@@ -36,8 +36,8 @@ pub fn main(init: Init.Minimal) void {
     else
         .unlimited;
 
-    var io_impl = if (rmio.RemiellIo.supported)
-        rmio.RemiellIo.init(heap.page_allocator, .{
+    var io_impl = if (remielle.io.RemiellIo.supported)
+        remielle.io.RemiellIo.init(heap.page_allocator, .{
             .coroutine_limit = concurrency_units,
             .stack_size = 1024 * 128,
         }) catch |err|
@@ -48,7 +48,7 @@ pub fn main(init: Init.Minimal) void {
     defer io_impl.deinit();
     const io = io_impl.io();
 
-    rmio.splash.print();
+    remielle.splash.print();
 
     const listen_args = .{ io, &data, &listen_address };
 
@@ -62,7 +62,7 @@ pub fn main(init: Init.Minimal) void {
         },
     };
 
-    if (rmio.RemiellIo.supported) {
+    if (remielle.io.RemiellIo.supported) {
         io_impl.waitForShutdown();
         app_future.cancel(io) catch {};
     } else {
@@ -85,5 +85,4 @@ const app = @import("app.zig");
 const Data = @import("Data.zig");
 
 const std = @import("std");
-const rmio = @import("rmio");
 const rmcli = @import("rmcli");

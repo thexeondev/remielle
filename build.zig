@@ -7,8 +7,6 @@ const stable_protos: []const []const u8 = &.{
 pub fn build(b: *Build) void {
     const remielle = b.createModule(.{ .root_source_file = b.path("src/remielle.zig") });
 
-    const rmio = b.createModule(.{ .root_source_file = b.path("rmio/src/root.zig") });
-
     const rmpb = b.createModule(.{ .root_source_file = b.path("rmpb/src/root.zig") });
 
     const host = b.graph.host;
@@ -74,7 +72,6 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("dpsv/src/main.zig"),
             .imports = &.{
                 .{ .name = "remielle", .module = remielle },
-                .{ .name = "rmio", .module = rmio },
             },
             .target = target,
             .optimize = optimize,
@@ -89,7 +86,6 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("sdksv/src/main.zig"),
             .imports = &.{
                 .{ .name = "remielle", .module = remielle },
-                .{ .name = "rmio", .module = rmio },
             },
             .target = target,
             .optimize = optimize,
@@ -104,7 +100,6 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("gamesv/src/main.zig"),
             .imports = &.{
                 .{ .name = "remielle", .module = remielle },
-                .{ .name = "rmio", .module = rmio },
                 .{ .name = "rmpb", .module = rmpb },
             },
             .target = target,
@@ -122,7 +117,6 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("rmctl/src/main.zig"),
             .imports = &.{
                 .{ .name = "remielle", .module = remielle },
-                .{ .name = "rmio", .module = rmio },
             },
             .target = target,
             .optimize = optimize,
@@ -191,17 +185,16 @@ pub fn build(b: *Build) void {
         "start dpsv, sdksv, gamesv at once",
     ).dependOn(&serve_all.step);
 
-    const tests = b.step("test", "run unit tests");
-    const rmio_tests = b.addTest(.{
-        .name = "rmio",
+    const tests = b.addTest(.{
+        .name = "remielle",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("rmio/src/root.zig"),
+            .root_source_file = b.path("src/remielle.zig"),
             .target = target,
             .optimize = optimize,
         }),
     });
 
-    tests.dependOn(&b.addRunArtifact(rmio_tests).step);
+    b.step("test", "run unit tests").dependOn(&b.addRunArtifact(tests).step);
 }
 
 const gamesv_assets: []const StaticAsset = &.{

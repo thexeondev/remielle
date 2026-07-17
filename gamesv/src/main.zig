@@ -10,7 +10,7 @@ pub const Options = struct {
 };
 
 pub const std_options: std.Options = .{
-    .logFn = rmio.log.logFn,
+    .logFn = remielle.log.logFn,
 };
 
 pub fn main(init: Init.Minimal) void {
@@ -44,8 +44,8 @@ pub fn main(init: Init.Minimal) void {
     addresses[Server.Socket.control.toIndex()] = net.IpAddress.parseLiteral(options.Bind_address_ctl) catch |err|
         fatal("bad ctl bind address specified: {t}", .{err});
 
-    var io_impl = if (rmio.RemiellIo.supported)
-        rmio.RemiellIo.init(gpa, .{ .coroutine_limit = .unlimited, .stack_size = 1024 * 1024 }) catch |err|
+    var io_impl = if (remielle.io.RemiellIo.supported)
+        remielle.io.RemiellIo.init(gpa, .{ .coroutine_limit = .unlimited, .stack_size = 1024 * 1024 }) catch |err|
             fatal("failed to init I/O implementation: {t}", .{err})
     else
         std.Io.Threaded.init(gpa, .{});
@@ -53,7 +53,7 @@ pub fn main(init: Init.Minimal) void {
     defer io_impl.deinit();
     const io = io_impl.io();
 
-    rmio.splash.print();
+    remielle.splash.print();
 
     var csprng_seed: [DefaultCsprng.secret_seed_length]u8 = undefined;
     io.randomSecure(&csprng_seed) catch |err| switch (err) {
@@ -89,7 +89,7 @@ pub fn main(init: Init.Minimal) void {
         },
     };
 
-    if (rmio.RemiellIo.supported) {
+    if (remielle.io.RemiellIo.supported) {
         io_impl.waitForShutdown();
         app_future.cancel(io) catch {};
     } else {
@@ -117,5 +117,4 @@ const Assets = @import("Assets.zig");
 const Server = @import("Server.zig");
 
 const std = @import("std");
-const rmio = @import("rmio");
 const builtin = @import("builtin");
