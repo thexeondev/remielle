@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const mem = remielle.mem;
+
 pub const Avatar = @import("Properties/Avatar.zig");
 pub const PlayerAccessory = @import("Properties/PlayerAccessory.zig");
 pub const Buddy = @import("Properties/Buddy.zig");
@@ -16,8 +19,8 @@ hall: Hall,
 main_city_time: MainCityTime,
 quick_team: QuickTeam,
 
-pub const List = rmmem.RemielleArrayList(
-    rmmem.suggestBucketSize(64, Properties),
+pub const List = mem.RemielleArrayList(
+    mem.suggestBucketSize(64, Properties),
     Properties,
     u32,
 );
@@ -707,7 +710,6 @@ const templates = Assets.templates;
 const Assets = @import("../Assets.zig");
 
 const pb = @import("rmpb").stable;
-const rmmem = @import("rmmem");
 const std = @import("std");
 
 const Properties = @This();

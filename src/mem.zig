@@ -1,3 +1,44 @@
+const std = @import("std");
+const heap = std.heap;
+
+pub fn LimitedString(comptime limit: usize) type {
+    return struct {
+        const String = @This();
+
+        pub const Error = error{TooLongString};
+
+        pub const max_length = limit;
+        pub const empty: String = .{};
+
+        bytes: [max_length + 1]u8 = @splat(0),
+
+        pub fn fromSlice(value: []const u8) Error!String {
+            var string: String = .{};
+            try string.set(value);
+
+            return string;
+        }
+
+        pub fn constant(comptime value: []const u8) String {
+            return comptime String.fromSlice(value) catch
+                unreachable; // Constant string is too long.
+        }
+
+        pub fn view(string: *const String) [:0]const u8 {
+            std.debug.assert(string.bytes[max_length] == 0);
+            return std.mem.span(@as([*:0]const u8, @ptrCast(&string.bytes)));
+        }
+
+        pub fn set(string: *String, value: []const u8) Error!void {
+            if (value.len > max_length) return error.TooLongString;
+
+            @memcpy(string.bytes[0..value.len], value);
+            string.bytes[value.len] = 0;
+        }
+    };
+}
+
+/// Deprecated.
 fn SoaBucket(comptime capacity: usize, comptime Struct: type) type {
     const struct_info = @typeInfo(Struct).@"struct";
 
@@ -20,6 +61,7 @@ fn SoaBucket(comptime capacity: usize, comptime Struct: type) type {
     return @Struct(.auto, null, &field_names, &field_types, &@splat(.{}));
 }
 
+/// Deprecated.
 pub fn suggestBucketSize(comptime desired_size: usize, comptime Struct: type) usize {
     const desired_bytes = @sizeOf(SoaBucket(desired_size, Struct));
     if (desired_bytes % heap.page_size_min == 0)
@@ -37,6 +79,7 @@ pub fn suggestBucketSize(comptime desired_size: usize, comptime Struct: type) us
     return suggested_size;
 }
 
+/// Deprecated.
 pub fn RemielleArrayList(
     comptime bucket_size: usize,
     comptime Struct: type,
@@ -178,43 +221,3 @@ pub fn RemielleArrayList(
         }
     };
 }
-
-pub fn LimitedString(comptime limit: usize) type {
-    return struct {
-        const String = @This();
-
-        pub const Error = error{TooLongString};
-
-        pub const max_length = limit;
-        pub const empty: String = .{};
-
-        bytes: [max_length + 1]u8 = @splat(0),
-
-        pub fn fromSlice(value: []const u8) Error!String {
-            var string: String = .{};
-            try string.set(value);
-
-            return string;
-        }
-
-        pub fn constant(comptime value: []const u8) String {
-            return comptime String.fromSlice(value) catch
-                unreachable; // Constant string is too long.
-        }
-
-        pub fn view(string: *const String) [:0]const u8 {
-            std.debug.assert(string.bytes[max_length] == 0);
-            return std.mem.span(@as([*:0]const u8, @ptrCast(&string.bytes)));
-        }
-
-        pub fn set(string: *String, value: []const u8) Error!void {
-            if (value.len > max_length) return error.TooLongString;
-
-            @memcpy(string.bytes[0..value.len], value);
-            string.bytes[value.len] = 0;
-        }
-    };
-}
-
-const heap = std.heap;
-const std = @import("std");

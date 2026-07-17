@@ -1,3 +1,16 @@
+const Passwd = @This();
+const std = @import("std");
+const Io = std.Io;
+const heap = std.heap;
+const Random = std.Random;
+const Allocator = std.mem.Allocator;
+const bcrypt = std.crypto.pwhash.bcrypt;
+const array_hash_map = std.array_hash_map;
+const MultiArrayList = std.MultiArrayList;
+
+const remielle = @import("remielle");
+const LimitedString = remielle.mem.LimitedString;
+
 const save_path = "Persistent/SDK/passwd";
 
 sync: Io.RwLock,
@@ -154,7 +167,7 @@ pub fn create(
 }
 
 pub const Name = struct {
-    string: rmmem.LimitedString(31),
+    string: LimitedString(31),
 
     pub fn fromSlice(slice: []const u8) !Name {
         var name: Name = .{ .string = try .fromSlice(slice) };
@@ -164,7 +177,7 @@ pub const Name = struct {
 };
 
 pub const Secret = struct {
-    hash: rmmem.LimitedString(256),
+    hash: LimitedString(256),
 
     pub fn fromPassword(io: Io, password: []const u8) !Secret {
         var result: Secret = undefined;
@@ -209,16 +222,3 @@ pub const Token = struct {
         return std.mem.eql(u8, &token.string, userdata);
     }
 };
-
-const heap = std.heap;
-const bcrypt = std.crypto.pwhash.bcrypt;
-const array_hash_map = std.array_hash_map;
-
-const Io = std.Io;
-const Random = std.Random;
-const Allocator = std.mem.Allocator;
-const MultiArrayList = std.MultiArrayList;
-
-const rmmem = @import("rmmem");
-const std = @import("std");
-const Passwd = @This();

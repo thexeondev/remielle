@@ -1,6 +1,12 @@
+const QuickTeam = @This();
+const std = @import("std");
+
+const remielle = @import("remielle");
+const LimitedString = remielle.mem.LimitedString;
+
 pub const slots = 20;
 pub const avatar_slots = 3;
-pub const Name = rmmem.LimitedString(14);
+pub const Name = LimitedString(14);
 
 meta: [slots]Meta,
 
@@ -38,7 +44,3 @@ pub const OptionalID = enum(u32) {
         };
     }
 };
-
-const rmmem = @import("rmmem");
-const std = @import("std");
-const QuickTeam = @This();

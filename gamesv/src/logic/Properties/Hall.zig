@@ -1,3 +1,10 @@
+const Hall = @This();
+const remielle = @import("remielle");
+const LimitedString = remielle.mem.LimitedString;
+
+const Assets = @import("../../Assets.zig");
+const templates = Assets.templates;
+
 section_id: templates.section_config.Id,
 position: Position,
 
@@ -14,7 +21,7 @@ pub const Position = union(enum) {
         .id = .empty,
     };
 
-    pub const Id = rmmem.LimitedString(127);
+    pub const Id = LimitedString(127);
 
     pub const Transform = struct {
         pub const vector_size = 3;
@@ -45,10 +52,3 @@ pub const Position = union(enum) {
         ) orelse return null };
     }
 };
-
-const templates = Assets.templates;
-
-const Assets = @import("../../Assets.zig");
-const rmmem = @import("rmmem");
-
-const Hall = @This();

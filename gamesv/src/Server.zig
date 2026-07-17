@@ -1,3 +1,6 @@
+const remielle = @import("remielle");
+const mem = remielle.mem;
+
 const log = std.log.scoped(.@"remielle-gamesv");
 
 pub const Socket = enum(usize) {
@@ -76,7 +79,7 @@ pub const Client = struct {
     };
 };
 
-pub const Clients = rmmem.RemielleArrayList(rmmem.suggestBucketSize(64, Client), Client, u32);
+pub const Clients = mem.RemielleArrayList(mem.suggestBucketSize(64, Client), Client, u32);
 
 pub const Frame = struct {
     /// The index of resources associated with the client this `Frame` is originated from.
@@ -491,7 +494,6 @@ const Persistent = @import("Persistent.zig");
 
 const rmio = @import("rmio");
 const rmpb = @import("rmpb");
-const rmmem = @import("rmmem");
 
 const std = @import("std");
 const Server = @This();

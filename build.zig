@@ -9,7 +9,6 @@ pub fn build(b: *Build) void {
 
     const rmio = b.createModule(.{ .root_source_file = b.path("rmio/src/root.zig") });
     const rmnet = b.createModule(.{ .root_source_file = b.path("rmnet/src/root.zig") });
-    const rmmem = b.createModule(.{ .root_source_file = b.path("rmmem/src/root.zig") });
 
     const rmpb = b.createModule(.{ .root_source_file = b.path("rmpb/src/root.zig") });
 
@@ -92,7 +91,6 @@ pub fn build(b: *Build) void {
             .imports = &.{
                 .{ .name = "remielle", .module = remielle },
                 .{ .name = "rmio", .module = rmio },
-                .{ .name = "rmmem", .module = rmmem },
             },
             .target = target,
             .optimize = optimize,
@@ -109,7 +107,6 @@ pub fn build(b: *Build) void {
                 .{ .name = "remielle", .module = remielle },
                 .{ .name = "rmio", .module = rmio },
                 .{ .name = "rmnet", .module = rmnet },
-                .{ .name = "rmmem", .module = rmmem },
                 .{ .name = "rmpb", .module = rmpb },
             },
             .target = target,

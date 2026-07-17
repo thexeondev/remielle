@@ -20,6 +20,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <www.gnu.org>.
 
+const remielle = @import("remielle");
+const mem = remielle.mem;
+
 const min_rto: kcp.Timeval = .{ .milliseconds = 100 };
 const max_rto: kcp.Timeval = .{ .milliseconds = 60000 };
 const mss: usize = kcp.mtu - kcp.Header.size;
@@ -258,8 +261,8 @@ const Conversation = struct {
     undrained: bool,
 };
 
-const Storage = rmmem.RemielleArrayList(
-    rmmem.suggestBucketSize(64, Conversation),
+const Storage = mem.RemielleArrayList(
+    mem.suggestBucketSize(64, Conversation),
     Conversation,
     u32,
 );
@@ -731,6 +734,5 @@ const SinglyLinkedList = std.SinglyLinkedList;
 
 const kcp = @import("../kcp.zig");
 
-const rmmem = @import("rmmem");
 const std = @import("std");
 const MultiConversation = @This();
