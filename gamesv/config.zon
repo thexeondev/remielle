@@ -16,5 +16,5 @@
     // All created account UIDs will be relative to this.
     .base_player_uid = 666, // the number of the beast
 
-    .dummy_cmd = "PLIIMHGPGOM",
+    .dummy_cmd = "LHOCKEJJCAO",
 }
