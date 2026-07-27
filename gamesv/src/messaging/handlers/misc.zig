@@ -48,7 +48,7 @@ pub fn getMiscData(
 
     var show_post_girls: std.ArrayList(u32) = try .initCapacity(response.allocator, 1);
     show_post_girls.appendAssumeCapacity(
-        @intFromEnum(templates.post_girl_config.Id.Avatar_Female_Size03_Velina),
+        3510056,
     );
 
     var player_accessory_list: std.ArrayList(pb.PlayerAccessoryInfo) = try .initCapacity(response.allocator, Properties.PlayerAccessory.slots);
