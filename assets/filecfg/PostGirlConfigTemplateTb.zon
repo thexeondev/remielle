@@ -285,6 +285,21 @@
         .unlock_condition = "",
     },
     .{
+        .id = 3510055,
+        .name = "Avatar_Female_Size02_Remielle",
+        .unlock_condition = "",
+    },
+    .{
+        .id = 3510056,
+        .name = "Avatar_Female_Size02_Remielle",
+        .unlock_condition = "",
+    },
+    .{
+        .id = 3510057,
+        .name = "Avatar_Female_Size03_Sigrid",
+        .unlock_condition = "",
+    },
+    .{
         .id = 3550000,
         .name = "LiveWallpaper_Activity001",
         .unlock_condition = "",
