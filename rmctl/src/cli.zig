@@ -71,6 +71,10 @@ pub const Command = union(enum) {
         },
         zone_id: u32,
     },
+    @"unlock-avatar": struct {
+        uid: u32,
+        id: avatar_base.Id,
+    },
 
     /// Exits on invalid input.
     pub fn parse(

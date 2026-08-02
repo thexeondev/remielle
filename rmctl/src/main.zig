@@ -205,6 +205,18 @@ pub fn main(init: Init) void {
             const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
+        .@"unlock-avatar" => |unlock_agent| {
+            var message: Operation.Message(Operation.UnlockAvatar) = .init(userdata, .{
+                .player_uid = unlock_agent.uid,
+                .avatar_id = @intFromEnum(unlock_agent.id),
+            });
+
+            socket.send(io, &destination, @ptrCast(&message)) catch |err|
+                fatal("send: {t}", .{err});
+
+            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            _ = ack;
+        },
     }
 }
 

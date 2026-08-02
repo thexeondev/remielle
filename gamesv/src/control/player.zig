@@ -247,6 +247,50 @@ pub fn createEquip(
     try context.sendEvent(rmnet.Event.Ack, .{});
 }
 
+pub fn unlockAvatar(
+    operation: control.Operation(rmnet.Operation.UnlockAvatar),
+    context: *const control.Context,
+) !void {
+    const server = context.server;
+
+    const player_index: u32 = @intCast(server.uid_map.getIndex(operation.data.player_uid) orelse {
+        // TODO: offline changes.
+        return context.sendEvent(rmnet.Event.Nak, .{ .reason = .no_entry, .extra = 0 });
+    });
+
+    const arena = server.resettable_arena.allocator();
+
+    var changes: logic.Changes = .init;
+    const new_avatars = try arena.alloc(logic.Changes.NewAvatar, 1);
+
+    for (new_avatars) |*change| {
+        for (templates.avatar_base.entries) |template| {
+            if (template.id == operation.data.avatar_id) break;
+        } else return context.sendEvent(rmnet.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
+
+        change.* = .{
+            .id = @enumFromInt(operation.data.avatar_id),
+        };
+
+        changes.new_avatars = new_avatars;
+    }
+
+    const frame: Server.Frame = .{
+        .target_index = player_index,
+        .time = context.time,
+        .clients = &server.clients,
+        .assets = server.assets,
+        .properties = &server.properties,
+        .calendar = &server.persistent.calendar,
+        .multi_conversation = &server.multi_conversation,
+    };
+
+    try logic.mutators.dispatchLogicChanges(&frame, &changes);
+    try messaging.notifiers.notifyLogicChanges(arena, &frame, &changes);
+
+    try context.sendEvent(rmnet.Event.Ack, .{});
+}
+
 const Avatar = logic.Properties.Avatar;
 const Weapon = logic.Properties.Weapon;
 const Equipment = logic.Properties.Equipment;

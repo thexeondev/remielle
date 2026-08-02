@@ -7,6 +7,7 @@ pub const Tag = enum(u16) {
     create_weapon = 3,
     create_equip = 4,
     mod_hadal_zone_schedule = 5,
+    unlock_avatar = 6,
     _,
 };
 
@@ -125,6 +126,14 @@ pub const ModHadalZoneSchedule = extern struct {
         pub const entries_count_field = "count";
         pub const Entry = ModHadalZoneSchedule.Entry;
     };
+};
+
+pub const UnlockAvatar = extern struct {
+    pub const tag: Tag = .unlock_avatar;
+    pub const version: Version = 0;
+
+    player_uid: u32,
+    avatar_id: u32,
 };
 
 pub fn Message(comptime Op: type) type {
