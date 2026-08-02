@@ -27,4 +27,6 @@
     .{ .area_id = 111001, .group_name = "MainCityName_Booastrum" },
     .{ .area_id = 111101, .group_name = "BigScene_Booastrum" },
     .{ .area_id = 111102, .group_name = "BigScene_Scamall" },
+    .{ .area_id = 111103, .group_name = "MainCityName_Vyrium" },
+    .{ .area_id = 111104, .group_name = "BigScene_Vyrium" },
 }

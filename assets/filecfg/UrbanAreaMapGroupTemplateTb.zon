@@ -69,4 +69,9 @@
         .group_name = "WorldMap_UrbanMapGroupName_CN_15",
         .is_map_visible = true,
     },
+    .{
+        .area_group_id = 112,
+        .group_name = "WorldMap_UrbanMapGroupName_CN_16",
+        .is_map_visible = true,
+    },
 }

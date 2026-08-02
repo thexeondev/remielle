@@ -15,7 +15,7 @@ To build **Remielle** from sources you need:
 
 For use with the game client, the client patch is required: [vortex](https://git.xeondev.com/ESD/vortex) (a replacement is being worked on)
 
-#### Currently supported client version: `CNBetaWin3.2.0`, it can be found in our [discord server](https://discord.xeondev.com/)
+#### Currently supported client version: `CNBetaWin3.2.1`, it can be found in our [discord server](https://discord.xeondev.com/)
 
 ## Steps to compile and run
 Linux:
