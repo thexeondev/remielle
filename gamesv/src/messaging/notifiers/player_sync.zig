@@ -3,10 +3,12 @@ pub fn playerSync(
     calendar: *const logic.Calendar,
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
+        logic.Properties.Avatar,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.ControlAvatar,
         logic.Changes.ControlGuiseAvatar,
+        logic.Changes.NewAvatar,
         logic.Changes.Avatar,
         logic.Changes.Weapon,
         logic.Changes.Equip,
@@ -26,7 +28,12 @@ pub fn playerSync(
         changes.control_guise_avatar,
     );
 
-    sync.avatar = try buildAvatarSync(notify.allocator, changes.avatars);
+    sync.avatar = try buildAvatarSync(
+        notify.allocator,
+        properties.avatar,
+        changes.avatars,
+        changes.new_avatars,
+    );
 
     sync.misc = .{
         .player_accessory = try buildPlayerAccessory(
@@ -56,6 +63,26 @@ pub fn playerSync(
     notify.one(sync);
 }
 
+pub fn addAvatar(
+    changes: logic.Changes.Subset(.{
+        logic.Changes.NewAvatar,
+    }),
+    notify: Notify(pb.AddAvatarScNotify),
+) !void {
+    const avatars: []const logic.Changes.NewAvatar = changes.new_avatars;
+    var packets: std.ArrayList(pb.AddAvatarScNotify) = .empty;
+
+    for (avatars) |avatar| {
+        var add: pb.AddAvatarScNotify = .init;
+        add.avatar_id = @intFromEnum(avatar.id);
+        add.perform_type = .Gacha;
+
+        packets.append(notify.allocator, add) catch @panic("OOM");
+    }
+
+    notify.many(packets.items);
+}
+
 fn buildSelfBasicInfo(
     allocator: Allocator,
     info: *const Properties.BasicInfo,
@@ -68,20 +95,37 @@ fn buildSelfBasicInfo(
     return try packers.packSelfBasicInfo(allocator, info);
 }
 
-fn buildAvatarSync(allocator: Allocator, changes: []const logic.Changes.Avatar) !?pb.AvatarSync {
-    if (changes.len == 0) return null;
+fn buildAvatarSync(
+    allocator: Allocator,
+    properties: *const logic.Properties.Avatar,
+    avatars: []const logic.Changes.Avatar,
+    new_avatars: []const logic.Changes.NewAvatar,
+) !?pb.AvatarSync {
+    if (avatars.len == 0 and new_avatars.len == 0) return null;
 
     var sync: pb.AvatarSync = .{
-        .avatar_list = try .initCapacity(allocator, changes.len),
+        .avatar_list = try .initCapacity(allocator, avatars.len + new_avatars.len),
     };
 
-    for (changes) |change| sync.avatar_list.appendAssumeCapacity(try packers.packAvatarInfo(
+    for (avatars) |change| sync.avatar_list.appendAssumeCapacity(try packers.packAvatarInfo(
         allocator,
         change.id,
         &change.meta,
         change.weapon_uid,
         change.equipment_uids,
     ));
+
+    for (new_avatars) |new_avatar| {
+        const i = properties.indexes.get(new_avatar.id).?;
+
+        sync.avatar_list.appendAssumeCapacity(try packers.packAvatarInfo(
+            allocator,
+            properties.ids[i],
+            &properties.meta[i],
+            properties.weapon_uids[i],
+            properties.equipment_uids[i],
+        ));
+    }
 
     return sync;
 }

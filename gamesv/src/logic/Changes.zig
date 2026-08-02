@@ -8,6 +8,7 @@ npc_interaction: ?NpcInteraction,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
+new_avatars: []const NewAvatar,
 quick_teams: []const QuickTeam,
 weapons: []const Weapon,
 equipment: []const Equip,
@@ -24,6 +25,7 @@ pub const init: Changes = .{
     .control_avatar = null,
     .control_guise_avatar = null,
     .avatars = &.{},
+    .new_avatars = &.{},
     .quick_teams = &.{},
     .weapons = &.{},
     .equipment = &.{},
@@ -223,6 +225,11 @@ pub const Avatar = struct {
     weapon_uid: Properties.Avatar.OptionalUID,
     equipment_uids: [Properties.Avatar.equipment_slots]Properties.Avatar.OptionalUID,
     awake_material_count: Properties.Avatar.Awakening.Material,
+};
+
+/// Avatar addition
+pub const NewAvatar = struct {
+    id: Properties.Avatar.Id,
 };
 
 pub const QuickTeam = struct {

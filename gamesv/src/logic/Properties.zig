@@ -47,40 +47,38 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
 
     for (templates.avatar_base.entries) |template| if (template.camp != 0) if (template.id < 2_000) if (template.id % 10 == 1) {
         const i = avatar.indexes.count();
-        avatar.indexes.put(template.getId(), @intCast(i));
-        avatar.ids[i] = template.getId();
 
-        avatar.meta[i] = .{
-            .level = .max,
-            .exp = 0,
-            .rank = .max,
-            .talents = .max,
-            .mindscape_tab_state = .init,
-            .flags = .init,
-            .skill_levels = undefined,
-            .skin = .none,
-            .awakening = .none,
-        };
+        addDefaultAvatar(avatar, template.getId(), i);
+    };
+}
 
-        inline for (&avatar.meta[i].skill_levels, 0..) |*level, skill_type|
-            level.* = .maxFor(@enumFromInt(skill_type));
+pub fn addDefaultAvatar(avatar: *Avatar, id: templates.avatar_base.Id, i: usize) void {
+    avatar.indexes.put(id, @intCast(i));
+    avatar.ids[i] = id;
 
-        avatar.weapon_uids[i] = .none;
-        avatar.equipment_uids[i] = @splat(.none);
-        avatar.awake_material_counts[i] = .none;
+    avatar.meta[i] = .{
+        .level = .max,
+        .exp = 0,
+        .rank = .max,
+        .talents = .max,
+        .mindscape_tab_state = .init,
+        .flags = .init,
+        .skill_levels = undefined,
+        .skin = .none,
+        .awakening = .none,
     };
 
+    inline for (&avatar.meta[i].skill_levels, 0..) |*level, skill_type|
+        level.* = .maxFor(@enumFromInt(skill_type));
+
+    avatar.weapon_uids[i] = .none;
+    avatar.equipment_uids[i] = @splat(.none);
+    avatar.awake_material_counts[i] = .none;
+
     for (templates.avatar_special_awaken.entries) |template| {
-        const maybe_index: ?u32 = avatar_index: {
-            const id = std.enums.fromInt(Properties.Avatar.Id, template.avatar_id) orelse
-                break :avatar_index null;
+        if (std.enums.fromInt(Properties.Avatar.Id, template.avatar_id) == null) continue;
 
-            break :avatar_index avatar.indexes.get(id);
-        };
-
-        const index = maybe_index orelse continue;
-
-        avatar.awake_material_counts[index] = .add(avatar.awake_material_counts[index], 1);
+        avatar.awake_material_counts[i] = .add(avatar.awake_material_counts[i], 1);
     }
 }
 

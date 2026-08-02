@@ -34272,14 +34272,14 @@ pub const AddAvatarScNotify = struct {
     pub const pb_desc_name = "AddAvatarScNotify";
     lock: bool = false,
     avatar_id: u32 = 0,
-    perform_type: ?DHHLIKAELOK = null,
+    perform_type: ?AddAvatarType = null,
     UNK_AddAvatarScNotify_32: std.ArrayList(GAEOLHHGGAH) = .empty,
 };
 
-pub const DHHLIKAELOK = enum(i32) {
-    DHHLIKAELOK_LHFCHPPJNNM = 0,
-    DHHLIKAELOK_NKJJMKPBDGL = 1,
-    DHHLIKAELOK_NBJDGKOIMHM = 2,
+pub const AddAvatarType = enum(i32) {
+    Silent = 0,
+    Partnership_Established_Popup = 1,
+    Gacha = 2,
 };
 
 pub const INPBMEFMMFI = struct {
