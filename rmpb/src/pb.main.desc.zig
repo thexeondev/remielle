@@ -9764,8 +9764,8 @@ pub const JOEDKKCOBNI = struct {
 
 pub const AvatarSkinDressCsReq = struct {
     pub const cmd_id: u16 = 6183;
-    pub const avatar_skin_id_field_desc: FieldDesc = .{ .number = 10, .xor = 15214 };
-    pub const avatar_id_field_desc: FieldDesc = .{ .number = 12, .xor = 11943 };
+    pub const avatar_id_field_desc: FieldDesc = .{ .number = 10, .xor = 15214 };
+    pub const avatar_skin_id_field_desc: FieldDesc = .{ .number = 12, .xor = 11943 };
 };
 
 pub const MMNGDAJHLNN = struct {
