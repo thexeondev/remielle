@@ -184,11 +184,11 @@ fn buildHadalZoneSync(
 
     for (
         std.enums.values(logic.Calendar.HadalZone.Entrance),
-    ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toInt()].unwrap()) |zone_id| {
+    ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toIndex()].unwrap()) |zone_id| {
         const entrance_type: pb.EntranceType = entrance.toEntranceType();
 
         sync.sync_entrance_list.appendAssumeCapacity(.{
-            .entrance_id = entrance.toInt(),
+            .entrance_id = entrance.toEntranceId(),
             .state = @enumFromInt(3),
             .cur_zone_record_sync = try packers.packZoneRecord(allocator, rtc.time, entrance_type, zone_id),
         });

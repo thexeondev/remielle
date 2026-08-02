@@ -71,6 +71,7 @@ pub const GameMode = union(enum) {
                     },
                     .boss_challenge => ZoneId.boss_challenge.toInt() * 100 + layer.layer_index,
                     .stable => @intFromEnum(layer.zone_id) * 100 + layer.layer_index,
+                    .free_training => 6900404,
                 };
             }
         };
@@ -86,6 +87,7 @@ pub const GameMode = union(enum) {
             alive_count = 61002,
             impact = 62010,
             boss_challenge = 69001,
+            free_training = 89001,
             _,
 
             pub fn fromInt(int: u32) ?ZoneId {
@@ -104,6 +106,7 @@ pub const GameMode = union(enum) {
             stable = 61,
             scheduled = 62,
             boss_challenge = 69,
+            free_training = 89,
 
             pub fn fromZoneId(id: ZoneId) Group {
                 return fromZoneIdInt(@intFromEnum(id)).?;
@@ -122,7 +125,7 @@ pub const GameMode = union(enum) {
             return switch (hz.layer.zone_id) {
                 .alive_count => 222, // HADAL_ZONE_ALIVECOUNT
                 else => |zone_id| switch (Group.fromZoneId(zone_id)) {
-                    .boss_challenge => 224, // HADAL_ZONE_BOSSCHALLENGE
+                    .boss_challenge, .free_training => 224, // HADAL_ZONE_BOSSCHALLENGE
                     .stable, .scheduled => switch (hz.layer.room_index) {
                         0 => 209, // HADAL_ZONE
                         else => 303, // HADAL_ZONE_IMPACT_BATTLE

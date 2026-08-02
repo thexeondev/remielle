@@ -52,11 +52,22 @@ pub const Command = union(enum) {
     },
     @"mod-hadal-entrance": struct {
         entrance: enum(u32) {
-            hadal_zone_scheduled = 1,
+            free_training = 0,
+            hadal_zone_scheduled_1 = 1,
             hadal_zone_stable = 2,
             hadal_zone_defensive = 3,
-            boss_challenge_normal = 9,
-            boss_challenge_hard = 16,
+            hadal_zone_ambush = 4,
+            boss_challenge_trial_1 = 9,
+            boss_challenge_trial_2 = 10,
+            boss_challenge_trial_3 = 11,
+            // 12 is an empty spacer
+            hadal_zone_scheduled_2 = 13,
+            hadal_zone_scheduled_3 = 14,
+            // 15 is an empty spacer
+            boss_challenge_adversity_1 = 16,
+            boss_challenge_adversity_2 = 17,
+            boss_challenge_adversity_3 = 18,
+            boss_challenge_adversity_4 = 19,
         },
         zone_id: u32,
     },

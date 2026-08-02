@@ -13,12 +13,12 @@ pub fn getHadalZoneData(
 
     for (
         std.enums.values(Calendar.HadalZone.Entrance),
-    ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toInt()].unwrap()) |zone_id| {
+    ) |entrance| if (calendar.hadal_zone.entrance_zones[entrance.toIndex()].unwrap()) |zone_id| {
         const entrance_type: pb.EntranceType = entrance.toEntranceType();
 
         entrance_list.appendAssumeCapacity(.{
             .entrance_type = entrance_type,
-            .entrance_id = entrance.toInt(),
+            .entrance_id = entrance.toEntranceId(),
             .state = @enumFromInt(3),
             .cur_zone_record = try packers.packZoneRecord(response.allocator, rtc.time, entrance_type, zone_id),
         });
