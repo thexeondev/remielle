@@ -33,4 +33,8 @@ pub const Template = struct {
     rp_max: i32,
     rp_recover: i32,
     awake_ids: []const u32,
+    root_bone: []const u8,
+    ep_recover: i32,
+    ep_max: i32,
+    sharp_critical_damage: i32,
 };

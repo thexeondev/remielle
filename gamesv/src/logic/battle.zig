@@ -128,6 +128,7 @@ fn setBattleProperties(map: *Property.Map) void {
     setProperty(map, .DefBattle, getProperty(map, .Def));
     setProperty(map, .CritBattle, getProperty(map, .Crit));
     setProperty(map, .CritDmgBattle, getProperty(map, .CritDmg));
+    setProperty(map, .SharpCriticalDamageBattle, getProperty(map, .SharpCriticalDamage));
     setProperty(map, .SpRecoverBattle, getProperty(map, .SpRecover));
     setProperty(map, .ElementMysteryBattle, getProperty(map, .ElementMystery));
     setProperty(map, .ElementAbnormalPowerBattle, getProperty(map, .ElementAbnormalPower));
@@ -140,6 +141,7 @@ fn setBattleProperties(map: *Property.Map) void {
     setProperty(map, .RpRecoverBattle, getProperty(map, .RpRecover));
     setProperty(map, .SkipDefDamageRatioBattle, getProperty(map, .SkipDefDamageRatio));
     setProperty(map, .AddedDamageRatioWindBattle, getProperty(map, .AddedDamageRatioWind));
+    setProperty(map, .EpRecoverBattle, getProperty(map, .EpRecover));
     modifyProperty(map, .PenRatioBattle, getProperty(map, .Pen));
     modifyProperty(map, .PenDeltaBattle, getProperty(map, .PenValue));
 
@@ -150,16 +152,20 @@ fn setBattleProperties(map: *Property.Map) void {
 fn setDynamicProperties(map: *Property.Map) void {
     setDynamicProperty(map, .HpMax, .HpMaxBase, .HpMaxRatio, .HpMaxDelta);
     setDynamicProperty(map, .SpMax, .SpMaxBase, .None, .SpMaxDelta);
+    setDynamicProperty(map, .RpMax, .RpMaxBase, .None, .RpMaxDelta);
+    setDynamicProperty(map, .EpMax, .EpMaxBase, .None, .EpMaxDelta);
     setDynamicProperty(map, .Atk, .AtkBase, .AtkRatio, .AtkDelta);
     setDynamicProperty(map, .BreakStun, .BreakStunBase, .BreakStunRatio, .BreakStunDelta);
     setDynamicProperty(map, .SkipDefAtk, .SkipDefAtkBase, .None, .SkipDefAtkDelta);
     setDynamicProperty(map, .Def, .DefBase, .DefRatio, .DefDelta);
     setDynamicProperty(map, .Crit, .CritBase, .None, .CritDelta);
     setDynamicProperty(map, .CritDmg, .CritDmgBase, .None, .CritDmgDelta);
+    setDynamicProperty(map, .SharpCriticalDamage, .SharpCriticalDamageBase, .None, .SharpCriticalDamageDelta);
     setDynamicProperty(map, .Pen, .PenBase, .None, .PenDelta);
     setDynamicProperty(map, .PenValue, .PenValueBase, .None, .PenValueDelta);
     setDynamicProperty(map, .SpRecover, .SpRecoverBase, .SpRecoverRatio, .SpRecoverDelta);
     setDynamicProperty(map, .RpRecover, .RpRecoverBase, .RpRecoverRatio, .RpRecoverDelta);
+    setDynamicProperty(map, .EpRecover, .EpRecoverBase, .EpRecoverRatio, .EpRecoverDelta);
     setDynamicProperty(map, .ElementMystery, .ElementMysteryBase, .None, .ElementMysteryDelta);
     setDynamicProperty(map, .ElementAbnormalPower, .ElementAbnormalPowerBase, .ElementAbnormalPowerRatio, .ElementAbnormalPowerDelta);
     setDynamicProperty(map, .AddedDamageRatio, .AddedDamageRatio1, .None, .AddedDamageRatio3);
@@ -226,6 +232,7 @@ fn initBaseProperties(map: *Property.Map, template: *const templates.avatar_batt
     setProperty(map, .DefGrowth, template.defence_growth);
     setProperty(map, .CritBase, template.crit);
     setProperty(map, .CritDmgBase, template.crit_damage);
+    setProperty(map, .SharpCriticalDamageBase, template.sharp_critical_damage);
     setProperty(map, .PenBase, 0);
     setProperty(map, .PenValueBase, 0);
     setProperty(map, .SpMaxBase, template.sp_bar_point);
@@ -234,6 +241,8 @@ fn initBaseProperties(map: *Property.Map, template: *const templates.avatar_batt
     setProperty(map, .ElementAbnormalPowerBase, template.element_abnormal_power);
     setProperty(map, .RpMax, template.rp_max);
     setProperty(map, .RpRecoverBase, template.rp_recover);
+    setProperty(map, .EpMax, template.ep_max);
+    setProperty(map, .EpRecoverBase, template.ep_recover);
 }
 
 fn modifyProperty(map: *Property.Map, key: Property, delta: i32) void {
@@ -405,12 +414,14 @@ pub const Property = enum(u32) {
     HpMax = 111,
     SpMax = 115,
     RpMax = 119,
+    EpMax = 120,
     Atk = 121,
     BreakStun = 122,
     SkipDefAtk = 123,
     Def = 131,
     Crit = 201,
     CritDmg = 211,
+    SharpCriticalDamage = 213,
     Pen = 231,
     PenValue = 232,
     SpRecover = 305,
@@ -425,6 +436,7 @@ pub const Property = enum(u32) {
     RpRecover = 320,
     SkipDefDamageRatio = 322,
     AddedDamageRatioWind = 323,
+    EpRecover = 324,
     // battle
     HpMaxBattle = 1111,
     AtkBattle = 1121,
@@ -433,6 +445,7 @@ pub const Property = enum(u32) {
     DefBattle = 1131,
     CritBattle = 1201,
     CritDmgBattle = 1211,
+    SharpCriticalDamageBattle = 1213,
     PenRatioBattle = 1231,
     PenDeltaBattle = 1232,
     SpRecoverBattle = 1305,
@@ -447,21 +460,26 @@ pub const Property = enum(u32) {
     RpRecoverBattle = 1320,
     SkipDefDamageRatioBattle = 1322,
     AddedDamageRatioWindBattle = 1323,
+    EpRecoverBattle = 1324,
     // base
     HpMaxBase = 11101,
     SpMaxBase = 11501,
+    RpMaxBase = 11901,
+    EpMaxBase = 12001,
     AtkBase = 12101,
     BreakStunBase = 12201,
     SkipDefAtkBase = 12301, // ?? client has 12205 for some reason
     DefBase = 13101,
     CritBase = 20101,
     CritDmgBase = 21101,
+    SharpCriticalDamageBase = 21301,
     PenBase = 23101,
     PenValueBase = 23201,
     SpRecoverBase = 30501,
     ElementMysteryBase = 31201,
     ElementAbnormalPowerBase = 31401,
     RpRecoverBase = 32001,
+    EpRecoverBase = 32401,
     // ratio
     HpMaxRatio = 11102,
     AtkRatio = 12102,
@@ -470,21 +488,26 @@ pub const Property = enum(u32) {
     SpRecoverRatio = 30502,
     ElementAbnormalPowerRatio = 31402,
     RpRecoverRatio = 32002,
+    EpRecoverRatio = 32402,
     // delta
     HpMaxDelta = 11103,
     SpMaxDelta = 11503,
+    RpMaxDelta = 11903,
+    EpMaxDelta = 12003,
     AtkDelta = 12103,
     BreakStunDelta = 12203,
     SkipDefAtkDelta = 12303, // ?? client has 12205 for some reason
     DefDelta = 13103,
     CritDelta = 20103,
     CritDmgDelta = 21103,
+    SharpCriticalDamageDelta = 21303,
     PenDelta = 23103,
     PenValueDelta = 23203,
     SpRecoverDelta = 30503,
     ElementMysteryDelta = 31203,
     ElementAbnormalPowerDelta = 31403,
     RpRecoverDelta = 32003,
+    EpRecoverDelta = 32403,
     // damage ratios 1/3
     AddedDamageRatio1 = 30701,
     AddedDamageRatio3 = 30703,
