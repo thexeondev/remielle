@@ -26,21 +26,21 @@
             .servers = .{"remielle"},
             .cdn_conf = .{
                 .design_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17938874_25b899b644/client/",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17953905_912e850db5/client/",
                     .data_revision = "17938874",
-                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6283,\"fileMD5\":\"11655180840643117107\"}]",
+                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6284,\"fileMD5\":\"6319953280465152845\"}]",
                 },
                 .game_res = .{
                     .audio_revision = "17893740",
-                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_17938874_25b899b644/client/",
+                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_17953905_912e850db5/client/",
                     .branch = "beta_live",
                     .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":2979942,\"fileMD5\":\"3536867021072202751\"},{\"fileName\":\"audio_version\",\"fileSize\":67638,\"fileMD5\":\"7515155875906771305\"},{\"fileName\":\"base_revision\",\"fileSize\":19,\"fileMD5\":\"4405916221086155789\"}]",
-                    .res_revision = "17938874",
+                    .res_revision = "17953905",
                 },
                 .silence_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17938874_25b899b644/client_silence/",
-                    .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":567,\"fileMD5\":\"7551760599124082839\"}]",
-                    .silence_revision = "17917468",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17953905_912e850db5/client_silence/",
+                    .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":568,\"fileMD5\":\"6244241471591986126\"}]",
+                    .silence_revision = "17953905",
                 },
             },
         },
