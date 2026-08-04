@@ -13,7 +13,7 @@ We also maintain an in-house implementation of `protobuf` serializer and compile
 To build **Remielle** from sources you need:
 - Zig Compiler, version `0.16.0`: [Linux](https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz)/[Windows](https://ziglang.org/download/0.16.0/zig-x86_64-windows-0.16.0.zip)
 
-For use with the game client, the client patch is required: [vortex](https://git.xeondev.com/ESD/vortex) (a replacement is being worked on)
+For use with the game client, the client patch is required: [thaumiel](https://git.xeondev.com/remielle/thaumiel)
 
 #### Currently supported client version: `CNBetaWin3.2.1`, it can be found in our [discord server](https://discord.xeondev.com/)
 
