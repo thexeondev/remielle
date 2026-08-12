@@ -3137,7 +3137,7 @@
         .min_avatar_level = 15,
         .min_passive_skill_level = 1,
         .unlock_passive_skill_level = 2,
-        .propertys = .{ .{ .property = 20101, .value = 480 }, .{ .property = 21301, .value = 0 } },
+        .propertys = .{.{ .property = 20101, .value = 480 }},
         .material_costs = .{},
     },
     .{
@@ -3146,7 +3146,7 @@
         .min_avatar_level = 25,
         .min_passive_skill_level = 2,
         .unlock_passive_skill_level = 3,
-        .propertys = .{ .{ .property = 20101, .value = 480 }, .{ .property = 21301, .value = 1000 } },
+        .propertys = .{.{ .property = 20101, .value = 960 }},
         .material_costs = .{},
     },
     .{
@@ -3155,7 +3155,7 @@
         .min_avatar_level = 35,
         .min_passive_skill_level = 3,
         .unlock_passive_skill_level = 4,
-        .propertys = .{ .{ .property = 20101, .value = 960 }, .{ .property = 21301, .value = 1000 } },
+        .propertys = .{.{ .property = 20101, .value = 1440 }},
         .material_costs = .{},
     },
     .{
@@ -3164,7 +3164,7 @@
         .min_avatar_level = 45,
         .min_passive_skill_level = 4,
         .unlock_passive_skill_level = 5,
-        .propertys = .{ .{ .property = 20101, .value = 960 }, .{ .property = 21301, .value = 2000 } },
+        .propertys = .{.{ .property = 20101, .value = 1920 }},
         .material_costs = .{},
     },
     .{
@@ -3173,7 +3173,7 @@
         .min_avatar_level = 55,
         .min_passive_skill_level = 5,
         .unlock_passive_skill_level = 6,
-        .propertys = .{ .{ .property = 20101, .value = 1440 }, .{ .property = 21301, .value = 2000 } },
+        .propertys = .{.{ .property = 20101, .value = 2400 }},
         .material_costs = .{},
     },
     .{
@@ -3182,7 +3182,7 @@
         .min_avatar_level = 60,
         .min_passive_skill_level = 6,
         .unlock_passive_skill_level = 7,
-        .propertys = .{ .{ .property = 20101, .value = 1440 }, .{ .property = 21301, .value = 3000 } },
+        .propertys = .{.{ .property = 20101, .value = 2880 }},
         .material_costs = .{},
     },
     .{
@@ -3191,7 +3191,7 @@
         .min_avatar_level = 15,
         .min_passive_skill_level = 1,
         .unlock_passive_skill_level = 2,
-        .propertys = .{ .{ .property = 13102, .value = 960 }, .{ .property = 12101, .value = 0 } },
+        .propertys = .{ .{ .property = 20101, .value = 480 }, .{ .property = 12101, .value = 0 } },
         .material_costs = .{},
     },
     .{
@@ -3200,7 +3200,7 @@
         .min_avatar_level = 25,
         .min_passive_skill_level = 2,
         .unlock_passive_skill_level = 3,
-        .propertys = .{ .{ .property = 13102, .value = 960 }, .{ .property = 12101, .value = 25 } },
+        .propertys = .{ .{ .property = 20101, .value = 480 }, .{ .property = 12101, .value = 25 } },
         .material_costs = .{},
     },
     .{
@@ -3209,7 +3209,7 @@
         .min_avatar_level = 35,
         .min_passive_skill_level = 3,
         .unlock_passive_skill_level = 4,
-        .propertys = .{ .{ .property = 13102, .value = 1920 }, .{ .property = 12101, .value = 25 } },
+        .propertys = .{ .{ .property = 20101, .value = 960 }, .{ .property = 12101, .value = 25 } },
         .material_costs = .{},
     },
     .{
@@ -3218,7 +3218,7 @@
         .min_avatar_level = 45,
         .min_passive_skill_level = 4,
         .unlock_passive_skill_level = 5,
-        .propertys = .{ .{ .property = 13102, .value = 1920 }, .{ .property = 12101, .value = 50 } },
+        .propertys = .{ .{ .property = 20101, .value = 960 }, .{ .property = 12101, .value = 50 } },
         .material_costs = .{},
     },
     .{
@@ -3227,7 +3227,7 @@
         .min_avatar_level = 55,
         .min_passive_skill_level = 5,
         .unlock_passive_skill_level = 6,
-        .propertys = .{ .{ .property = 13102, .value = 2880 }, .{ .property = 12101, .value = 50 } },
+        .propertys = .{ .{ .property = 20101, .value = 1440 }, .{ .property = 12101, .value = 50 } },
         .material_costs = .{},
     },
     .{
@@ -3236,7 +3236,7 @@
         .min_avatar_level = 60,
         .min_passive_skill_level = 6,
         .unlock_passive_skill_level = 7,
-        .propertys = .{ .{ .property = 13102, .value = 2880 }, .{ .property = 12101, .value = 75 } },
+        .propertys = .{ .{ .property = 20101, .value = 1440 }, .{ .property = 12101, .value = 75 } },
         .material_costs = .{},
     },
 }

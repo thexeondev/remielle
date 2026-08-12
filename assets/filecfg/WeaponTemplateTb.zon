@@ -182,7 +182,7 @@
     .{
         .item_id = 12016,
         .weapon_name = "Weapon_B_Common_16",
-        .base_property = .{ .property = 13101, .value = 18 },
+        .base_property = .{ .property = 13101, .value = 19 },
         .rand_property = .{ .property = 13102, .value = 1280 },
         .star_limit = 4,
         .exp_recycle = 300,
@@ -386,7 +386,7 @@
     .{
         .item_id = 13017,
         .weapon_name = "Weapon_A_Common_17",
-        .base_property = .{ .property = 13101, .value = 23 },
+        .base_property = .{ .property = 13101, .value = 24 },
         .rand_property = .{ .property = 13102, .value = 1600 },
         .star_limit = 4,
         .exp_recycle = 6000,
@@ -434,7 +434,7 @@
     .{
         .item_id = 13021,
         .weapon_name = "Weapon_A_Common_21",
-        .base_property = .{ .property = 13101, .value = 23 },
+        .base_property = .{ .property = 13101, .value = 24 },
         .rand_property = .{ .property = 20103, .value = 800 },
         .star_limit = 4,
         .exp_recycle = 6000,
@@ -1178,7 +1178,7 @@
     .{
         .item_id = 14161,
         .weapon_name = "Weapon_S_1611",
-        .base_property = .{ .property = 13101, .value = 28 },
+        .base_property = .{ .property = 13101, .value = 29 },
         .rand_property = .{ .property = 13102, .value = 1920 },
         .star_limit = 4,
         .exp_recycle = 30000,
@@ -1191,7 +1191,7 @@
         .item_id = 14162,
         .weapon_name = "Weapon_S_1621",
         .base_property = .{ .property = 12101, .value = 48 },
-        .rand_property = .{ .property = 13102, .value = 1920 },
+        .rand_property = .{ .property = 30502, .value = 2400 },
         .star_limit = 4,
         .exp_recycle = 30000,
         .refine_initial = 1,

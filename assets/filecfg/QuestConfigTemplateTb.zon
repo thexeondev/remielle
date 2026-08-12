@@ -5150,6 +5150,111 @@
         .quest_type = 4,
     },
     .{
+        .quest_id = 2310711,
+        .quest_name = "QuestName_2310711",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310712,
+        .quest_name = "QuestName_2310712",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310713,
+        .quest_name = "QuestName_2310713",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310714,
+        .quest_name = "QuestName_2310714",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310715,
+        .quest_name = "QuestName_2310715",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310716,
+        .quest_name = "QuestName_2310716",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310717,
+        .quest_name = "QuestName_2310717",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310718,
+        .quest_name = "QuestName_2310718",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310719,
+        .quest_name = "QuestName_2310719",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310720,
+        .quest_name = "QuestName_2310720",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310721,
+        .quest_name = "QuestName_2310721",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310722,
+        .quest_name = "QuestName_2310722",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310723,
+        .quest_name = "QuestName_2310723",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310724,
+        .quest_name = "QuestName_2310724",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310725,
+        .quest_name = "QuestName_2310725",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310726,
+        .quest_name = "QuestName_2310726",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310727,
+        .quest_name = "QuestName_2310727",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310728,
+        .quest_name = "QuestName_2310728",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310729,
+        .quest_name = "QuestName_2310729",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2310730,
+        .quest_name = "QuestName_2310730",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 2324501,
+        .quest_name = "QuestName_2324501",
+        .quest_type = 4,
+    },
+    .{
         .quest_id = 3010101,
         .quest_name = "QuestName_3010101",
         .quest_type = 23,
@@ -18947,6 +19052,11 @@
     .{
         .quest_id = 6011205,
         .quest_name = "QuestName_6011205",
+        .quest_type = 4,
+    },
+    .{
+        .quest_id = 6011206,
+        .quest_name = "QuestName_6011206",
         .quest_type = 4,
     },
     .{
@@ -47675,6 +47785,16 @@
         .quest_type = 9,
     },
     .{
+        .quest_id = 102610214,
+        .quest_name = "QuestName_102610214",
+        .quest_type = 9,
+    },
+    .{
+        .quest_id = 102610215,
+        .quest_name = "QuestName_102610215",
+        .quest_type = 9,
+    },
+    .{
         .quest_id = 105010001,
         .quest_name = "QuestName_105010001",
         .quest_type = 19,
@@ -51536,6 +51656,111 @@
     },
     .{
         .quest_id = 105010773,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010774,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010775,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010776,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010777,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010778,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010779,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010780,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010781,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010782,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010783,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010784,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010785,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010786,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010787,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010788,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010789,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010790,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010791,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010792,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010793,
+        .quest_name = "QuestName_105010494",
+        .quest_type = 19,
+    },
+    .{
+        .quest_id = 105010794,
         .quest_name = "QuestName_105010494",
         .quest_type = 19,
     },
@@ -57842,6 +58067,126 @@
     .{
         .quest_id = 231070805,
         .quest_name = "QuestName_231070805",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071101,
+        .quest_name = "QuestName_231071101",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071201,
+        .quest_name = "QuestName_231071201",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071301,
+        .quest_name = "QuestName_231071301",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071401,
+        .quest_name = "QuestName_231071401",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071501,
+        .quest_name = "QuestName_231071501",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071601,
+        .quest_name = "QuestName_231071601",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071701,
+        .quest_name = "QuestName_231071701",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071801,
+        .quest_name = "QuestName_231071801",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231071901,
+        .quest_name = "QuestName_231071901",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072001,
+        .quest_name = "QuestName_231072001",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072101,
+        .quest_name = "QuestName_231072101",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072201,
+        .quest_name = "QuestName_231072201",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072301,
+        .quest_name = "QuestName_231072301",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072401,
+        .quest_name = "QuestName_231072401",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072501,
+        .quest_name = "QuestName_231072501",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072601,
+        .quest_name = "QuestName_231072601",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072701,
+        .quest_name = "QuestName_231072701",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072801,
+        .quest_name = "QuestName_231072801",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231072901,
+        .quest_name = "QuestName_231072901",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 231073001,
+        .quest_name = "QuestName_231073001",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 232450101,
+        .quest_name = "QuestName_232450101",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 232450102,
+        .quest_name = "QuestName_232450102",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 232450103,
+        .quest_name = "QuestName_232450103",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 232450104,
+        .quest_name = "QuestName_232450104",
         .quest_type = 5,
     },
     .{
@@ -69920,6 +70265,11 @@
         .quest_type = 5,
     },
     .{
+        .quest_id = 601120309,
+        .quest_name = "QuestName_601120309",
+        .quest_type = 5,
+    },
+    .{
         .quest_id = 601120401,
         .quest_name = "QuestName_601120401",
         .quest_type = 5,
@@ -69955,6 +70305,11 @@
         .quest_type = 5,
     },
     .{
+        .quest_id = 601120408,
+        .quest_name = "QuestName_601120408",
+        .quest_type = 5,
+    },
+    .{
         .quest_id = 601120501,
         .quest_name = "QuestName_601120501",
         .quest_type = 5,
@@ -69982,6 +70337,26 @@
     .{
         .quest_id = 601120506,
         .quest_name = "QuestName_601120506",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 601120507,
+        .quest_name = "QuestName_601120507",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 601120508,
+        .quest_name = "QuestName_601120508",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 601120509,
+        .quest_name = "QuestName_601120509",
+        .quest_type = 5,
+    },
+    .{
+        .quest_id = 601120601,
+        .quest_name = "QuestName_601120601",
         .quest_type = 5,
     },
     .{

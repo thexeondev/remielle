@@ -3616,7 +3616,7 @@
         .max_level = 20,
         .hp_max = 312,
         .attack = 36,
-        .defence = 21,
+        .defence = 24,
         .promotion_costs = .{ .{ .item_id = 10, .number = 56000 }, .{ .item_id = 100227, .number = 12 } },
     },
     .{
@@ -3626,7 +3626,7 @@
         .max_level = 30,
         .hp_max = 624,
         .attack = 72,
-        .defence = 42,
+        .defence = 49,
         .promotion_costs = .{ .{ .item_id = 10, .number = 120000 }, .{ .item_id = 100227, .number = 20 } },
     },
     .{
@@ -3636,7 +3636,7 @@
         .max_level = 40,
         .hp_max = 936,
         .attack = 108,
-        .defence = 62,
+        .defence = 73,
         .promotion_costs = .{ .{ .item_id = 10, .number = 200000 }, .{ .item_id = 100237, .number = 10 } },
     },
     .{
@@ -3646,7 +3646,7 @@
         .max_level = 50,
         .hp_max = 1248,
         .attack = 144,
-        .defence = 83,
+        .defence = 97,
         .promotion_costs = .{ .{ .item_id = 10, .number = 400000 }, .{ .item_id = 100237, .number = 20 } },
     },
     .{
@@ -3656,7 +3656,7 @@
         .max_level = 60,
         .hp_max = 1559,
         .attack = 180,
-        .defence = 104,
+        .defence = 122,
         .promotion_costs = .{},
     },
     .{
