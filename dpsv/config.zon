@@ -22,25 +22,25 @@
     },
 
     .versions = .{
-        .@"CNBetaWin3.2.2" = .{
+        .@"CNBetaWin3.2.3" = .{
             .servers = .{"remielle"},
             .cdn_conf = .{
                 .design_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_18114313_ac80198f54/client/",
-                    .data_revision = "18097913",
-                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6035,\"fileMD5\":\"16332682419161290908\"}]",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_18259966_8d55d9c1f3/client/",
+                    .data_revision = "18258799",
+                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6051,\"fileMD5\":\"8949336079967174845\"}]",
                 },
                 .game_res = .{
-                    .audio_revision = "18054953",
-                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_18114313_ac80198f54/client/",
+                    .audio_revision = "18218919",
+                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_18259966_8d55d9c1f3/client/",
                     .branch = "beta_live",
-                    .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":2986366,\"fileMD5\":\"4340301580478161770\"},{\"fileName\":\"audio_version\",\"fileSize\":67638,\"fileMD5\":\"15896109416721449819\"},{\"fileName\":\"base_revision\",\"fileSize\":19,\"fileMD5\":\"8595085006893373138\"}]",
-                    .res_revision = "18114313",
+                    .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":2989547,\"fileMD5\":\"14443289338930941187\"},{\"fileName\":\"audio_version\",\"fileSize\":67648,\"fileMD5\":\"10475041915268381251\"},{\"fileName\":\"base_revision\",\"fileSize\":19,\"fileMD5\":\"9809331081255161629\"}]",
+                    .res_revision = "18259966",
                 },
                 .silence_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_18114313_ac80198f54/client_silence/",
-                    .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":568,\"fileMD5\":\"7250522917897885078\"}]",
-                    .silence_revision = "18070256",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_18259966_8d55d9c1f3/client_silence/",
+                    .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":569,\"fileMD5\":\"15827271360371418774\"}]",
+                    .silence_revision = "18240402",
                 },
             },
         },

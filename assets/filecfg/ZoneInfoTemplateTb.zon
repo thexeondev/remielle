@@ -4771,7 +4771,7 @@
     },
     .{
         .zone_id = 690462,
-        .name = "OfficialName_Monster_Girtablu_HC",
+        .name = "OfficialName_Monster_Mutant_HC",
         .layer_id = 69046201,
         .layer_index = 1,
         .group_id = 1002,
@@ -4811,7 +4811,7 @@
     },
     .{
         .zone_id = 690472,
-        .name = "OfficialName_Monster_Mutant_HC",
+        .name = "OfficialName_Monster_Girtablu_HC",
         .layer_id = 69047201,
         .layer_index = 1,
         .group_id = 1002,
@@ -5551,7 +5551,7 @@
     },
     .{
         .zone_id = 6904621,
-        .name = "OfficialName_Monster_Girtablu_HC",
+        .name = "OfficialName_Monster_Mutant_HC",
         .layer_id = 69046201,
         .layer_index = 1,
         .group_id = 1002,
@@ -5561,7 +5561,7 @@
     },
     .{
         .zone_id = 6904711,
-        .name = "OfficialName_Monster_Mutant",
+        .name = "OfficialName_Monster_Larval",
         .layer_id = 69047101,
         .layer_index = 1,
         .group_id = 1001,
@@ -5581,7 +5581,7 @@
     },
     .{
         .zone_id = 6904711,
-        .name = "OfficialName_Monster_MentorMevorakh",
+        .name = "OfficialName_Monster_GraymaneCenturion",
         .layer_id = 69047103,
         .layer_index = 3,
         .group_id = 1001,
@@ -5591,7 +5591,7 @@
     },
     .{
         .zone_id = 6904721,
-        .name = "OfficialName_Monster_Mutant_HC",
+        .name = "OfficialName_Monster_Girtablu_HC",
         .layer_id = 69047201,
         .layer_index = 1,
         .group_id = 1002,

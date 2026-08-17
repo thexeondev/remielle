@@ -504,6 +504,27 @@
         .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconAttack.png",
     },
     .{
+        .id = 12254075,
+        .training_type = 2,
+        .battle_event_id = 19810076,
+        .special_training_name = "TrainingRoomTxt_SpecialTraining_Name_75",
+        .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconArmorer.png",
+    },
+    .{
+        .id = 12254076,
+        .training_type = 2,
+        .battle_event_id = 19810077,
+        .special_training_name = "TrainingRoomTxt_SpecialTraining_Name_76",
+        .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconStun.png",
+    },
+    .{
+        .id = 12254077,
+        .training_type = 2,
+        .battle_event_id = 19810078,
+        .special_training_name = "TrainingRoomTxt_SpecialTraining_Name_77",
+        .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconStun.png",
+    },
+    .{
         .id = 12255001,
         .training_type = 3,
         .battle_event_id = 70200005,
@@ -761,5 +782,12 @@
         .battle_event_id = 19810075,
         .special_training_name = "TrainingRoomTxt_SpecialTraining_Name_4",
         .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconStun.png",
+    },
+    .{
+        .id = 12256018,
+        .training_type = 4,
+        .battle_event_id = 0,
+        .special_training_name = "",
+        .special_training_icon = "",
     },
 }
