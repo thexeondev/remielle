@@ -786,8 +786,8 @@
     .{
         .id = 12256018,
         .training_type = 4,
-        .battle_event_id = 0,
-        .special_training_name = "",
-        .special_training_icon = "",
+        .battle_event_id = 19810079,
+        .special_training_name = "TrainingRoomTxt_SpecialTraining_Name_4",
+        .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconStun.png",
     },
 }
