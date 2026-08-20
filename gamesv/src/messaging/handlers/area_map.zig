@@ -37,6 +37,14 @@ pub fn getAreaMapData(
     } });
 }
 
+pub fn getNewAreaPortalList(
+    message: Message(pb.GetNewAreaPortalListCsReq),
+    response: Response(pb.GetNewAreaPortalListScRsp),
+) !void {
+    _ = message;
+    response.set(.init);
+}
+
 const ArrayList = std.ArrayList;
 const Message = handlers.Message;
 const Response = handlers.Response;
