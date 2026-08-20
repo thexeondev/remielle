@@ -281,6 +281,8 @@ const core_skill_specials = [_]struct { u32, Property, Property, [7]i32 }{
     .{ 1471, .SkipDefAtk, .HpMax, @splat(10) },
     // Starlight - Billy - 10% HP -> SheerForce
     .{ 1531, .SkipDefAtk, .HpMax, @splat(10) },
+    // Claret - 35% CritDMG -> CritRate
+    .{ 1611, .Crit, .CritDmg, @splat(35) },
 };
 
 pub const Property = enum(u32) {
