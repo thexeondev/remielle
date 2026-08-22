@@ -15,7 +15,7 @@ To build **Remielle** from sources you need:
 
 For use with the game client, the client patch is required: [thaumiel](https://git.xeondev.com/remielle/thaumiel)
 
-#### Currently supported client version: `CNBetaWin3.2.3`, it can be found in our [discord server](https://discord.xeondev.com/)
+#### Currently supported client version: `CNBetaWin3.2.4`, it can be found in our [discord server](https://discord.xeondev.com/)
 
 ## Steps to compile and run
 Linux:

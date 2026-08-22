@@ -4801,7 +4801,7 @@
     },
     .{
         .zone_id = 690471,
-        .name = "OfficialName_Monster_MentorMevorakh",
+        .name = "OfficialName_Monster_Larval",
         .layer_id = 69047103,
         .layer_index = 3,
         .group_id = 1001,
@@ -5561,7 +5561,7 @@
     },
     .{
         .zone_id = 6904711,
-        .name = "OfficialName_Monster_Larval",
+        .name = "OfficialName_Monster_Mutant",
         .layer_id = 69047101,
         .layer_index = 1,
         .group_id = 1001,
@@ -5581,7 +5581,7 @@
     },
     .{
         .zone_id = 6904711,
-        .name = "OfficialName_Monster_GraymaneCenturion",
+        .name = "OfficialName_Monster_Larval",
         .layer_id = 69047103,
         .layer_index = 3,
         .group_id = 1001,

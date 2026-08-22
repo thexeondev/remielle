@@ -13,7 +13,7 @@
         .unlock_condition = "1040140073",
         .teleport_name = "TeleportName_02",
         .section_id = 1,
-        .transform_id = 61692,
+        .transform_id = 61776,
     },
     .{
         .teleport_id = 3,
@@ -21,7 +21,7 @@
         .unlock_condition = "1040140082",
         .teleport_name = "TeleportName_03",
         .section_id = 1,
-        .transform_id = 41232,
+        .transform_id = 41316,
     },
     .{
         .teleport_id = 4,
@@ -29,7 +29,7 @@
         .unlock_condition = "1040140212&30070021",
         .teleport_name = "TeleportName_04",
         .section_id = 1,
-        .transform_id = 63100,
+        .transform_id = 63184,
     },
     .{
         .teleport_id = 5,
@@ -45,7 +45,7 @@
         .unlock_condition = "1040140126",
         .teleport_name = "TeleportName_06",
         .section_id = 1,
-        .transform_id = 79320,
+        .transform_id = 79532,
     },
     .{
         .teleport_id = 7,
@@ -61,7 +61,7 @@
         .unlock_condition = "1040140504",
         .teleport_name = "TeleportName_08",
         .section_id = 1,
-        .transform_id = 86412,
+        .transform_id = 86496,
     },
     .{
         .teleport_id = 9,
@@ -69,7 +69,7 @@
         .unlock_condition = "1040140088",
         .teleport_name = "TeleportName_09",
         .section_id = 1,
-        .transform_id = 84176,
+        .transform_id = 84260,
     },
     .{
         .teleport_id = 10,
@@ -101,7 +101,7 @@
         .unlock_condition = "1040140267",
         .teleport_name = "TeleportName_13",
         .section_id = 101,
-        .transform_id = 54020,
+        .transform_id = 54104,
     },
     .{
         .teleport_id = 14,
@@ -117,7 +117,7 @@
         .unlock_condition = "1040140270",
         .teleport_name = "TeleportName_16",
         .section_id = 151,
-        .transform_id = 43888,
+        .transform_id = 43972,
     },
     .{
         .teleport_id = 17,
@@ -149,7 +149,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_54",
         .section_id = 2,
-        .transform_id = 60460,
+        .transform_id = 60544,
     },
     .{
         .teleport_id = 55,
@@ -157,7 +157,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_55",
         .section_id = 2,
-        .transform_id = 60756,
+        .transform_id = 60840,
     },
     .{
         .teleport_id = 100,
@@ -213,7 +213,7 @@
         .unlock_condition = "1040140268",
         .teleport_name = "TeleportName_15",
         .section_id = 103,
-        .transform_id = 59664,
+        .transform_id = 59748,
     },
     .{
         .teleport_id = 407,
@@ -221,7 +221,7 @@
         .unlock_condition = "1040140260",
         .teleport_name = "TeleportName_02",
         .section_id = 101,
-        .transform_id = 59496,
+        .transform_id = 59580,
     },
     .{
         .teleport_id = 408,
@@ -229,7 +229,7 @@
         .unlock_condition = "1040140260",
         .teleport_name = "TeleportName_03",
         .section_id = 101,
-        .transform_id = 59344,
+        .transform_id = 59428,
     },
     .{
         .teleport_id = 409,
@@ -245,7 +245,7 @@
         .unlock_condition = "1040140260",
         .teleport_name = "TeleportName_410",
         .section_id = 101,
-        .transform_id = 59708,
+        .transform_id = 59792,
     },
     .{
         .teleport_id = 411,
@@ -261,7 +261,7 @@
         .unlock_condition = "1060060058",
         .teleport_name = "TeleportName_18",
         .section_id = 103,
-        .transform_id = 60200,
+        .transform_id = 60284,
     },
     .{
         .teleport_id = 413,
@@ -269,7 +269,7 @@
         .unlock_condition = "1100141172",
         .teleport_name = "TeleportName_413",
         .section_id = 101,
-        .transform_id = 19612,
+        .transform_id = 19696,
     },
     .{
         .teleport_id = 414,
@@ -285,7 +285,7 @@
         .unlock_condition = "1040140270",
         .teleport_name = "TeleportName_503",
         .section_id = 151,
-        .transform_id = 44032,
+        .transform_id = 44116,
     },
     .{
         .teleport_id = 504,
@@ -293,7 +293,7 @@
         .unlock_condition = "1060140044|1040140556|1040140962|1040140212&30070025",
         .teleport_name = "TeleportName_504",
         .section_id = 151,
-        .transform_id = 70324,
+        .transform_id = 70408,
     },
     .{
         .teleport_id = 505,
@@ -301,7 +301,7 @@
         .unlock_condition = "1040140522",
         .teleport_name = "TeleportName_505",
         .section_id = 151,
-        .transform_id = 63056,
+        .transform_id = 63140,
     },
     .{
         .teleport_id = 701,
@@ -349,7 +349,7 @@
         .unlock_condition = "1040140418",
         .teleport_name = "TeleportName_905",
         .section_id = 104,
-        .transform_id = 78488,
+        .transform_id = 78572,
     },
     .{
         .teleport_id = 1001,
@@ -525,7 +525,7 @@
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
-        .transform_id = 4828,
+        .transform_id = 4892,
     },
     .{
         .teleport_id = 1023,
@@ -533,7 +533,7 @@
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
-        .transform_id = 5352,
+        .transform_id = 5416,
     },
     .{
         .teleport_id = 1024,
@@ -541,7 +541,7 @@
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
-        .transform_id = 5796,
+        .transform_id = 5924,
     },
     .{
         .teleport_id = 1025,
@@ -597,7 +597,7 @@
         .unlock_condition = "1100140060",
         .teleport_name = "TeleportName_01",
         .section_id = 2,
-        .transform_id = 3128,
+        .transform_id = 3256,
     },
     .{
         .teleport_id = 1032,
@@ -605,7 +605,7 @@
         .unlock_condition = "1100140061",
         .teleport_name = "TeleportName_01",
         .section_id = 2,
-        .transform_id = 3196,
+        .transform_id = 3324,
     },
     .{
         .teleport_id = 1033,
@@ -613,7 +613,7 @@
         .unlock_condition = "1040140154",
         .teleport_name = "TeleportName_01",
         .section_id = 2,
-        .transform_id = 3264,
+        .transform_id = 3392,
     },
     .{
         .teleport_id = 1034,
@@ -685,7 +685,7 @@
         .unlock_condition = "1040140126",
         .teleport_name = "TeleportName_06",
         .section_id = 1,
-        .transform_id = 8860,
+        .transform_id = 8988,
     },
     .{
         .teleport_id = 1043,
@@ -701,7 +701,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_01",
         .section_id = 2,
-        .transform_id = 10208,
+        .transform_id = 10336,
     },
     .{
         .teleport_id = 1045,
@@ -709,7 +709,7 @@
         .unlock_condition = "1063080004|1040140553|1040140959",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 4896,
+        .transform_id = 5024,
     },
     .{
         .teleport_id = 1046,
@@ -717,7 +717,7 @@
         .unlock_condition = "1021228250",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 4960,
+        .transform_id = 5088,
     },
     .{
         .teleport_id = 1047,
@@ -725,7 +725,7 @@
         .unlock_condition = "1021228250",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 5008,
+        .transform_id = 5136,
     },
     .{
         .teleport_id = 1048,
@@ -733,7 +733,7 @@
         .unlock_condition = "1021228250",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 5056,
+        .transform_id = 5184,
     },
     .{
         .teleport_id = 1049,
@@ -741,7 +741,7 @@
         .unlock_condition = "1021228250",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 5104,
+        .transform_id = 5232,
     },
     .{
         .teleport_id = 1050,
@@ -749,7 +749,7 @@
         .unlock_condition = "1021228250",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 5152,
+        .transform_id = 5280,
     },
     .{
         .teleport_id = 1051,
@@ -757,7 +757,7 @@
         .unlock_condition = "1063080004|1040140553|1040140959",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 5240,
+        .transform_id = 5368,
     },
     .{
         .teleport_id = 1052,
@@ -773,7 +773,7 @@
         .unlock_condition = "1063080004|1040140553|1040140959",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 5588,
+        .transform_id = 5716,
     },
     .{
         .teleport_id = 1054,
@@ -805,7 +805,7 @@
         .unlock_condition = "1063080004|1040140553|1040140959",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 6032,
+        .transform_id = 6160,
     },
     .{
         .teleport_id = 1058,
@@ -821,7 +821,7 @@
         .unlock_condition = "1040140557|1040140963",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 6320,
+        .transform_id = 6448,
     },
     .{
         .teleport_id = 1060,
@@ -829,7 +829,7 @@
         .unlock_condition = "1063080004|1040140553|1040140959",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 6368,
+        .transform_id = 6496,
     },
     .{
         .teleport_id = 1061,
@@ -861,7 +861,7 @@
         .unlock_condition = "1063080004|1040140553|1040140959",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 8784,
+        .transform_id = 8912,
     },
     .{
         .teleport_id = 1065,
@@ -901,7 +901,7 @@
         .unlock_condition = "1063080004|1040140553",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 9276,
+        .transform_id = 9404,
     },
     .{
         .teleport_id = 1070,
@@ -917,7 +917,7 @@
         .unlock_condition = "2030110003",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 10604,
+        .transform_id = 10732,
     },
     .{
         .teleport_id = 1072,
@@ -1069,7 +1069,7 @@
         .unlock_condition = "1040140718|1040140894",
         .teleport_name = "TeleportName_2001",
         .section_id = 201,
-        .transform_id = 3440,
+        .transform_id = 3524,
     },
     .{
         .teleport_id = 2002,
@@ -1173,7 +1173,7 @@
         .unlock_condition = "1040140730",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 8908,
+        .transform_id = 8992,
     },
     .{
         .teleport_id = 2015,
@@ -1189,7 +1189,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 9052,
+        .transform_id = 9136,
     },
     .{
         .teleport_id = 2017,
@@ -1197,7 +1197,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 9120,
+        .transform_id = 9204,
     },
     .{
         .teleport_id = 2018,
@@ -1205,7 +1205,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 9188,
+        .transform_id = 9272,
     },
     .{
         .teleport_id = 2019,
@@ -1213,7 +1213,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 9256,
+        .transform_id = 9340,
     },
     .{
         .teleport_id = 2020,
@@ -1293,7 +1293,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 9988,
+        .transform_id = 10072,
     },
     .{
         .teleport_id = 2030,
@@ -1301,7 +1301,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 10080,
+        .transform_id = 10164,
     },
     .{
         .teleport_id = 2031,
@@ -1309,7 +1309,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 10172,
+        .transform_id = 10256,
     },
     .{
         .teleport_id = 2032,
@@ -1317,7 +1317,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 10264,
+        .transform_id = 10348,
     },
     .{
         .teleport_id = 2033,
@@ -1325,7 +1325,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 10320,
+        .transform_id = 10404,
     },
     .{
         .teleport_id = 2035,
@@ -1397,7 +1397,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 11484,
+        .transform_id = 11568,
     },
     .{
         .teleport_id = 2045,
@@ -1453,7 +1453,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_2014",
         .section_id = 201,
-        .transform_id = 12240,
+        .transform_id = 12324,
     },
     .{
         .teleport_id = 2052,
@@ -1461,7 +1461,7 @@
         .unlock_condition = "714584001",
         .teleport_name = "TeleportName_01",
         .section_id = 2,
-        .transform_id = 72304,
+        .transform_id = 72516,
     },
     .{
         .teleport_id = 6001,
@@ -1509,7 +1509,7 @@
         .unlock_condition = "1040140255&1227000005",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 11160,
+        .transform_id = 11288,
     },
     .{
         .teleport_id = 11006,
@@ -1525,7 +1525,7 @@
         .unlock_condition = "1040140255&1227000010",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 11304,
+        .transform_id = 11432,
     },
     .{
         .teleport_id = 11008,
@@ -1589,7 +1589,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 6080,
+        .transform_id = 6208,
     },
     .{
         .teleport_id = 106001,
@@ -1597,7 +1597,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_01",
         .section_id = 151,
-        .transform_id = 6416,
+        .transform_id = 6544,
     },
     .{
         .teleport_id = 106058,
@@ -2152,15 +2152,15 @@
         .transform_id = 4776,
     },
     .{
-        .teleport_id = 1022001,
+        .teleport_id = 1021007,
         .client_visible = 0,
-        .unlock_condition = "1040140333",
+        .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
-        .transform_id = 4908,
+        .transform_id = 4840,
     },
     .{
-        .teleport_id = 1022002,
+        .teleport_id = 1022001,
         .client_visible = 0,
         .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
@@ -2168,7 +2168,7 @@
         .transform_id = 4972,
     },
     .{
-        .teleport_id = 1022003,
+        .teleport_id = 1022002,
         .client_visible = 0,
         .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
@@ -2176,7 +2176,7 @@
         .transform_id = 5036,
     },
     .{
-        .teleport_id = 1022004,
+        .teleport_id = 1022003,
         .client_visible = 0,
         .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
@@ -2184,7 +2184,7 @@
         .transform_id = 5100,
     },
     .{
-        .teleport_id = 1022005,
+        .teleport_id = 1022004,
         .client_visible = 0,
         .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
@@ -2192,7 +2192,7 @@
         .transform_id = 5164,
     },
     .{
-        .teleport_id = 1022006,
+        .teleport_id = 1022005,
         .client_visible = 0,
         .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
@@ -2200,7 +2200,7 @@
         .transform_id = 5228,
     },
     .{
-        .teleport_id = 1022007,
+        .teleport_id = 1022006,
         .client_visible = 0,
         .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
@@ -2208,15 +2208,15 @@
         .transform_id = 5292,
     },
     .{
-        .teleport_id = 1023001,
+        .teleport_id = 1022007,
         .client_visible = 0,
-        .unlock_condition = "1040140119",
+        .unlock_condition = "1040140333",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
-        .transform_id = 5416,
+        .transform_id = 5356,
     },
     .{
-        .teleport_id = 1023002,
+        .teleport_id = 1023001,
         .client_visible = 0,
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
@@ -2224,7 +2224,7 @@
         .transform_id = 5480,
     },
     .{
-        .teleport_id = 1023003,
+        .teleport_id = 1023002,
         .client_visible = 0,
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
@@ -2232,7 +2232,7 @@
         .transform_id = 5544,
     },
     .{
-        .teleport_id = 1023004,
+        .teleport_id = 1023003,
         .client_visible = 0,
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
@@ -2240,7 +2240,7 @@
         .transform_id = 5608,
     },
     .{
-        .teleport_id = 1023005,
+        .teleport_id = 1023004,
         .client_visible = 0,
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
@@ -2248,12 +2248,28 @@
         .transform_id = 5672,
     },
     .{
-        .teleport_id = 1023006,
+        .teleport_id = 1023005,
         .client_visible = 0,
         .unlock_condition = "1040140119",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
         .transform_id = 5736,
+    },
+    .{
+        .teleport_id = 1023006,
+        .client_visible = 0,
+        .unlock_condition = "1040140119",
+        .teleport_name = "TeleportName_01",
+        .section_id = 103,
+        .transform_id = 5800,
+    },
+    .{
+        .teleport_id = 1023007,
+        .client_visible = 0,
+        .unlock_condition = "1040140119",
+        .teleport_name = "TeleportName_01",
+        .section_id = 103,
+        .transform_id = 5864,
     },
     .{
         .teleport_id = 6000103,
@@ -2317,7 +2333,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_16",
         .section_id = 151,
-        .transform_id = 54804,
+        .transform_id = 54888,
     },
     .{
         .teleport_id = 7020002,
@@ -2325,7 +2341,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_503",
         .section_id = 151,
-        .transform_id = 46592,
+        .transform_id = 46676,
     },
     .{
         .teleport_id = 7020003,
@@ -2341,7 +2357,7 @@
         .unlock_condition = "1040140066&1040140620",
         .teleport_name = "TeleportName_701",
         .section_id = 103,
-        .transform_id = 49676,
+        .transform_id = 49760,
     },
     .{
         .teleport_id = 7020005,
@@ -2349,7 +2365,7 @@
         .unlock_condition = "1040140066",
         .teleport_name = "TeleportName_701",
         .section_id = 103,
-        .transform_id = 49756,
+        .transform_id = 49840,
     },
     .{
         .teleport_id = 7020006,
@@ -2365,7 +2381,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_701",
         .section_id = 103,
-        .transform_id = 49952,
+        .transform_id = 50036,
     },
     .{
         .teleport_id = 7020008,
@@ -2373,7 +2389,7 @@
         .unlock_condition = "1040140066&1040140620",
         .teleport_name = "TeleportName_701",
         .section_id = 103,
-        .transform_id = 50004,
+        .transform_id = 50088,
     },
     .{
         .teleport_id = 7020009,
@@ -2389,7 +2405,7 @@
         .unlock_condition = "",
         .teleport_name = "",
         .section_id = 101,
-        .transform_id = 23360,
+        .transform_id = 23444,
     },
     .{
         .teleport_id = 7020011,
@@ -2397,7 +2413,7 @@
         .unlock_condition = "",
         .teleport_name = "",
         .section_id = 101,
-        .transform_id = 23468,
+        .transform_id = 23552,
     },
     .{
         .teleport_id = 7020012,
@@ -2413,7 +2429,7 @@
         .unlock_condition = "1040140066&70570203",
         .teleport_name = "TeleportName_701",
         .section_id = 103,
-        .transform_id = 50492,
+        .transform_id = 50576,
     },
     .{
         .teleport_id = 7020014,
@@ -2421,7 +2437,7 @@
         .unlock_condition = "1040140066&70570201",
         .teleport_name = "TeleportName_701",
         .section_id = 103,
-        .transform_id = 50572,
+        .transform_id = 50656,
     },
     .{
         .teleport_id = 7020015,
@@ -2469,7 +2485,7 @@
         .unlock_condition = "",
         .teleport_name = "",
         .section_id = 103,
-        .transform_id = 51136,
+        .transform_id = 51220,
     },
     .{
         .teleport_id = 7053001,
@@ -2749,7 +2765,7 @@
         .unlock_condition = "",
         .teleport_name = "",
         .section_id = 253,
-        .transform_id = 74576,
+        .transform_id = 74660,
     },
     .{
         .teleport_id = 7120002,
@@ -3341,7 +3357,7 @@
         .unlock_condition = "1040140272",
         .teleport_name = "TeleportName_01",
         .section_id = 103,
-        .transform_id = 16636,
+        .transform_id = 16764,
     },
     .{
         .teleport_id = 112000002,
@@ -3453,7 +3469,7 @@
         .unlock_condition = "",
         .teleport_name = "TeleportName_01",
         .section_id = 2,
-        .transform_id = 19344,
+        .transform_id = 19472,
     },
     .{
         .teleport_id = 112000016,
@@ -7670,6 +7686,14 @@
         .teleport_name = "",
         .section_id = 1,
         .transform_id = 16,
+    },
+    .{
+        .teleport_id = 115000234,
+        .client_visible = 0,
+        .unlock_condition = "",
+        .teleport_name = "TeleportName_905",
+        .section_id = 103,
+        .transform_id = 6568,
     },
     .{
         .teleport_id = 915710001,
