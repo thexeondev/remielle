@@ -70311,7 +70311,7 @@
     },
     .{
         .quest_id = 601110213,
-        .quest_name = "",
+        .quest_name = "QuestName_601110213",
         .quest_type = 5,
     },
     .{
