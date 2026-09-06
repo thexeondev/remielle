@@ -1,6 +1,7 @@
 const std = @import("std");
 const Io = std.Io;
 
+/// Deprecated in favor of `args.parse`.
 pub fn parseOptions(
     comptime Options: type,
     /// Must not include argv0
