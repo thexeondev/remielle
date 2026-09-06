@@ -43,7 +43,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
 fn unlockAllAvatars(props: *Properties.List, at: Player) void {
     const avatar = props.getPtr(.avatar, at.toInt());
 
-    for (templates.avatar_base.entries) |template| if (template.camp != 0) {
+    for (templates.avatar_base.entries) |template| if (template.camp != 0) if (template.id < 2_000) {
         const i = avatar.indexes.count();
         avatar.indexes.put(template.getId(), @intCast(i));
         avatar.ids[i] = template.getId();
