@@ -1,6 +1,6 @@
 const std = @import("std");
 const Io = std.Io;
-const Type = std.builtin.Type;
+const Type = std.lang.Type;
 const Allocator = std.mem.Allocator;
 
 /// Main protocol types. Stable.
