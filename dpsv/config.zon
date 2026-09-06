@@ -1,12 +1,7 @@
 .{
     // TCP listen address.
-    // Can be overridden by the `-l` option.
+    // Can be overridden by the `--listen-address` option.
     .listen_address = "127.0.0.1:12401",
-
-    // The amount of connections allowed to be processed concurrently.
-    // Zero means unlimited amount.
-    // Can be overridden by the `-c` option.
-    .concurrent_connections_limit = 0,
 
     // The outer address of this server.
     // Will be communicated to clients as a part of a per-region url.

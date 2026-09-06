@@ -18,13 +18,12 @@ pub fn listen(
         ),
         else => |e| fatal("failed to listen at {f}: {t}", .{ address, e }),
     };
-
     defer server.deinit(io);
 
     var client_group: Io.Group = .init;
     defer client_group.cancel(io);
 
-    log.info("waiting for requests at http://{f}", .{address});
+    log.info("waiting for requests at http://{f}", .{server.socket.address});
     defer log.info("shutting down...", .{});
 
     while (true) {
@@ -53,8 +52,7 @@ pub fn listen(
 }
 
 fn serve(io: Io, data: *const Data, stream: net.Stream) Io.Cancelable!void {
-    // TODO: we need 0.17.0 for timeouts
-    // https://codeberg.org/ziglang/zig/commit/2b48f559f424d8bf790bf54f4bb83d631461a681
+    // TODO(Io): implement `batchAwaitConcurrent` for `NetRead` to utilize timeouts.
     defer stream.close(io);
 
     var request_buffer: [buffer_size]u8 = undefined;
