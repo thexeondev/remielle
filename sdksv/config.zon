@@ -1,5 +1,5 @@
 .{
     // TCP listen address.
-    // Can be overridden by the `-l` option.
+    // Can be overridden by the `--listen-address` option.
     .listen_address = "127.0.0.1:20100",
 }
