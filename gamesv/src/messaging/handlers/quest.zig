@@ -38,7 +38,7 @@ pub fn startTrainingQuest(
     }),
     response: Response(pb.StartTrainingQuestScRsp),
 ) !void {
-    const quest: templates.training_quest.Id = @enumFromInt(message.data.quest_id);
+    const quest: templates.training_quest.Id = @fromBackingInt(@intCast(message.data.quest_id));
     if (quest != .free_training) // Not implemented yet
         return response.fail(1);
 

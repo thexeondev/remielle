@@ -25,11 +25,11 @@ pub const Slot = enum(u8) {
         if (slot < 1 or slot > slots)
             return null;
 
-        return @enumFromInt(@as(u8, @intCast(slot)));
+        return @fromBackingInt(@intCast(@as(u8, @intCast(slot))));
     }
 
     pub fn toIndex(slot: Slot) u8 {
-        return @intFromEnum(slot) - 1;
+        return @backingInt(slot) - 1;
     }
 };
 
@@ -40,7 +40,7 @@ pub const OptionalID = enum(u32) {
     pub fn unwrap(o: OptionalID) ?u32 {
         return switch (o) {
             .none => null,
-            _ => |id| @intFromEnum(id),
+            _ => |id| @backingInt(id),
         };
     }
 };

@@ -253,7 +253,7 @@ fn onGameMessageReceived(
 
                 logic.Properties.setDefaultsAt(
                     &server.properties,
-                    @enumFromInt(player_index),
+                    @fromBackingInt(@intCast(player_index)),
                 );
 
                 server.savePlayer(io, player_index);

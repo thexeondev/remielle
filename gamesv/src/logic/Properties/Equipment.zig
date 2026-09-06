@@ -32,12 +32,12 @@ pub const Uid = enum(u16) {
         if (uid < base or uid > base + std.math.maxInt(u16))
             return null;
 
-        return @enumFromInt(@as(u16, @intCast(uid - base)));
+        return @fromBackingInt(@intCast(@as(u16, @intCast(uid - base))));
     }
 
     /// To the protocol UID representation.
     pub fn toInt(uid: Uid) u32 {
-        return @intFromEnum(uid) + base;
+        return @backingInt(uid) + base;
     }
 };
 
@@ -47,14 +47,14 @@ pub const Level = enum(u8) {
     _,
 
     pub fn toInt(level: Level) u8 {
-        return @intFromEnum(level);
+        return @backingInt(level);
     }
 
     pub fn fromInt(int: u8) ?Level {
         if (int > Level.max.toInt())
             return null;
 
-        return @enumFromInt(int);
+        return @fromBackingInt(@intCast(int));
     }
 };
 
@@ -64,14 +64,14 @@ pub const Star = enum(u8) {
     _,
 
     pub fn toInt(star: Star) u8 {
-        return @intFromEnum(star);
+        return @backingInt(star);
     }
 
     pub fn fromInt(int: u8) ?Star {
         if (int > Star.max.toInt())
             return null;
 
-        return @enumFromInt(int);
+        return @fromBackingInt(@intCast(int));
     }
 };
 
@@ -82,11 +82,11 @@ pub const Slot = enum(u8) {
         if (index < 1 or index > 6)
             return null;
 
-        return @enumFromInt(@as(u8, @intCast(index)));
+        return @fromBackingInt(@intCast(@as(u8, @intCast(index))));
     }
 
     pub fn toIndex(dress_index: Slot) u8 {
-        return @intFromEnum(dress_index) - 1;
+        return @backingInt(dress_index) - 1;
     }
 };
 
@@ -112,12 +112,12 @@ pub const Property = struct {
         pub inline fn unwrap(key: Key) ?u16 {
             return switch (key) {
                 .none => null,
-                else => @intFromEnum(key),
+                else => @backingInt(key),
             };
         }
 
         pub inline fn fromInt(int: u16) Key {
-            return @enumFromInt(int);
+            return @fromBackingInt(@intCast(int));
         }
     };
 };

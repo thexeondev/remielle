@@ -97,7 +97,7 @@ pub const Ack = enum(u32) {
     _,
 
     pub fn ack(id: u32) Ack {
-        return @enumFromInt(id);
+        return @fromBackingInt(@intCast(id));
     }
 };
 
@@ -112,7 +112,7 @@ pub fn send(
 
     const head: protobuf.stable.PacketHead = .{
         .packet_id = clients.getPtr(.packet_counter, destination_index).nextId(),
-        .ack_packet_id = @intFromEnum(ack),
+        .ack_packet_id = @backingInt(ack),
     };
 
     const length = encodingLength(head, message);

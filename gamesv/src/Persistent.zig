@@ -32,8 +32,8 @@ pub const AccountUid = enum(u64) {
     _,
 
     pub fn fromString(account_uid: []const u8) ?AccountUid {
-        return @enumFromInt(std.fmt.parseInt(u64, account_uid, 10) catch
-            return null);
+        return @fromBackingInt(@intCast(std.fmt.parseInt(u64, account_uid, 10) catch
+            return null));
     }
 };
 

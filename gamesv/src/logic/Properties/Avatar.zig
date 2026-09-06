@@ -52,7 +52,7 @@ pub const OptionalUID = enum(u32) {
     pub fn unwrap(ou: OptionalUID) ?u32 {
         return switch (ou) {
             .none => null,
-            _ => |uid| @intFromEnum(uid),
+            _ => |uid| @backingInt(uid),
         };
     }
 };
@@ -63,7 +63,7 @@ pub const Level = enum(u8) {
     _,
 
     pub fn toInt(level: Level) u8 {
-        return @intFromEnum(level);
+        return @backingInt(level);
     }
 };
 
@@ -73,7 +73,7 @@ pub const Rank = enum(u8) {
     _,
 
     pub fn toInt(rank: Rank) u8 {
-        return @intFromEnum(rank);
+        return @backingInt(rank);
     }
 };
 
@@ -83,7 +83,7 @@ pub const Talents = enum(u8) {
     _,
 
     pub fn toInt(talents: Talents) u8 {
-        return @intFromEnum(talents);
+        return @backingInt(talents);
     }
 };
 
@@ -92,7 +92,7 @@ pub const Skin = enum(u32) {
     _,
 
     pub fn toInt(skin: Skin) u32 {
-        return @intFromEnum(skin);
+        return @backingInt(skin);
     }
 };
 
@@ -101,7 +101,7 @@ pub const Awakening = enum(u32) {
     _,
 
     pub fn toInt(awakening: Awakening) u32 {
-        return @intFromEnum(awakening);
+        return @backingInt(awakening);
     }
 
     pub const Material = enum(u8) {
@@ -109,14 +109,14 @@ pub const Awakening = enum(u32) {
         _,
 
         pub fn toInt(mat: Material) u8 {
-            return @intFromEnum(mat);
+            return @backingInt(mat);
         }
 
         pub fn add(mat: Material, num: u8) Material {
-            return @enumFromInt(switch (mat) {
+            return @fromBackingInt(@intCast(switch (mat) {
                 .none => 1,
-                else => @intFromEnum(mat) + num,
-            });
+                else => @backingInt(mat) + num,
+            }));
         }
     };
 };
@@ -140,7 +140,7 @@ pub const Flags = packed struct {
         enabled = 0b11,
 
         pub inline fn isUnlocked(sw: ShowWeapon) bool {
-            return (@intFromEnum(sw) & 1) != 0;
+            return (@backingInt(sw) & 1) != 0;
         }
     };
 };
@@ -161,19 +161,19 @@ pub const Skill = enum(u8) {
         _,
 
         pub fn maxFor(skill: Skill) Skill.Level {
-            return @enumFromInt(@as(u8, switch (skill) {
+            return @fromBackingInt(@intCast(@as(u8, switch (skill) {
                 .core_skill => 7,
                 else => 12,
-            }));
+            })));
         }
 
         pub fn toInt(level: Skill.Level) u8 {
-            return @intFromEnum(level);
+            return @backingInt(level);
         }
     };
 
     pub fn toInt(skill: Skill) u32 {
-        return @intFromEnum(skill);
+        return @backingInt(skill);
     }
 };
 
@@ -195,7 +195,7 @@ pub const MindscapeTabState = enum(u6) {
     }
 
     pub fn toBools(mind: MindscapeTabState) [MindscapeTabState.tab_count]bool {
-        const int = @intFromEnum(mind);
+        const int = @backingInt(mind);
         var bools: [MindscapeTabState.tab_count]bool = undefined;
 
         inline for (&bools, 0..) |*bit, index|
@@ -208,11 +208,11 @@ pub const MindscapeTabState = enum(u6) {
         if ((bits & 0b111) & ((bits >> 3) & 0b111) != 0)
             return null;
 
-        return @enumFromInt(bits);
+        return @fromBackingInt(@intCast(bits));
     }
 
     pub fn requiredTalentNum(mind: MindscapeTabState) u3 {
-        const int: u6 = @intFromEnum(mind);
+        const int: u6 = @backingInt(mind);
         return tab_count - @clz(int);
     }
 };

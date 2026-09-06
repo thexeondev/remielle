@@ -16,7 +16,7 @@ pub const Id = Id: {
 
 pub fn byId(id: Id) ?*const Template {
     for (entries) |*entry| {
-        if (entry.section_id == @intFromEnum(id))
+        if (entry.section_id == @backingInt(id))
             return entry;
     } else return null;
 }
@@ -29,7 +29,7 @@ pub const Template = struct {
     section_name: []const u8,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.section_id);
+        return @fromBackingInt(@intCast(t.section_id));
     }
 };
 

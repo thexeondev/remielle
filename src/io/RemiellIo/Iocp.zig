@@ -9,7 +9,7 @@ pub fn init() RemiellIo.InitError!Iocp {
     var data: ws2_32.WSADATA = undefined;
     switch (ws2_32.WSAStartup(0x0202, &data)) {
         0 => {},
-        else => |rc| return switch (@as(ws2_32.WinsockError, @enumFromInt(@as(u16, @intCast(rc))))) {
+        else => |rc| return switch (@as(ws2_32.WinsockError, @fromBackingInt(@intCast(@as(u16, @intCast(rc)))))) {
             .WSASYSNOTREADY, .WSAVERNOTSUPPORTED => error.Unsupported,
             .WSAEPROCLIM => error.SystemResources,
             else => |e| unexpectedWsa(e),
@@ -586,7 +586,7 @@ fn sleepTimerCallback(
     _ = .{ dwTimerLowValue, dwTimerHighValue };
 
     const userdata: *OverlappedUserdata = @ptrCast(@alignCast(lpArgToCompletionRoutine));
-    userdata.overlapped.Internal = @intFromEnum(switch (@atomicRmw(
+    userdata.overlapped.Internal = @backingInt(switch (@atomicRmw(
         OperationState,
         &userdata.extra.sleep.state,
         .Xchg,
@@ -604,7 +604,7 @@ fn sleepTimerCallback(
 fn fillCompleted(iocp: *Iocp, cpes: []const kernel32.OVERLAPPED_ENTRY) void {
     for (cpes) |cpe| {
         const userdata: *OverlappedUserdata = @fieldParentPtr("overlapped", cpe.lpOverlapped);
-        const status: windows.NTSTATUS = @enumFromInt(cpe.lpOverlapped.Internal);
+        const status: windows.NTSTATUS = @fromBackingInt(@intCast(cpe.lpOverlapped.Internal));
 
         const pending: *Operation.Storage.Pending = @fieldParentPtr(
             "userdata",
@@ -888,7 +888,7 @@ fn completeOne(iocp: *Iocp, storage: *Operation.Storage, result: Operation.Resul
 
 fn unexpectedWsa(e: ws2_32.WinsockError) Io.UnexpectedError {
     if (std.options.unexpected_error_tracing) {
-        std.debug.print("unexpected winsock error: {t} ({d})\n", .{ e, @intFromEnum(e) });
+        std.debug.print("unexpected winsock error: {t} ({d})\n", .{ e, @backingInt(e) });
         std.debug.dumpCurrentStackTrace(.{});
     }
 
@@ -897,7 +897,7 @@ fn unexpectedWsa(e: ws2_32.WinsockError) Io.UnexpectedError {
 
 fn unexpectedWin32(e: windows.Win32Error) Io.UnexpectedError {
     if (std.options.unexpected_error_tracing) {
-        std.debug.print("unexpected win32 error: {t} ({d})\n", .{ e, @intFromEnum(e) });
+        std.debug.print("unexpected win32 error: {t} ({d})\n", .{ e, @backingInt(e) });
         std.debug.dumpCurrentStackTrace(.{});
     }
 
@@ -906,7 +906,7 @@ fn unexpectedWin32(e: windows.Win32Error) Io.UnexpectedError {
 
 fn unexpectedNtStatus(e: windows.NTSTATUS) Io.UnexpectedError {
     if (std.options.unexpected_error_tracing) {
-        std.debug.print("unexpected NTSTATUS: {t} ({d})\n", .{ e, @intFromEnum(e) });
+        std.debug.print("unexpected NTSTATUS: {t} ({d})\n", .{ e, @backingInt(e) });
         std.debug.dumpCurrentStackTrace(.{});
     }
 

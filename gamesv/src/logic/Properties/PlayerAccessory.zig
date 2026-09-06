@@ -11,15 +11,15 @@ pub const slots = 2;
 meta: std.EnumArray(Avatar, Meta),
 
 pub const Avatar = enum(u32) {
-    wise = @intFromEnum(templates.avatar_base.Id.wise),
-    belle = @intFromEnum(templates.avatar_base.Id.belle),
+    wise = @backingInt(templates.avatar_base.Id.wise),
+    belle = @backingInt(templates.avatar_base.Id.belle),
 
     pub inline fn fromGuise(guise: Properties.HallAvatar.Guise) ?Avatar {
-        return std.enums.fromInt(Avatar, @intFromEnum(guise));
+        return std.enums.fromInt(Avatar, @backingInt(guise));
     }
 
     pub inline fn fromGuiseUnchecked(guise: Properties.HallAvatar.Guise) Avatar {
-        return @enumFromInt(@intFromEnum(guise));
+        return @fromBackingInt(@intCast(@backingInt(guise)));
     }
 };
 

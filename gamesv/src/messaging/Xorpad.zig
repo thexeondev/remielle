@@ -17,11 +17,11 @@ pub const Offset = enum(usize) {
     _,
 
     pub inline fn offset(value: usize) Offset {
-        return @enumFromInt(value);
+        return @fromBackingInt(@intCast(value));
     }
 
     pub inline fn advance(o: *Offset, seek: usize) void {
-        o.* = @enumFromInt(@intFromEnum(o.*) + seek);
+        o.* = @fromBackingInt(@intCast(@backingInt(o.*) + seek));
     }
 };
 
@@ -36,7 +36,7 @@ pub const Key = enum(u64) {
         const client_rand_key = decryptClientRandKey(client_rand_key_b64) orelse
             return error.RandKeyDecryptFail;
 
-        return @enumFromInt(client_rand_key ^ server_rand_key);
+        return @fromBackingInt(@intCast(client_rand_key ^ server_rand_key));
     }
 
     const block_size_base64 = base64.Encoder.calcSize(rsa.block_size);
@@ -63,7 +63,7 @@ pub const Key = enum(u64) {
 
 pub fn xor(xp: *const Xorpad, offset: Offset, data: []u8) void {
     for (data, 0..) |*byte, i|
-        byte.* ^= xp.bytes[@mod(@intFromEnum(offset) + i, size)];
+        byte.* ^= xp.bytes[@mod(@backingInt(offset) + i, size)];
 }
 
 pub fn wrapWriter(xp: *const Xorpad, writer: *Io.Writer) Writer {
@@ -75,7 +75,7 @@ pub fn wrapReader(xp: *const Xorpad, reader: *Io.Reader, limit: usize) Reader {
 }
 
 pub fn fillSeeded(xp: *Xorpad, key: Key) void {
-    var mt: remielle.prng.MT19937 = .init(@intFromEnum(key));
+    var mt: remielle.prng.MT19937 = .init(@backingInt(key));
     for (0..size >> 3) |i|
         std.mem.writeInt(u64, xp.bytes[i * 8 ..][0..8], mt.get(), .big);
 }

@@ -28,7 +28,7 @@ pub const Template = struct {
     avatar_id: u32,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.id);
+        return @fromBackingInt(@intCast(t.id));
     }
 };
 

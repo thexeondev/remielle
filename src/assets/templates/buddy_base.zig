@@ -19,7 +19,7 @@ pub const Template = struct {
     id: u32,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.id);
+        return @fromBackingInt(@intCast(t.id));
     }
 };
 

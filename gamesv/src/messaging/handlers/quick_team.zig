@@ -21,8 +21,8 @@ pub fn quickTeamEdit(
             .buddy_id = .none,
         };
 
-        for (quick_team.avatar_list.items, 0..) |avatar, i| meta.avatar_ids[i] = @enumFromInt(avatar.avatar_id);
-        if (quick_team.buddy_list.items.len == 1) meta.buddy_id = @enumFromInt(quick_team.buddy_list.items[0].buddy_id);
+        for (quick_team.avatar_list.items, 0..) |avatar, i| meta.avatar_ids[i] = @fromBackingInt(@intCast(avatar.avatar_id));
+        if (quick_team.buddy_list.items.len == 1) meta.buddy_id = @fromBackingInt(@intCast(quick_team.buddy_list.items[0].buddy_id));
 
         quick_teams.appendAssumeCapacity(.{
             .slot = Properties.QuickTeam.Slot.fromInt(quick_team.slot) orelse return response.fail(1),

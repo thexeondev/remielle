@@ -40,7 +40,7 @@ pub fn switchGameMode(
             .scene = .{
                 .scene_type = 1,
                 .hall_scene_data = .{
-                    .section_id = @intFromEnum(hall.section_id),
+                    .section_id = @backingInt(hall.section_id),
                     .position = switch (hall.position) {
                         .id => null,
                         .transform => |*transform| .{
@@ -54,14 +54,14 @@ pub fn switchGameMode(
                         .transform => "",
                     },
                     .scene_time_in_minutes = properties.main_city_time.time_in_minutes,
-                    .day_of_week = @intFromEnum(properties.main_city_time.day_of_week),
+                    .day_of_week = @backingInt(properties.main_city_time.day_of_week),
                     .control_avatar_id = properties.basic_info.control_avatar.toInt(),
                     .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
                     .npc_list = npc_list: {
                         const section_index = std.mem.findScalar(
                             u32,
                             main_city.section_ids,
-                            @intFromEnum(hall.section_id),
+                            @backingInt(hall.section_id),
                         ) orelse break :npc_list .empty;
 
                         var npc_id_list: ArrayList(u32) = .empty;
@@ -157,7 +157,7 @@ pub fn switchGameMode(
                 },
             },
             .dungeon = .{
-                .quest_id = @intFromEnum(training.quest),
+                .quest_id = @backingInt(training.quest),
                 .dungeon_package_info = try packers.packDungeonPackageInfo(
                     notify.allocator,
                     &.{training.avatars},
@@ -176,30 +176,30 @@ pub fn switchGameMode(
                 .scene_id = hadal_zone.layer.getId(),
                 .enemy_property_scale = hadal_zone.getEnemyPropertyScale(),
                 .hadal_zone_scene_data = .{
-                    .zone_id = @intFromEnum(hadal_zone.layer.zone_id),
+                    .zone_id = @backingInt(hadal_zone.layer.zone_id),
                     .room_index = hadal_zone.layer.room_index,
                     .layer_index = hadal_zone.layer.layer_index,
                     .layer_item_id = hadal_zone.layer_item_id,
                     .first_room_avatar_id_list = avatar_id_list: {
                         var list: ArrayList(u32) = try .initCapacity(notify.allocator, 3);
                         for (hadal_zone.rooms.avatar_lists[0]) |slot| if (slot.toId()) |id|
-                            list.appendAssumeCapacity(@intFromEnum(id));
+                            list.appendAssumeCapacity(@backingInt(id));
 
                         break :avatar_id_list list;
                     },
                     .second_room_avatar_id_list = avatar_id_list: {
                         var list: ArrayList(u32) = try .initCapacity(notify.allocator, 3);
                         for (hadal_zone.rooms.avatar_lists[1]) |slot| if (slot.toId()) |id|
-                            list.appendAssumeCapacity(@intFromEnum(id));
+                            list.appendAssumeCapacity(@backingInt(id));
 
                         break :avatar_id_list list;
                     },
                     .first_room_buddy_id = if (hadal_zone.rooms.buddies[0].toId()) |id|
-                        @intFromEnum(id)
+                        @backingInt(id)
                     else
                         0,
                     .second_room_buddy_id = if (hadal_zone.rooms.buddies[1].toId()) |id|
-                        @intFromEnum(id)
+                        @backingInt(id)
                     else
                         0,
                 },
@@ -234,14 +234,14 @@ pub fn switchGameMode(
                                 );
 
                                 var avatar_unit: pb.AvatarUnitInfo = .{
-                                    .avatar_id = @intFromEnum(id),
+                                    .avatar_id = @backingInt(id),
                                     .properties = try .initCapacity(notify.allocator, property_map.count()),
                                 };
 
                                 var iterator = property_map.iterator();
                                 while (iterator.next()) |kv|
                                     avatar_unit.properties.appendAssumeCapacity(.{
-                                        .key = @intFromEnum(kv.key_ptr.*),
+                                        .key = @backingInt(kv.key_ptr.*),
                                         .value = kv.value_ptr.*,
                                     });
 
@@ -263,7 +263,7 @@ pub fn switchGameMode(
 
                         for (hadal_zone.rooms.buddies) |buddy| if (buddy.toId()) |id|
                             buddy_list.appendAssumeCapacity(.{
-                                .buddy_id = @intFromEnum(id),
+                                .buddy_id = @backingInt(id),
                                 .type = .FIGHTING,
                             });
 
@@ -324,7 +324,7 @@ pub fn npcInteraction(
     };
 
     notify.one(.{
-        .section_id = @intFromEnum(properties.hall.section_id),
+        .section_id = @backingInt(properties.hall.section_id),
         .action_list = action_list,
     });
 }
@@ -340,8 +340,8 @@ pub fn hallRefresh(
 ) !void {
     notify.one(.{
         .force_refresh = true,
-        .section_id = @intFromEnum(properties.hall.section_id),
+        .section_id = @backingInt(properties.hall.section_id),
         .scene_time_in_minutes = changes.main_city_time.?.time_in_minutes,
-        .day_of_week = @intFromEnum(changes.main_city_time.?.day_of_week),
+        .day_of_week = @backingInt(changes.main_city_time.?.day_of_week),
     });
 }

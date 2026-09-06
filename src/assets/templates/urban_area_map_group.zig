@@ -20,7 +20,7 @@ pub const Template = struct {
     is_map_visible: bool,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.area_group_id);
+        return @fromBackingInt(@intCast(t.area_group_id));
     }
 };
 

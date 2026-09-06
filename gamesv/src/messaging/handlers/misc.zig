@@ -57,8 +57,8 @@ pub fn getMiscData(
 
     var player_accessory_list: std.ArrayList(pb.PlayerAccessoryInfo) = try .initCapacity(response.allocator, Properties.PlayerAccessory.slots);
     inline for (std.enums.values(Properties.PlayerAccessory.Avatar)) |avatar| player_accessory_list.appendAssumeCapacity(.{
-        .avatar_id = @intFromEnum(avatar),
-        .avatar_skin_id = @intFromEnum(properties.player_accessory.meta.get(avatar).skin),
+        .avatar_id = @backingInt(avatar),
+        .avatar_skin_id = @backingInt(properties.player_accessory.meta.get(avatar).skin),
     });
 
     response.set(.{ .data = .{

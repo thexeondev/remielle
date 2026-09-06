@@ -38,7 +38,7 @@ pub fn getString(string: String) [:0]const u8 {
         .empty => "",
         _ => |index| std.mem.span(@as(
             [*:0]const u8,
-            @ptrCast(string_table[@intFromEnum(index)..]),
+            @ptrCast(string_table[@backingInt(index)..]),
         )),
     };
 }

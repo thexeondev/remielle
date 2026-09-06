@@ -237,7 +237,7 @@ const OptionalIndex = enum(u32) {
 
     pub fn toInt(oi: OptionalIndex) u32 {
         std.debug.assert(oi != .none);
-        return @intFromEnum(oi);
+        return @backingInt(oi);
     }
 };
 
@@ -520,7 +520,7 @@ pub fn writer(mc: *MultiConversation, client: u32, size: usize) AllocWriterError
         const index = ring.tail % SendRing.size;
 
         ring.sn[index] = ring.tail;
-        ring.frg[index] = @enumFromInt(count - 1);
+        ring.frg[index] = @fromBackingInt(@intCast(count - 1));
         ring.len[index] = @truncate(@min(mss, full_size));
         ring.resend_ts[index] = .zero;
         ring.rto[index] = .zero;
@@ -530,7 +530,7 @@ pub fn writer(mc: *MultiConversation, client: u32, size: usize) AllocWriterError
 
     if (!mc.storage.swapBit(.undrained, client, true)) {
         mc.storage.getPtr(.node, client).next = mc.undrained.head;
-        mc.undrained.head = @enumFromInt(client);
+        mc.undrained.head = @fromBackingInt(@intCast(client));
     }
 
     return .init(ring, first);
@@ -594,7 +594,7 @@ pub fn fillAt(mc: *MultiConversation, client_index: u32, data: []const u8) !void
 
     if (!mc.storage.swapBit(.undrained, client_index, true)) {
         mc.storage.getPtr(.node, client_index).next = mc.undrained.head;
-        mc.undrained.head = @enumFromInt(client_index);
+        mc.undrained.head = @fromBackingInt(@intCast(client_index));
     }
 }
 

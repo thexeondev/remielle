@@ -34,12 +34,12 @@ pub const Uid = enum(u16) {
         if (uid < base or uid > base + std.math.maxInt(u16))
             return null;
 
-        return @enumFromInt(@as(u16, @intCast(uid - base)));
+        return @fromBackingInt(@intCast(@as(u16, @intCast(uid - base))));
     }
 
     /// To the protocol UID representation.
     pub fn toInt(uid: Uid) u32 {
-        return @intFromEnum(uid) + base;
+        return @backingInt(uid) + base;
     }
 };
 
@@ -49,14 +49,14 @@ pub const Level = enum(u8) {
     _,
 
     pub fn toInt(level: Level) u8 {
-        return @intFromEnum(level);
+        return @backingInt(level);
     }
 
     pub fn fromInt(int: u8) ?Level {
         if (int < Level.init.toInt() or int > Level.max.toInt())
             return null;
 
-        return @enumFromInt(int);
+        return @fromBackingInt(@intCast(int));
     }
 };
 
@@ -66,14 +66,14 @@ pub const Star = enum(u8) {
     _,
 
     pub fn toInt(star: Star) u8 {
-        return @intFromEnum(star);
+        return @backingInt(star);
     }
 
     pub fn fromInt(int: u8) ?Star {
         if (int < Star.init.toInt() or int > Star.max.toInt())
             return null;
 
-        return @enumFromInt(int);
+        return @fromBackingInt(@intCast(int));
     }
 };
 
@@ -83,13 +83,13 @@ pub const Refine = enum(u8) {
     _,
 
     pub fn toInt(refine: Refine) u8 {
-        return @intFromEnum(refine);
+        return @backingInt(refine);
     }
 
     pub fn fromInt(int: u8) ?Refine {
         if (int < Refine.init.toInt() or int > Refine.max.toInt())
             return null;
 
-        return @enumFromInt(int);
+        return @fromBackingInt(@intCast(int));
     }
 };

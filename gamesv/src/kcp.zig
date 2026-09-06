@@ -22,13 +22,13 @@ pub const ConvId = enum(u32) {
                 c.count +%= 1;
             }
 
-            return @enumFromInt(c.count);
+            return @fromBackingInt(@intCast(c.count));
         }
     };
 
     pub fn toInt(conv: ConvId) u32 {
         std.debug.assert(conv != .none);
-        return @intFromEnum(conv);
+        return @backingInt(conv);
     }
 };
 
@@ -42,11 +42,11 @@ pub const Token = enum(u32) {
     };
 
     pub fn init(parameters: *const Parameters) Token {
-        return @enumFromInt(std.hash.Crc32.hash(@as([]const u8, @ptrCast(parameters))[0..16]));
+        return @fromBackingInt(@intCast(std.hash.Crc32.hash(@as([]const u8, @ptrCast(parameters))[0..16])));
     }
 
     pub inline fn downgrade(token: Token) Unchecked {
-        return @enumFromInt(@intFromEnum(token));
+        return @fromBackingInt(@intCast(@backingInt(token)));
     }
 
     /// An unchecked, just-received-from-the-wire token value.
@@ -60,7 +60,7 @@ pub const Token = enum(u32) {
                 .addr = user_addr,
             });
 
-            return if (@intFromEnum(actual) == @intFromEnum(unchecked))
+            return if (@backingInt(actual) == @backingInt(unchecked))
                 actual
             else
                 null;

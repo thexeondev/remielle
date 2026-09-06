@@ -22,6 +22,6 @@ pub const Template = struct {
     special_training_icon: []const u8,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.id);
+        return @fromBackingInt(@intCast(t.id));
     }
 };

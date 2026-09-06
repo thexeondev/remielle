@@ -529,8 +529,8 @@ const Lexer = struct {
     pub fn expectPuncts(l: *Lexer, comptime puncts: []const Token.Punct) !Token.Punct.Restricted(puncts) {
         const p = try l.expect(.punct);
         inline for (puncts) |expected|
-            if (@intFromEnum(p.punct) == @intFromEnum(expected))
-                return @enumFromInt(@intFromEnum(p.punct));
+            if (@backingInt(p.punct) == @backingInt(expected))
+                return @fromBackingInt(@intCast(@backingInt(p.punct)));
 
         std.log.err("{f}", .{Diagnostic.unexpected(l, p)});
         return error.UnexpectedToken;
@@ -658,7 +658,7 @@ const Lexer = struct {
 
                 var field_values: [field_names.len]u8 = undefined;
                 inline for (variants, 0..) |variant, i|
-                    field_values[i] = @intFromEnum(variant);
+                    field_values[i] = @backingInt(variant);
 
                 return @Enum(u8, .exhaustive, field_names, &field_values);
             }
@@ -677,7 +677,7 @@ const Lexer = struct {
 
         pub fn format(t: Token, w: *Io.Writer) !void {
             switch (t) {
-                .punct => |p| try w.print("'{c}'", .{@intFromEnum(p)}),
+                .punct => |p| try w.print("'{c}'", .{@backingInt(p)}),
                 .quoted => |s| try w.print("\"{s}\"", .{s}),
                 .name, .number => |n| try w.print("'{s}'", .{n}),
                 .keyword => |kw| try w.print("'{s}'", .{@tagName(kw)}),

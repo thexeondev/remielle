@@ -29,10 +29,10 @@ pub fn decode(bytes: *const [size]u8) DecodeError!Header {
     errdefer comptime unreachable;
 
     return .{
-        .conv_id = @enumFromInt(readInt(u32, bytes[0..4], .little)),
-        .token = @enumFromInt(readInt(u32, bytes[4..8], .little)),
+        .conv_id = @fromBackingInt(@intCast(readInt(u32, bytes[0..4], .little))),
+        .token = @fromBackingInt(@intCast(readInt(u32, bytes[4..8], .little))),
         .cmd = cmd,
-        .frg = @enumFromInt(bytes[9]),
+        .frg = @fromBackingInt(@intCast(bytes[9])),
         .wnd = readInt(u16, bytes[10..12], .little),
         .ts = .{ .milliseconds = readInt(u32, bytes[12..16], .little) },
         .sn = readInt(u32, bytes[16..20], .little),
@@ -42,10 +42,10 @@ pub fn decode(bytes: *const [size]u8) DecodeError!Header {
 }
 
 pub fn encode(header: *const Header, writer: *Io.Writer) Io.Writer.Error!void {
-    try writer.writeInt(u32, @intFromEnum(header.conv_id), .little);
-    try writer.writeInt(u32, @intFromEnum(header.token), .little);
-    try writer.writeByte(@intFromEnum(header.cmd));
-    try writer.writeByte(@intFromEnum(header.frg));
+    try writer.writeInt(u32, @backingInt(header.conv_id), .little);
+    try writer.writeInt(u32, @backingInt(header.token), .little);
+    try writer.writeByte(@backingInt(header.cmd));
+    try writer.writeByte(@backingInt(header.frg));
     try writer.writeInt(u16, header.wnd, .little);
     try writer.writeInt(u32, header.ts.milliseconds, .little);
     try writer.writeInt(u32, header.sn, .little);

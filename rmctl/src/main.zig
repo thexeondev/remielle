@@ -84,7 +84,7 @@ pub fn main(init: Init) void {
 
             const mod_message: Operation.Message(Operation.ModAvatarMeta) = .init(userdata, .{
                 .player_uid = mod_avatar_meta.uid,
-                .avatar_id = @intFromEnum(mod_avatar_meta.id),
+                .avatar_id = @backingInt(mod_avatar_meta.id),
                 .field = mod_avatar_meta.field,
                 .value = value,
             });
@@ -211,7 +211,7 @@ pub fn main(init: Init) void {
             ));
 
             mod_message.appendAssumeCapacity(.{
-                .entrance_id = @intFromEnum(mod_hadal_entrance.entrance),
+                .entrance_id = @backingInt(mod_hadal_entrance.entrance),
                 .zone_id = mod_hadal_entrance.zone_id,
             });
 
@@ -276,7 +276,7 @@ fn receive(
                 else => |reason| fatal("error: {t} ({d})", .{ reason, nak_message.event.extra }),
             }
         },
-        _ => |unknown| fatal("received unknown event, tag: {d}", .{@intFromEnum(unknown)}),
+        _ => |unknown| fatal("received unknown event, tag: {d}", .{@backingInt(unknown)}),
         // else => |unexpected| fatal("received unexpected event ({t})", .{unexpected}),
     }
 }

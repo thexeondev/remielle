@@ -37,7 +37,7 @@ pub const Template = struct {
     refine_costs: []const templates.ItemCount,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.item_id);
+        return @fromBackingInt(@intCast(t.item_id));
     }
 };
 

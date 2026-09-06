@@ -39,7 +39,7 @@ pub fn modPlayerAccessory(
     const player_accessory = message.data.player_accessory orelse
         return response.fail(1);
 
-    const new_skin = templates.avatar_skin_base.map.get(@enumFromInt(player_accessory.avatar_skin_id)) orelse
+    const new_skin = templates.avatar_skin_base.map.get(@fromBackingInt(@intCast(player_accessory.avatar_skin_id))) orelse
         return response.fail(1);
 
     if (new_skin.avatar_id != player_accessory.avatar_id)
@@ -47,7 +47,7 @@ pub fn modPlayerAccessory(
 
     changes.insert(Changes.PlayerAccessory{
         .avatar = std.enums.fromInt(Properties.PlayerAccessory.Avatar, new_skin.avatar_id) orelse return response.fail(1),
-        .meta = .{ .skin = @enumFromInt(new_skin.id) },
+        .meta = .{ .skin = @fromBackingInt(@intCast(new_skin.id)) },
     });
 
     response.set(.init);

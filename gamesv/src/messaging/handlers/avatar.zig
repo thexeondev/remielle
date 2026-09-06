@@ -84,7 +84,7 @@ pub fn avatarSkinDress(
     }),
     response: Response(pb.AvatarSkinDressScRsp),
 ) !void {
-    const new_skin = templates.avatar_skin_base.map.get(@enumFromInt(message.data.avatar_skin_id)) orelse
+    const new_skin = templates.avatar_skin_base.map.get(@fromBackingInt(@intCast(message.data.avatar_skin_id))) orelse
         return response.fail(1);
 
     const maybe_index: ?u32 = avatar_index: {
@@ -97,7 +97,7 @@ pub fn avatarSkinDress(
     const index = maybe_index orelse
         return response.fail(1);
 
-    if (new_skin.avatar_id != @intFromEnum(properties.avatar.ids[index]))
+    if (new_skin.avatar_id != @backingInt(properties.avatar.ids[index]))
         return response.fail(1);
 
     var meta = properties.avatar.meta[index];
@@ -107,7 +107,7 @@ pub fn avatarSkinDress(
 
         const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
 
-        meta.skin = @enumFromInt(new_skin.id);
+        meta.skin = @fromBackingInt(@intCast(new_skin.id));
         avatars[0] = .{
             .id = properties.avatar.ids[index],
             .meta = meta,
@@ -121,7 +121,7 @@ pub fn avatarSkinDress(
         if (properties.basic_info.control_guise_avatar.toInt() == new_skin.avatar_id)
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
-                .guise_skin = @enumFromInt(new_skin.id),
+                .guise_skin = @fromBackingInt(@intCast(new_skin.id)),
             });
     }
 
@@ -167,7 +167,7 @@ pub fn avatarSkinUnDress(
 
         changes.insert(avatars);
 
-        if (properties.basic_info.control_guise_avatar.toInt() == @intFromEnum(properties.avatar.ids[index]))
+        if (properties.basic_info.control_guise_avatar.toInt() == @backingInt(properties.avatar.ids[index]))
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
                 .guise_skin = .none,
@@ -211,7 +211,7 @@ pub fn weaponDress(
 
     if (meta.flags.show_weapon == .locked) {
         const template = templates.weapon.map.get(properties.weapon.ids[weapon_index]).?;
-        if (template.avatar_id == @intFromEnum(properties.avatar.ids[index]))
+        if (template.avatar_id == @backingInt(properties.avatar.ids[index]))
             meta.flags.show_weapon = .enabled;
     }
 
@@ -220,7 +220,7 @@ pub fn weaponDress(
     avatars[0] = .{
         .id = properties.avatar.ids[index],
         .meta = meta,
-        .weapon_uid = @enumFromInt(weapon_uid.toInt()),
+        .weapon_uid = @fromBackingInt(@intCast(weapon_uid.toInt())),
         .equipment_uids = properties.avatar.equipment_uids[index],
         .awake_material_count = properties.avatar.awake_material_counts[index],
     };
@@ -230,7 +230,7 @@ pub fn weaponDress(
     if (std.mem.findScalar(
         Avatar.OptionalUID,
         properties.avatar.weapon_uids[0..properties.avatar.count()],
-        @enumFromInt(weapon_uid.toInt()),
+        @fromBackingInt(@intCast(weapon_uid.toInt())),
     )) |prev_owner_index| {
         // Another avatar has this weapon equipped, swap them.
         changes_count = 2;
@@ -309,7 +309,7 @@ pub fn equipmentDress(
     var equipment_uids = properties.avatar.equipment_uids[index];
 
     const old_equip_id = equipment_uids[dress_index.toIndex()];
-    equipment_uids[dress_index.toIndex()] = @enumFromInt(equip_uid);
+    equipment_uids[dress_index.toIndex()] = @fromBackingInt(@intCast(equip_uid));
 
     avatars[0] = .{
         .id = properties.avatar.ids[index],
@@ -331,7 +331,7 @@ pub fn equipmentDress(
     if (std.mem.findScalar(
         Properties.Avatar.OptionalUID,
         equipments,
-        @enumFromInt(equip_uid),
+        @fromBackingInt(@intCast(equip_uid)),
     )) |prev_owner_index| {
         const avatar_idx = prev_owner_index / slots;
         const slot_idx = prev_owner_index % slots;
@@ -339,7 +339,7 @@ pub fn equipmentDress(
         changes_count = 2;
 
         var prev_owner_equipments_uids = properties.avatar.equipment_uids[avatar_idx];
-        prev_owner_equipments_uids[slot_idx] = @enumFromInt(old_equip_id.unwrap() orelse 0);
+        prev_owner_equipments_uids[slot_idx] = @fromBackingInt(@intCast(old_equip_id.unwrap() orelse 0));
 
         avatars[1] = .{
             .id = properties.avatar.ids[avatar_idx],
@@ -407,11 +407,11 @@ pub fn equipmentSuitDress(
         if (std.mem.findScalar(
             Properties.Avatar.OptionalUID,
             equipments,
-            @enumFromInt(param.equip_uid),
+            @fromBackingInt(@intCast(param.equip_uid)),
         ) != null)
             return response.fail(1); // EquipmentSuitDressCsReq requests only unused equipment.
 
-        avatars[0].equipment_uids[slot.toIndex()] = @enumFromInt(param.equip_uid);
+        avatars[0].equipment_uids[slot.toIndex()] = @fromBackingInt(@intCast(param.equip_uid));
     }
 
     changes.insert(avatars);
@@ -491,7 +491,7 @@ pub fn avatarUnlockAwake(
                 meta.flags.awake_available = true;
                 meta.flags.awake_enabled = true;
             }
-            meta.awakening = @enumFromInt(template.id);
+            meta.awakening = @fromBackingInt(@intCast(template.id));
 
             const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
             avatars[0] = .{
@@ -499,7 +499,7 @@ pub fn avatarUnlockAwake(
                 .meta = meta,
                 .weapon_uid = properties.avatar.weapon_uids[index],
                 .equipment_uids = properties.avatar.equipment_uids[index],
-                .awake_material_count = @enumFromInt(avatar_awake_material_count.toInt() - 1),
+                .awake_material_count = @fromBackingInt(@intCast(avatar_awake_material_count.toInt() - 1)),
             };
 
             changes.insert(avatars);

@@ -23,7 +23,7 @@ pub fn getHadalZoneData(
         entrance_list.appendAssumeCapacity(.{
             .entrance_type = entrance_type,
             .entrance_id = entrance.toEntranceId(),
-            .state = @enumFromInt(3),
+            .state = @fromBackingInt(@intCast(3)),
             .cur_zone_record = try packers.packZoneRecord(response.allocator, rtc.time, entrance_type, zone_id),
         });
     };

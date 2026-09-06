@@ -21,7 +21,7 @@ pub fn getWeaponData(
     while (i < properties.weapon.count) : (i += 1) {
         weapon_list.appendAssumeCapacity(.{
             .uid = properties.weapon.uids[i].toInt(),
-            .id = @intFromEnum(properties.weapon.ids[i]),
+            .id = @backingInt(properties.weapon.ids[i]),
             .level = properties.weapon.levels[i].toInt(),
             .star = properties.weapon.stars[i].toInt(),
             .refine_level = properties.weapon.refines[i].toInt(),
@@ -79,7 +79,7 @@ pub fn getItemData(
     const awake_material_counts = properties.avatar.awake_material_counts[0..avatar_count];
     for (awake_material_counts, 0..) |awake_material_count, index| if (awake_material_count != .none) {
         try materials.append(response.allocator, .{
-            .id = 20_000 + @divFloor(@intFromEnum(properties.avatar.ids[index]), 10),
+            .id = 20_000 + @divFloor(@backingInt(properties.avatar.ids[index]), 10),
             .count = awake_material_count.toInt(),
         });
     };

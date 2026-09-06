@@ -30,20 +30,20 @@ pub const Id = enum(u64) {
 
         return switch (int) {
             0 => null,
-            else => @enumFromInt(int),
+            else => @fromBackingInt(@intCast(int)),
         };
     }
 
     pub fn toString(id: Id, buf: *[fmt_len]u8) []const u8 {
-        return std.fmt.bufPrint(buf, "{d}", .{@intFromEnum(id)}) catch unreachable;
+        return std.fmt.bufPrint(buf, "{d}", .{@backingInt(id)}) catch unreachable;
     }
 
     inline fn fromIndex(index: usize) Id {
-        return @enumFromInt(index + 1);
+        return @fromBackingInt(@intCast(index + 1));
     }
 
     inline fn toIndex(id: Id) usize {
-        return @intFromEnum(id) - 1;
+        return @backingInt(id) - 1;
     }
 };
 

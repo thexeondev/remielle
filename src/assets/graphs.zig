@@ -25,7 +25,7 @@ pub const Action = extern struct {
         _,
 
         pub inline fn toIndex(ei: ExtraIndex) u32 {
-            return @intFromEnum(ei);
+            return @backingInt(ei);
         }
     };
 
@@ -119,7 +119,7 @@ pub const interacts = struct {
             .empty => "",
             _ => |index| std.mem.span(@as(
                 [*:0]const u8,
-                @ptrCast(interacts.string_table[@intFromEnum(index)..]),
+                @ptrCast(interacts.string_table[@backingInt(index)..]),
             )),
         };
     }

@@ -106,8 +106,8 @@ fn buildPlayerAccessory(
 
     if (maybe_player_accessory) |player_accessory|
         try sync.player_accessory_list.append(allocator, .{
-            .avatar_id = @intFromEnum(player_accessory.avatar),
-            .avatar_skin_id = @intFromEnum(player_accessory.meta.skin),
+            .avatar_id = @backingInt(player_accessory.avatar),
+            .avatar_skin_id = @backingInt(player_accessory.meta.skin),
         });
 
     return sync;
@@ -129,7 +129,7 @@ fn buildItemSync(
 
             for (avatar_changes) |avatar_change| {
                 list.appendAssumeCapacity(.{
-                    .id = 20_000 + @divFloor(@intFromEnum(avatar_change.id), 10),
+                    .id = 20_000 + @divFloor(@backingInt(avatar_change.id), 10),
                     .count = avatar_change.awake_material_count.toInt(),
                 });
             }
@@ -142,7 +142,7 @@ fn buildItemSync(
             for (weapon_changes) |change|
                 list.appendAssumeCapacity(.{
                     .uid = change.uid.toInt(),
-                    .id = @intFromEnum(change.id),
+                    .id = @backingInt(change.id),
                     .level = change.level.toInt(),
                     .star = change.star.toInt(),
                     .refine_level = change.refine.toInt(),
@@ -193,7 +193,7 @@ fn buildHadalZoneSync(
 
         sync.sync_entrance_list.appendAssumeCapacity(.{
             .entrance_id = entrance.toEntranceId(),
-            .state = @enumFromInt(3),
+            .state = @fromBackingInt(@intCast(3)),
             .cur_zone_record_sync = try packers.packZoneRecord(allocator, rtc.time, entrance_type, zone_id),
         });
     };

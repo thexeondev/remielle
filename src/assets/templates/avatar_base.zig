@@ -39,7 +39,7 @@ pub const Template = struct {
     audio_event_replace_param: [:0]const u8,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.id);
+        return @fromBackingInt(@intCast(t.id));
     }
 };
 

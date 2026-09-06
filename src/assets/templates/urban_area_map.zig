@@ -19,7 +19,7 @@ pub const Template = struct {
     group_name: []const u8,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.area_id);
+        return @fromBackingInt(@intCast(t.area_id));
     }
 };
 

@@ -37,7 +37,7 @@ pub const Level = enum(u8) {
     _,
 
     pub fn toInt(level: Level) u32 {
-        return @intFromEnum(level);
+        return @backingInt(level);
     }
 };
 
@@ -47,7 +47,7 @@ pub const Rank = enum(u8) {
     _,
 
     pub fn toInt(rank: Rank) u32 {
-        return @intFromEnum(rank);
+        return @backingInt(rank);
     }
 };
 
@@ -57,7 +57,7 @@ pub const Star = enum(u8) {
     _,
 
     pub fn toInt(star: Star) u32 {
-        return @intFromEnum(star);
+        return @backingInt(star);
     }
 };
 
@@ -82,18 +82,18 @@ pub const Skill = enum(u8) {
         _,
 
         pub fn maxFor(skill: Skill) Skill.Level {
-            return @enumFromInt(@as(u8, switch (skill) {
+            return @fromBackingInt(@intCast(@as(u8, switch (skill) {
                 .passive => 5,
                 else => 8,
-            }));
+            })));
         }
 
         pub fn toInt(level: Skill.Level) u32 {
-            return @intFromEnum(level);
+            return @backingInt(level);
         }
     };
 
     pub fn toInt(skill: Skill) u32 {
-        return @intFromEnum(skill);
+        return @backingInt(skill);
     }
 };

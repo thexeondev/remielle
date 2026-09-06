@@ -15,7 +15,7 @@ pub fn playerKick(
     const reason: protobuf.main.PlayerKickReason = std.enums.fromInt(
         protobuf.main.PlayerKickReason,
         operation.data.reason,
-    ) orelse @enumFromInt(0);
+    ) orelse @fromBackingInt(@intCast(0));
 
     server.kick(context.io, context.time, index, reason);
 }
@@ -48,7 +48,7 @@ pub fn modAvatarMeta(
             if (value > Avatar.Level.max.toInt() or value < Avatar.Level.init.toInt())
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
-            meta.level = @enumFromInt(@as(u8, @intCast(value)));
+            meta.level = @fromBackingInt(@intCast(@as(u8, @intCast(value))));
         },
         .exp => {
             meta.exp = std.math.cast(u32, value) orelse
@@ -58,13 +58,13 @@ pub fn modAvatarMeta(
             if (value > Avatar.Rank.max.toInt() or value < Avatar.Rank.init.toInt())
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
-            meta.rank = @enumFromInt(@as(u8, @intCast(value)));
+            meta.rank = @fromBackingInt(@intCast(@as(u8, @intCast(value))));
         },
         .talents => {
             if (value > Avatar.Talents.max.toInt() or value < Avatar.Talents.init.toInt())
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
-            meta.talents = @enumFromInt(@as(u8, @intCast(value)));
+            meta.talents = @fromBackingInt(@intCast(@as(u8, @intCast(value))));
         },
         .mindscape_tab_state => {
             const mind = Avatar.MindscapeTabState.fromBits(@truncate(value)) orelse
@@ -81,16 +81,16 @@ pub fn modAvatarMeta(
                 encoded.level > Avatar.Skill.Level.maxFor(skill).toInt())
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
-            meta.skill_levels[skill.toInt()] = @enumFromInt(@as(u8, @intCast(encoded.level)));
+            meta.skill_levels[skill.toInt()] = @fromBackingInt(@intCast(@as(u8, @intCast(encoded.level))));
         },
         .skin => {
             const skin_id = std.enums.fromInt(templates.avatar_skin_base.Id, value) orelse
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
-            meta.skin = @enumFromInt(@intFromEnum(skin_id));
+            meta.skin = @fromBackingInt(@intCast(@backingInt(skin_id)));
         },
         .awakening => {
-            meta.awakening = @enumFromInt(@as(u32, @intCast(value)));
+            meta.awakening = @fromBackingInt(@intCast(@as(u32, @intCast(value))));
         },
         .favorite => {
             meta.flags.favorite = value != 0;
@@ -154,7 +154,7 @@ pub fn createWeapon(
 
     for (weapons, extended.entries, 0..) |*change, *entry, i|
         change.* = .{
-            .uid = @enumFromInt(@as(u16, @intCast(weapon.count + i))),
+            .uid = @fromBackingInt(@intCast(@as(u16, @intCast(weapon.count + i)))),
             .id = std.enums.fromInt(Weapon.Id, entry.id) orelse
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
             .level = Weapon.Level.fromInt(entry.meta.level) orelse
@@ -213,7 +213,7 @@ pub fn createEquip(
         } else return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
         change.* = .{
-            .uid = @enumFromInt(@as(u16, @intCast(equip.count + i))),
+            .uid = @fromBackingInt(@intCast(@as(u16, @intCast(equip.count + i)))),
             .id = entry.id,
             .level = Equipment.Level.fromInt(entry.meta.level) orelse
                 return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 }),
@@ -223,7 +223,7 @@ pub fn createEquip(
                 var properties: Equipment.Property.List = undefined;
                 for (&properties, &entry.properties) |*property, *input|
                     property.* = .{
-                        .key = @enumFromInt(input.key),
+                        .key = @fromBackingInt(@intCast(input.key)),
                         .base_value = input.base_value,
                         .add_value = input.add_value,
                     };

@@ -13,11 +13,11 @@ pub const Socket = enum(usize) {
     pub const count = 2;
 
     pub inline fn toIndex(socket: Socket) usize {
-        return @intFromEnum(socket);
+        return @backingInt(socket);
     }
 
     pub inline fn fromIndex(index: usize) Socket {
-        return @enumFromInt(index);
+        return @fromBackingInt(@intCast(index));
     }
 };
 
@@ -76,8 +76,8 @@ pub const Client = struct {
         _,
 
         pub fn nextId(counter: *PacketCounter) u32 {
-            defer counter.* = @enumFromInt(1 +% @intFromEnum(counter.*));
-            return @intFromEnum(counter.*);
+            defer counter.* = @fromBackingInt(@intCast(1 +% @backingInt(counter.*)));
+            return @backingInt(counter.*);
         }
     };
 };
@@ -101,7 +101,7 @@ pub const Frame = struct {
     multi_conversation: *kcp.MultiConversation,
 
     pub inline fn player(frame: *const Frame) logic.Properties.Player {
-        return @enumFromInt(frame.target_index);
+        return @fromBackingInt(@intCast(frame.target_index));
     }
 };
 
@@ -312,7 +312,7 @@ fn addClient(
 fn increaseLimit(server: *Server) void {
     server.session_limit = switch (server.session_limit) {
         .unlimited => .unlimited,
-        .nothing, _ => |limit| @enumFromInt(limit.toInt().? + 1),
+        .nothing, _ => |limit| @fromBackingInt(@intCast(limit.toInt().? + 1)),
     };
 }
 
@@ -339,7 +339,7 @@ pub fn savePlayer(
     const player_save = logic.Properties.toPlayerSave(
         &server.properties,
         arena,
-        @enumFromInt(index),
+        @fromBackingInt(@intCast(index)),
     ) catch |err| switch (err) {
         error.OutOfMemory => {
             // TODO: get rid of protobuf for saves to avoid this error.
@@ -370,7 +370,7 @@ pub fn loadPlayerProperties(
 
             logic.Properties.setDefaultsAt(
                 &server.properties,
-                @enumFromInt(index),
+                @fromBackingInt(@intCast(index)),
             );
         },
     };
@@ -384,7 +384,7 @@ fn loadPlayerPropertiesFromSave(server: *Server, io: Io, uid: u32, index: u32) !
 
     try logic.Properties.fromPlayerSave(
         &server.properties,
-        @enumFromInt(index),
+        @fromBackingInt(@intCast(index)),
         &player_save,
     );
 }
