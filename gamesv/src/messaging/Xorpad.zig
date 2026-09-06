@@ -1,6 +1,7 @@
 const Xorpad = @This();
 const std = @import("std");
 const Io = std.Io;
+const assert = std.debug.assert;
 const base64 = std.base64.standard;
 
 const remielle = @import("remielle");
@@ -108,15 +109,29 @@ pub const Writer = struct {
         writer.nested.end = writer.interface.end;
     }
 
-    pub fn drain(io_w: *Io.Writer, _: []const []const u8, _: usize) Io.Writer.Error!usize {
+    pub fn drain(io_w: *Io.Writer, data: []const []const u8, splat: usize) Io.Writer.Error!usize {
+        assert(data.len != 0);
+        assert(splat != 0);
+
         const writer: *Writer = @alignCast(@fieldParentPtr("interface", io_w));
+
+        if (io_w.end != io_w.buffer.len) {
+            assert(io_w.end < io_w.buffer.len);
+
+            const data0 = data[0];
+            const write_n = @min(data0.len, io_w.buffer.len - io_w.end);
+            @memcpy(io_w.buffer[io_w.end..][0..write_n], data0[0..write_n]);
+            io_w.end += write_n;
+            return write_n;
+        }
 
         const to_xor = io_w.buffer[writer.buffer_offset..io_w.end];
         writer.xorpad.xor(writer.offset, to_xor);
         writer.offset.advance(to_xor.len);
 
         writer.nested.end = io_w.end;
-        _ = try writer.nested.vtable.drain(writer.nested, &.{&.{}}, 0);
+
+        _ = try writer.nested.vtable.drain(writer.nested, &.{&.{}}, 1);
 
         io_w.end = writer.nested.end;
         io_w.buffer = writer.nested.buffer;

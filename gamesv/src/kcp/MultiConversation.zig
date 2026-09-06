@@ -470,8 +470,19 @@ pub const Writer = struct {
         };
     }
 
-    pub fn drain(io_w: *Io.Writer, _: []const []const u8, _: usize) Io.Writer.Error!usize {
-        if (io_w.end != io_w.buffer.len) return 0;
+    pub fn drain(io_w: *Io.Writer, data: []const []const u8, splat: usize) Io.Writer.Error!usize {
+        assert(data.len != 0);
+        assert(splat != 0);
+
+        if (io_w.end != io_w.buffer.len) {
+            assert(io_w.end < io_w.buffer.len);
+
+            const data0 = data[0];
+            const write_n = @min(data0.len, io_w.buffer.len - io_w.end);
+            @memcpy(io_w.buffer[io_w.end..][0..write_n], data0[0..write_n]);
+            io_w.end += write_n;
+            return write_n;
+        }
 
         const seg_w: *Writer = @alignCast(@fieldParentPtr("interface", io_w));
         if (seg_w.cur == seg_w.ring.tail - 1) return error.WriteFailed;
@@ -734,5 +745,6 @@ const SinglyLinkedList = std.SinglyLinkedList;
 
 const kcp = @import("../kcp.zig");
 
+const assert = std.debug.assert;
 const std = @import("std");
 const MultiConversation = @This();
