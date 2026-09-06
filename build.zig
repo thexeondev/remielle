@@ -9,6 +9,9 @@ const stable_protos: []const []const u8 = &.{
 };
 
 pub fn build(b: *Build) void {
+    // TODO: use b.dependOn* functionality once it's implemented by the build system.
+    b.graph.poisonCache();
+
     const remielle = b.addModule(
         "remielle",
         .{ .root_source_file = b.path("src/remielle.zig") },
