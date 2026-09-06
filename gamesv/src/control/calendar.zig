@@ -17,7 +17,7 @@ pub fn modHadalZoneSchedule(
                 break;
         } else return context.sendEvent(remielle.control.Event.Nak, .{ .reason = .invalid_parameter, .extra = 0 });
 
-        hadal_zone.entrance_zones[entrance.toInt()] = @enumFromInt(entry.zone_id);
+        hadal_zone.entrance_zones[entrance.toIndex()] = @enumFromInt(entry.zone_id);
     }
 
     server.persistent.calendar.hadal_zone = hadal_zone;
