@@ -113,7 +113,9 @@ fn configureRemielleModule(
         },
     );
 
-    StaticAsset.addAll(b, remielle, shared_assets);
+    importAllFrom(b, remielle, "assets/filecfg");
+    importAllFrom(b, remielle, "assets/bincfg");
+    importAllFrom(b, remielle, "assets/graphs");
 
     const tests = b.addTest(.{ .root_module = remielle });
     steps.@"test".dependOn(&b.addRunArtifact(tests).step);
@@ -199,10 +201,6 @@ fn configureProtobufCompilation(
     };
 }
 
-const dpsv_assets: []const StaticAsset = &.{
-    .asset("config", "dpsv/config.zon"),
-};
-
 fn configureDispatchServer(b: *Build, steps: struct {
     install: *Build.Step,
     @"test": *Build.Step,
@@ -222,7 +220,7 @@ fn configureDispatchServer(b: *Build, steps: struct {
         .optimize = options.optimize,
     });
 
-    StaticAsset.addAll(b, module, dpsv_assets);
+    importOne(b, module, "dpsv/config.zon");
 
     const tests = b.addTest(.{ .root_module = module });
     steps.@"test".dependOn(&b.addRunArtifact(tests).step);
@@ -241,10 +239,6 @@ fn configureDispatchServer(b: *Build, steps: struct {
 
     steps.@"serve-all".addFileArg(exe.getEmittedBin());
 }
-
-const sdksv_assets: []const StaticAsset = &.{
-    .asset("config", "sdksv/config.zon"),
-};
 
 fn configureSdkServer(b: *Build, steps: struct {
     install: *Build.Step,
@@ -265,7 +259,7 @@ fn configureSdkServer(b: *Build, steps: struct {
         .optimize = options.optimize,
     });
 
-    StaticAsset.addAll(b, module, sdksv_assets);
+    importOne(b, module, "sdksv/config.zon");
 
     const tests = b.addTest(.{ .root_module = module });
     steps.@"test".dependOn(&b.addRunArtifact(tests).step);
@@ -284,11 +278,6 @@ fn configureSdkServer(b: *Build, steps: struct {
 
     steps.@"serve-all".addFileArg(exe.getEmittedBin());
 }
-
-const gamesv_assets: []const StaticAsset = &.{
-    .asset("config", "gamesv/config.zon"),
-    .asset("initial_xorpad", "gamesv/initial_xorpad.bytes"),
-};
 
 fn configureGameServer(b: *Build, steps: struct {
     install: *Build.Step,
@@ -310,7 +299,8 @@ fn configureGameServer(b: *Build, steps: struct {
         .optimize = options.optimize,
     });
 
-    StaticAsset.addAll(b, module, gamesv_assets);
+    importOne(b, module, "gamesv/config.zon");
+    importOne(b, module, "gamesv/initial_xorpad.bytes");
 
     const tests = b.addTest(.{ .root_module = module });
     tests.step.dependOn(options.protobuf_comp.compile_main_descriptors);
@@ -368,38 +358,28 @@ fn configureRemielleCtl(b: *Build, steps: struct {
     steps.ctl.dependOn(&run.step);
 }
 
-const shared_assets: []const StaticAsset = &.{
-    // Filecfg
-    .asset("AvatarBaseTemplateTb", "assets/filecfg/AvatarBaseTemplateTb.zon"),
-    .asset("BuddyBaseTemplateTb", "assets/filecfg/BuddyBaseTemplateTb.zon"),
-    .asset("AvatarSkinBaseTemplateTb", "assets/filecfg/AvatarSkinBaseTemplateTb.zon"),
-    .asset("UnlockConfigTemplateTb", "assets/filecfg/UnlockConfigTemplateTb.zon"),
-    .asset("PostGirlConfigTemplateTb", "assets/filecfg/PostGirlConfigTemplateTb.zon"),
-    .asset("SectionConfigTemplateTb", "assets/filecfg/SectionConfigTemplateTb.zon"),
-    .asset("YorozuyaLevelTemplateTb", "assets/filecfg/YorozuyaLevelTemplateTb.zon"),
-    .asset("TrainingQuestTemplateTb", "assets/filecfg/TrainingQuestTemplateTb.zon"),
-    .asset("WeaponTemplateTb", "assets/filecfg/WeaponTemplateTb.zon"),
-    .asset("UrbanAreaMapTemplateTb", "assets/filecfg/UrbanAreaMapTemplateTb.zon"),
-    .asset("UrbanAreaMapGroupTemplateTb", "assets/filecfg/UrbanAreaMapGroupTemplateTb.zon"),
-    .asset("TeleportConfigTemplateTb", "assets/filecfg/TeleportConfigTemplateTb.zon"),
-    .asset("EquipmentTemplateTb", "assets/filecfg/EquipmentTemplateTb.zon"),
-    .asset("ZoneInfoTemplateTb", "assets/filecfg/ZoneInfoTemplateTb.zon"),
-    .asset("QuestConfigTemplateTb", "assets/filecfg/QuestConfigTemplateTb.zon"),
-    .asset("HadalZoneQuestTemplateTb", "assets/filecfg/HadalZoneQuestTemplateTb.zon"),
-    .asset("AvatarBattleTemplateTb", "assets/filecfg/AvatarBattleTemplateTb.zon"),
-    .asset("AvatarLevelAdvanceTemplateTb", "assets/filecfg/AvatarLevelAdvanceTemplateTb.zon"),
-    .asset("AvatarPassiveSkillTemplateTb", "assets/filecfg/AvatarPassiveSkillTemplateTb.zon"),
-    .asset("WeaponLevelTemplateTb", "assets/filecfg/WeaponLevelTemplateTb.zon"),
-    .asset("WeaponStarTemplateTb", "assets/filecfg/WeaponStarTemplateTb.zon"),
-    .asset("EquipmentLevelTemplateTb", "assets/filecfg/EquipmentLevelTemplateTb.zon"),
-    .asset("EquipmentSuitTemplateTb", "assets/filecfg/EquipmentSuitTemplateTb.zon"),
-    .asset("AvatarSpecialAwakenTemplateTb", "assets/filecfg/AvatarSpecialAwakenTemplateTb.zon"),
+fn importAllFrom(b: *Build, module: *Build.Module, dir_path: []const u8) void {
+    const dir = b.root.openDir(b.graph.io, dir_path, .{ .iterate = true }) catch |err|
+        std.debug.panic("failed to open {q}: {t}", .{ dir_path, err });
+    defer dir.close(b.graph.io);
 
-    // Binary-packed
-    .asset("main_city_object_template_tb.remi", "assets/bincfg/main_city_object_template_tb.remi"),
-    .asset("main_city.remi", "assets/graphs/main_city.remi"),
-    .asset("interacts.remi", "assets/graphs/interacts.remi"),
-};
+    var it = dir.iterateAssumeFirstIteration();
+    while (it.next(b.graph.io) catch @panic("failed to read dir")) |entry| {
+        if (entry.kind != .file) continue;
+
+        module.addAnonymousImport(
+            Io.Dir.path.stem(entry.name),
+            .{ .root_source_file = b.path(b.fmt("{s}/{s}", .{ dir_path, entry.name })) },
+        );
+    }
+}
+
+fn importOne(b: *Build, module: *Build.Module, sub_path: []const u8) void {
+    module.addAnonymousImport(
+        Io.Dir.path.stem(sub_path),
+        .{ .root_source_file = b.path(sub_path) },
+    );
+}
 
 fn filesReadable(io: Io, dir: Build.Cache.Path, path_list: []const []const u8) bool {
     for (path_list) |sub_path|
@@ -407,20 +387,3 @@ fn filesReadable(io: Io, dir: Build.Cache.Path, path_list: []const []const u8) b
 
     return true;
 }
-
-const StaticAsset = struct {
-    import_name: []const u8,
-    sub_path: []const u8,
-
-    pub fn asset(import_name: []const u8, sub_path: []const u8) StaticAsset {
-        return .{ .import_name = import_name, .sub_path = sub_path };
-    }
-
-    pub fn addAll(b: *Build, module: *Build.Module, assets: []const StaticAsset) void {
-        for (assets) |a|
-            module.addAnonymousImport(
-                a.import_name,
-                .{ .root_source_file = b.path(a.sub_path) },
-            );
-    }
-};

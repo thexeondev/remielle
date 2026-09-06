@@ -1,6 +1,6 @@
 pub const Map = std.array_hash_map.Auto(u32, void);
 
-const bytes align(@alignOf(u32)) = @embedFile("main_city_object_template_tb.remi").*;
+const bytes align(@alignOf(u32)) = @embedFile("main_city_object_template_tb").*;
 
 const header: *const Header = @ptrCast(&bytes);
 

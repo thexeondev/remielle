@@ -52,7 +52,7 @@ pub const Action = extern struct {
 };
 
 pub const main_city = struct {
-    const bytes align(@alignOf(u32)) = @embedFile("main_city.remi").*;
+    const bytes align(@alignOf(u32)) = @embedFile("main_city").*;
 
     const header: *const Header = @ptrCast(&bytes);
 
@@ -81,7 +81,7 @@ pub const String = enum(u32) {
 };
 
 pub const interacts = struct {
-    const bytes align(@alignOf(u32)) = @embedFile("interacts.remi").*;
+    const bytes align(@alignOf(u32)) = @embedFile("interacts").*;
 
     const header: *const Header = @ptrCast(&bytes);
 
