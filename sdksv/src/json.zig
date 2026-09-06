@@ -13,8 +13,8 @@ pub fn view(comptime Struct: type, comptime escaping: Escaping, string: []const 
         .escaped_once => "\\\"",
     };
 
-    inline for (@typeInfo(Struct).@"struct".fields) |field| {
-        const field_pattern = quote ++ field.name ++ quote ++ ":";
+    inline for (@typeInfo(Struct).@"struct".field_names) |field_name| {
+        const field_pattern = quote ++ field_name ++ quote ++ ":";
         const before_value_index = (std.mem.find(u8, string, field_pattern) orelse
             return null) + field_pattern.len;
 
@@ -38,7 +38,7 @@ pub fn view(comptime Struct: type, comptime escaping: Escaping, string: []const 
                 return null,
         };
 
-        @field(result, field.name) = value_unterminated[0..value_termination];
+        @field(result, field_name) = value_unterminated[0..value_termination];
     }
 
     return result;

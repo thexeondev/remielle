@@ -765,7 +765,7 @@ fn unexpected(e: linux.E) noreturn {
         abort();
 }
 
-const is_debug = builtin.mode == .Debug;
+const is_debug = builtin.mode == .debug;
 
 const fd_t = linux.fd_t;
 const errno = linux.errno;

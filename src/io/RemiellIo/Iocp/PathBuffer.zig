@@ -2,7 +2,7 @@ space: Io.Threaded.WindowsPathSpace,
 
 const Wtf16ToPrefixedFileWOptions = @typeInfo(
     @TypeOf(Io.Threaded.sliceToPrefixedFileW),
-).@"fn".params[2].type.?;
+).@"fn".param_types[2].?;
 
 const Wtf8ToPrefixedFileWError = @typeInfo(@typeInfo(
     @TypeOf(Io.Threaded.sliceToPrefixedFileW),

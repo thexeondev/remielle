@@ -73,7 +73,7 @@ pub const GameMode = union(enum) {
                         else => ZoneId.impact.toInt() * 100 + layer.layer_index * 10 + layer.room_index,
                     },
                     .boss_challenge => ZoneId.boss_challenge.toInt() * 100 + layer.layer_index,
-                    .stable => @intFromEnum(layer.zone_id) * 100 + layer.layer_index,
+                    .stable => @backingInt(layer.zone_id) * 100 + layer.layer_index,
                     .free_training => 6900404,
                 };
             }
@@ -97,11 +97,11 @@ pub const GameMode = union(enum) {
                 if (Group.fromZoneIdInt(int) == null)
                     return null;
 
-                return @enumFromInt(int);
+                return @fromBackingInt(@intCast(int));
             }
 
             pub inline fn toInt(id: ZoneId) u32 {
-                return @intFromEnum(id);
+                return @backingInt(id);
             }
         };
 
@@ -112,7 +112,7 @@ pub const GameMode = union(enum) {
             free_training = 89,
 
             pub fn fromZoneId(id: ZoneId) Group {
-                return fromZoneIdInt(@intFromEnum(id)).?;
+                return fromZoneIdInt(@backingInt(id)).?;
             }
 
             pub fn fromZoneIdInt(int: u32) ?Group {
@@ -151,13 +151,13 @@ pub const GameMode = union(enum) {
         _,
 
         pub inline fn fromId(id: templates.buddy_base.Id) OptionalBuddy {
-            return @enumFromInt(@intFromEnum(id));
+            return @fromBackingInt(@intCast(@backingInt(id)));
         }
 
         pub inline fn toId(optional: OptionalBuddy) ?templates.buddy_base.Id {
             return switch (optional) {
                 .none => null,
-                else => |id| @enumFromInt(@intFromEnum(id)),
+                else => |id| @fromBackingInt(@intCast(@backingInt(id))),
             };
         }
     };
@@ -170,13 +170,13 @@ pub const GameMode = union(enum) {
         _,
 
         pub inline fn fromId(id: templates.avatar_base.Id) AvatarSlot {
-            return @enumFromInt(@intFromEnum(id));
+            return @fromBackingInt(@intCast(@backingInt(id)));
         }
 
         pub inline fn toId(slot: AvatarSlot) ?templates.avatar_base.Id {
             return switch (slot) {
                 .none => null,
-                else => |id| @enumFromInt(@intFromEnum(id)),
+                else => |id| @fromBackingInt(@intCast(@backingInt(id))),
             };
         }
     };
@@ -251,24 +251,27 @@ pub const HadalZoneSchedule = struct {};
 pub const subset_marker_name = "logic_changes_subset_marker";
 
 pub fn Subset(comptime types: anytype) type {
-    var field_types: [types.len + 1]type = undefined;
-    var field_names: [types.len + 1][]const u8 = undefined;
-
     // Add a ZST field as a marker
+    var field_types: [types.len + 1]type = undefined;
     field_types[0] = void;
+
+    var field_names: [types.len + 1][]const u8 = undefined;
     field_names[0] = subset_marker_name;
 
-    const changes_fields = @typeInfo(Changes).@"struct".fields;
+    const changes_info = @typeInfo(Changes).@"struct";
 
-    for (types, field_types[1..], field_names[1..]) |C, *field_type, *field_name| {
-        search: for (changes_fields) |changes_field| {
-            if (changes_field.type == ?C) {
-                field_type.* = ?*const C;
-                field_name.* = changes_field.name;
+    for (types, field_types[1..], field_names[1..]) |C, *SubsetType, *subset_field_name| {
+        search: for (
+            changes_info.field_types,
+            changes_info.field_names,
+        ) |ChangesType, changes_field_name| {
+            if (ChangesType == ?C) {
+                SubsetType.* = ?*const C;
+                subset_field_name.* = changes_field_name;
                 break :search;
-            } else if (changes_field.type == []const C) {
-                field_type.* = changes_field.type;
-                field_name.* = changes_field.name;
+            } else if (ChangesType == []const C) {
+                SubsetType.* = ChangesType;
+                subset_field_name.* = changes_field_name;
                 break :search;
             }
         } else @compileError("Invalid change type: " ++ @typeName(C));
@@ -280,16 +283,19 @@ pub fn Subset(comptime types: anytype) type {
 pub fn Builder(comptime types: anytype) type {
     return struct {
         const Pointers = pointers: {
-            const changes_fields = @typeInfo(Changes).@"struct".fields;
+            const changes_info = @typeInfo(Changes).@"struct";
 
             var field_types: [types.len]type = undefined;
             var field_names: [types.len][]const u8 = undefined;
 
             for (types, &field_types, &field_names) |C, *field_type, *field_name| {
-                search: for (changes_fields) |changes_field| {
-                    if (changes_field.type == ?C or changes_field.type == []const C) {
-                        field_type.* = *changes_field.type;
-                        field_name.* = changes_field.name;
+                search: for (
+                    changes_info.field_types,
+                    changes_info.field_names,
+                ) |ChangeType, change_name| {
+                    if (ChangeType == ?C or ChangeType == []const C) {
+                        field_type.* = *ChangeType;
+                        field_name.* = change_name;
                         break :search;
                     }
                 } else @compileError("Invalid change type: " ++ @typeName(C));
@@ -304,21 +310,24 @@ pub fn Builder(comptime types: anytype) type {
         pub fn init(allocator: std.mem.Allocator, changes: *Changes) @This() {
             var pointers: Pointers = undefined;
 
-            inline for (@typeInfo(Pointers).@"struct".fields) |field| {
-                @field(pointers, field.name) = &@field(changes, field.name);
-            }
+            inline for (@typeInfo(Pointers).@"struct".field_names) |field_name|
+                @field(pointers, field_name) = &@field(changes, field_name);
 
             return .{ .allocator = allocator, .pointers = pointers };
         }
 
         pub inline fn insert(builder: *const @This(), change: anytype) void {
             const Change = @TypeOf(change);
+            const changes_info = @typeInfo(Changes).@"struct";
 
             switch (@typeInfo(Change)) {
                 .pointer => |pointer| {
-                    inline for (@typeInfo(Changes).@"struct".fields) |field| {
-                        if (field.type == []const pointer.child) {
-                            const ptr = @field(builder.pointers, field.name);
+                    inline for (
+                        changes_info.field_names,
+                        changes_info.field_types,
+                    ) |field_name, FieldType| {
+                        if (FieldType == []const pointer.child) {
+                            const ptr = @field(builder.pointers, field_name);
                             std.debug.assert(ptr.*.len == 0);
                             ptr.* = change;
                             break;
@@ -326,9 +335,12 @@ pub fn Builder(comptime types: anytype) type {
                     } else @compileError("invalid change type: " ++ @typeName(Change));
                 },
                 else => {
-                    inline for (@typeInfo(Changes).@"struct".fields) |field| {
-                        if (field.type == ?Change) {
-                            const ptr = @field(builder.pointers, field.name);
+                    inline for (
+                        changes_info.field_names,
+                        changes_info.field_types,
+                    ) |field_name, FieldType| {
+                        if (FieldType == ?Change) {
+                            const ptr = @field(builder.pointers, field_name);
                             std.debug.assert(ptr.* == null);
                             ptr.* = change;
                             break;
@@ -345,20 +357,25 @@ pub fn extract(logic_changes: *const Changes, comptime Sub: type) ?Sub {
     var subset: Sub = undefined;
     var any_fulfilled: u1 = 0;
 
-    inline for (@typeInfo(Sub).@"struct".fields) |field| {
-        if (field.type == void) continue;
+    const sub_info = @typeInfo(Sub).@"struct";
 
-        switch (@typeInfo(field.type)) {
+    inline for (
+        sub_info.field_names,
+        sub_info.field_types,
+    ) |field_name, FieldType| {
+        if (FieldType == void) continue;
+
+        switch (@typeInfo(FieldType)) {
             .pointer => {
-                @field(subset, field.name) = @field(logic_changes, field.name);
-                any_fulfilled |= @intFromBool(@field(logic_changes, field.name).len != 0);
+                @field(subset, field_name) = @field(logic_changes, field_name);
+                any_fulfilled |= @intFromBool(@field(logic_changes, field_name).len != 0);
             },
             .optional => {
-                @field(subset, field.name) = if (@field(logic_changes, field.name)) |*change|
+                @field(subset, field_name) = if (@field(logic_changes, field_name)) |*change|
                     change
                 else
                     null;
-                any_fulfilled |= @intFromBool(@field(logic_changes, field.name) != null);
+                any_fulfilled |= @intFromBool(@field(logic_changes, field_name) != null);
             },
             else => comptime unreachable,
         }

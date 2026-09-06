@@ -6,8 +6,7 @@ pub fn packBuddyInfo(arena: Allocator, id: logic.Properties.Buddy.Id, meta: *con
     const Buddy = logic.Properties.Buddy;
     var skill_levels: ArrayList(pb.BuddySkillLevel) = try .initCapacity(arena, Buddy.Skill.Levels.len);
 
-    inline for (std.meta.fields(Buddy.Skill)) |field| {
-        const skill: Buddy.Skill = @enumFromInt(field.value);
+    inline for (std.enums.values(Buddy.Skill)) |skill| {
         const level = meta.skill_levels.get(skill);
         skill_levels.appendAssumeCapacity(.{
             .skill_type = skill.toInt(),
@@ -16,7 +15,7 @@ pub fn packBuddyInfo(arena: Allocator, id: logic.Properties.Buddy.Id, meta: *con
     }
 
     return .{
-        .id = @intFromEnum(id),
+        .id = @backingInt(id),
         .level = meta.level.toInt(),
         .exp = meta.exp,
         .rank = meta.rank.toInt(),
@@ -60,7 +59,7 @@ pub fn packAvatarInfo(
         });
 
     return .{
-        .id = @intFromEnum(id),
+        .id = @backingInt(id),
         .level = meta.level.toInt(),
         .rank = meta.rank.toInt(),
         .unlocked_talent_num = meta.talents.toInt(),
@@ -96,7 +95,7 @@ pub fn packEquipmentInfo(
     );
 
     equip_properties.appendAssumeCapacity(.{
-        .key = @intFromEnum(properties[0].key), // main property is required.
+        .key = @backingInt(properties[0].key), // main property is required.
         .base_value = properties[0].base_value,
         .add_value = properties[0].add_value,
     });
@@ -169,7 +168,7 @@ pub fn packDungeonPackageInfo(
 
             weapon_list.appendAssumeCapacity(.{
                 .uid = weapon_uid_int,
-                .id = @intFromEnum(weapon.ids[weapon_index]),
+                .id = @backingInt(weapon.ids[weapon_index]),
                 .level = weapon.levels[weapon_index].toInt(),
                 .star = weapon.stars[weapon_index].toInt(),
                 .refine_level = weapon.refines[weapon_index].toInt(),
@@ -217,7 +216,7 @@ pub fn packQuickTeamData(arena: Allocator, quick_teams: []const QuickTeam.Meta) 
 
     for (quick_teams, 1..) |*quick_team, slot| {
         var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
-        for (quick_team.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @intFromEnum(avatar_id) });
+        for (quick_team.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @backingInt(avatar_id) });
 
         var buddy_list: std.ArrayList(pb.QuickTeamBuddy) = .empty;
         if (quick_team.buddy_id.unwrap()) |id| try buddy_list.append(arena, .{ .buddy_id = id });
@@ -238,13 +237,13 @@ pub fn packQuickTeamSync(arena: Allocator, quick_teams: []const logic.Changes.Qu
 
     for (quick_teams) |*quick_team| {
         var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
-        for (quick_team.meta.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @intFromEnum(avatar_id) });
+        for (quick_team.meta.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @backingInt(avatar_id) });
 
         var buddy_list: std.ArrayList(pb.QuickTeamBuddy) = .empty;
         if (quick_team.meta.buddy_id.unwrap()) |id| try buddy_list.append(arena, .{ .buddy_id = id });
 
         quick_team_list.appendAssumeCapacity(.{
-            .slot = @intFromEnum(quick_team.slot),
+            .slot = @backingInt(quick_team.slot),
             .name = quick_team.meta.name.view(),
             .avatar_list = avatar_list,
             .buddy_list = buddy_list,
@@ -276,7 +275,7 @@ pub fn packZoneRecord(
             for (assets.templates.zone_info.entries) |zone_info| if (zone_info.zone_id == zone_id) {
                 try list.append(arena, .{
                     .layer_index = zone_info.layer_index,
-                    .status = @enumFromInt(4),
+                    .status = @fromBackingInt(@intCast(4)),
                 });
             };
 

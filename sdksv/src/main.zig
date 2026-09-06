@@ -87,7 +87,7 @@ const Init = std.process.Init;
 const heap = std.heap;
 const net = std.Io.net;
 
-const is_debug = builtin.mode == .Debug;
+const is_debug = builtin.mode == .debug;
 
 const app = @import("app.zig");
 

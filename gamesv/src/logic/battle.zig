@@ -309,7 +309,7 @@ pub const Property = enum(u32) {
 
         const battle_template = battle_template: {
             for (templates.avatar_battle.entries) |*entry|
-                if (entry.id == @intFromEnum(avatar_id))
+                if (entry.id == @backingInt(avatar_id))
                     break :battle_template entry;
 
             return .empty;
@@ -319,7 +319,7 @@ pub const Property = enum(u32) {
 
         const level_advance_template = level_advance_template: {
             for (templates.avatar_level_advance.entries) |*entry| {
-                if (entry.avatar_id == @intFromEnum(avatar_id) and entry.id == avatar_meta.rank.toInt()) {
+                if (entry.avatar_id == @backingInt(avatar_id) and entry.id == avatar_meta.rank.toInt()) {
                     break :level_advance_template entry;
                 }
             }
@@ -328,7 +328,7 @@ pub const Property = enum(u32) {
         };
 
         var map: Property.Map = .empty;
-        try map.ensureTotalCapacity(arena, @typeInfo(Property).@"enum".fields.len);
+        try map.ensureTotalCapacity(arena, @typeInfo(Property).@"enum".field_names.len);
 
         initBaseProperties(&map, battle_template);
         initLevelAdvanceProperties(&map, level_advance_template);
@@ -340,7 +340,7 @@ pub const Property = enum(u32) {
         growPropertyByLevel(&map, avatar_level, .DefBase, .DefGrowth, .DefAdvance);
 
         const passive_skill_level = avatar_meta.skill_levels[logic.Properties.Avatar.Skill.core_skill.toInt()].toInt() - 1;
-        const avatar_passive_skill_id = @intFromEnum(avatar_id) * 1000 + passive_skill_level;
+        const avatar_passive_skill_id = @backingInt(avatar_id) * 1000 + passive_skill_level;
 
         for (templates.avatar_passive_skill.entries) |*entry| {
             if (entry.skill_id == avatar_passive_skill_id) {
@@ -362,7 +362,7 @@ pub const Property = enum(u32) {
             const weapon_star = weapon.stars[weapon_index].toInt();
             const weapon_template = templates.weapon.map.get(weapon_id).?;
 
-            const rarity: u32 = @mod(@divFloor(@intFromEnum(weapon_id), 1000), 10);
+            const rarity: u32 = @mod(@divFloor(@backingInt(weapon_id), 1000), 10);
 
             const level_template = level_template: {
                 for (templates.weapon_level.entries) |*entry| {
@@ -403,8 +403,8 @@ pub const Property = enum(u32) {
         initEquipmentSuitProperties(&map, equipment_indexes.items, equipment);
 
         setDynamicProperties(&map);
-        applyCoreSkillBonus(&map, @intFromEnum(avatar_id), avatar_meta.skill_levels[
-            @intFromEnum(
+        applyCoreSkillBonus(&map, @backingInt(avatar_id), avatar_meta.skill_levels[
+            @backingInt(
                 logic.Properties.Avatar.Skill.core_skill,
             )
         ].toInt());

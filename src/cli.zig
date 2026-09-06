@@ -7,22 +7,19 @@ pub fn parseOptions(
     args: []const []const u8,
     error_desc: *ErrorDescription,
 ) ?Options {
-    const option_fields = @typeInfo(Options).@"struct".fields;
+    const options_info = @typeInfo(Options).@"struct";
     const Option = comptime Option: {
-        var field_names: [option_fields.len][:0]const u8 = undefined;
-        var flags: [option_fields.len]u8 = undefined;
+        var flags: [options_info.field_names.len]u8 = undefined;
 
-        for (option_fields, &flags, &field_names) |option_field, *flag, *name| {
-            flag.* = option_field.name[0];
-            name.* = option_field.name;
-        }
+        for (&flags, options_info.field_names) |*flag, field_name|
+            flag.* = field_name[0];
 
-        break :Option @Enum(u8, .exhaustive, &field_names, &flags);
+        break :Option @Enum(u8, .exhaustive, options_info.field_names, &flags);
     };
 
     var options: Options = .{};
 
-    var opt_stack_buffer: [option_fields.len]Option = undefined;
+    var opt_stack_buffer: [options_info.field_names.len]Option = undefined;
     var opt_stack: std.ArrayList(Option) = .initBuffer(&opt_stack_buffer);
 
     for (args) |arg| if (arg[0] == '-') {
@@ -73,7 +70,7 @@ pub fn parseOptions(
     };
 
     if (opt_stack.items.len != 0) {
-        error_desc.* = .{ .missing_argument = @intFromEnum(opt_stack.items[0]) };
+        error_desc.* = .{ .missing_argument = @backingInt(opt_stack.items[0]) };
         return null;
     }
 
@@ -101,19 +98,26 @@ pub const ErrorDescription = union(enum) {
 pub fn Usage(comptime Args: type) type {
     return struct {
         const usage_string = blk: {
-            const fields = @typeInfo(Args).@"struct".fields;
+            const args_info = @typeInfo(Args).@"struct";
+
             var fmt: []const u8 = "";
 
-            for (fields) |field| if (field.type == bool) {
+            for (
+                args_info.field_names,
+                args_info.field_types,
+            ) |field_name, FieldType| if (FieldType == bool) {
                 if (fmt.len == 0) fmt = "[-";
-                fmt = fmt ++ .{field.name[0]};
+                fmt = fmt ++ .{field_name[0]};
             };
 
             if (fmt.len != 0) fmt = fmt ++ "]";
 
-            for (fields) |field| if (field.type != bool) {
+            for (
+                args_info.field_names,
+                args_info.field_types,
+            ) |field_name, FieldType| if (FieldType != bool) {
                 if (fmt.len != 0) fmt = fmt ++ " ";
-                fmt = fmt ++ "[-" ++ .{field.name[0]} ++ " " ++ field.name ++ "]";
+                fmt = fmt ++ "[-" ++ .{field_name[0]} ++ " " ++ field_name ++ "]";
             };
 
             break :blk fmt;

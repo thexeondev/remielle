@@ -1,14 +1,14 @@
 #!/bin/sh
 # DEPENDS: curl, tar, xz, realpath
 
-ZIG_VERSION="0.16.0"
+ZIG_VERSION="0.17.0-dev.2018+ab30a0b9a"
 ZIG_PLATFORM="x86_64-linux"
 ZIG_DIST="zig-${ZIG_PLATFORM}-${ZIG_VERSION}"
 ZIG_DIR="./.direnv/${ZIG_DIST}/"
 
 if [ ! -d $ZIG_DIR ]; then
 	mkdir -p ./.direnv
-	curl -L "https://ziglang.org/download/{$ZIG_VERSION}/{$ZIG_DIST}.tar.xz" |
+	curl -L "https://ziglang.org/builds/{$ZIG_DIST}.tar.xz" |
 	tar xfJ - -C ./.direnv/ &&
 	export PATH=$(realpath $ZIG_DIR):$PATH
 else

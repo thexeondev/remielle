@@ -309,12 +309,9 @@ const vtable: Io.VTable = vtable: {
     v.batchAwaitConcurrent = batchAwaitConcurrent;
     v.batchCancel = batchCancel;
     v.netBindIp = netBindIp;
-    v.netSend = netSend;
     v.netListenIp = netListenIp;
     v.netClose = netClose;
     v.netAccept = netAccept;
-    v.netRead = netRead;
-    v.netWrite = netWrite;
     v.now = now;
     v.random = random;
     v.randomSecure = randomSecure;
@@ -435,6 +432,33 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
 
             return .{ .net_receive = .{ null, 1 } };
         },
+
+        .net_send => |*o| {
+            for (o.messages, 0..) |*message, sent|
+                rio.netSendOne(o.socket_handle, message, o.flags) catch |err| {
+                    return .{ .net_send = .{ err, sent } };
+                };
+
+            return .{ .net_send = .{ null, o.messages.len } };
+        },
+
+        .net_read => |*o| return .{ .net_read = rio.syscall(.net_read, .{
+            .stream_handle = o.socket_handle,
+            .buffer = o.data[0],
+        }) catch |err| switch (err) {
+            error.Canceled => |e| return e,
+            else => |e| e,
+        } },
+
+        .net_write => |*o| return .{ .net_write = rio.netWrite(
+            o.socket_handle,
+            o.header,
+            o.data,
+            o.splat,
+        ) catch |err| switch (err) {
+            error.Canceled => |e| return e,
+            else => |e| e,
+        } },
 
         .file_write_streaming => |*o| {
             const iovecs_capacity = if (Operation.FileWrite.vectored) 8 else 0;
@@ -691,6 +715,9 @@ fn batchAwaitConcurrent(
             .file_read_streaming,
             .file_write_streaming,
             .device_io_control,
+            .net_read,
+            .net_write,
+            .net_send,
             => return error.ConcurrencyUnavailable, // TODO
 
             .net_receive => |net_receive| {
@@ -721,14 +748,14 @@ fn batchAwaitConcurrent(
         }
 
         switch (batch.pending.tail) {
-            .none => batch.pending.head = @enumFromInt(index),
-            _ => |tail| batch.storage[tail.toIndex()].pending.node.next = @enumFromInt(index),
+            .none => batch.pending.head = @fromBackingInt(@intCast(index)),
+            _ => |tail| batch.storage[tail.toIndex()].pending.node.next = @fromBackingInt(@intCast(index)),
         }
 
         batch.storage[index].pending.node.prev = batch.pending.tail;
         batch.submitted.head = next;
 
-        batch.pending.tail = @enumFromInt(index);
+        batch.pending.tail = @fromBackingInt(@intCast(index));
         batch_userdata.pending_count += 1;
     }
 
@@ -889,7 +916,7 @@ fn batchPutCompletion(
                 } },
             } };
 
-            batch.completed.head = @enumFromInt(index);
+            batch.completed.head = @fromBackingInt(@intCast(index));
         },
         else => unreachable,
     }
@@ -1108,19 +1135,18 @@ fn fileClose(userdata: ?*anyopaque, files: []const Io.File) void {
     rio.closeMany(Io.File, files);
 }
 
-fn netClose(userdata: ?*anyopaque, handles: []const net.Socket.Handle) void {
-    // Only linux can batch `close(2)`.
+fn netClose(userdata: ?*anyopaque, sockets: []const net.Socket) void {
     if (native_os != .linux) {
-        for (handles) |handle| switch (native_os) {
-            .windows => _ = Impl.closesocket(handle),
-            else => _ = posix.system.close(handle),
+        for (sockets) |socket| switch (native_os) {
+            .windows => _ = Impl.closesocket(socket.handle),
+            else => _ = posix.system.close(socket.handle),
         };
 
         return;
     }
 
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    rio.closeMany(net.Socket.Handle, handles);
+    rio.closeMany(net.Socket, sockets);
 }
 
 fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
@@ -1149,7 +1175,7 @@ fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
             op.* = .{ .awaiter = .{ .synchronous = wp }, .storage = .init(
                 .{ .close = .{
                     .handle = switch (T) {
-                        net.Socket.Handle => entry,
+                        net.Socket => entry.handle,
                         Io.File => entry.handle,
                         else => comptime unreachable,
                     },
@@ -1176,16 +1202,6 @@ fn netBindIp(
 ) net.IpAddress.BindError!net.Socket {
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
     return rio.impl.netBind(address, options, false);
-}
-
-fn netSend(userdata: ?*anyopaque, socket_handle: net.Socket.Handle, messages: []net.OutgoingMessage, flags: net.SendFlags) struct { ?net.Socket.SendError, usize } {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-
-    for (messages, 0..) |*message, sent|
-        rio.netSendOne(socket_handle, message, flags) catch |err|
-            return .{ err, sent };
-
-    return .{ null, messages.len };
 }
 
 fn netSendOne(
@@ -1230,28 +1246,13 @@ fn netAccept(
     });
 }
 
-fn netRead(
-    userdata: ?*anyopaque,
-    socket: net.Socket.Handle,
-    data: [][]u8,
-) net.Stream.Reader.Error!usize {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-
-    return rio.syscall(.net_read, .{
-        .stream_handle = socket,
-        .buffer = data[0],
-    });
-}
-
 fn netWrite(
-    userdata: ?*anyopaque,
+    rio: *RemiellIo,
     socket: net.Socket.Handle,
     header: []const u8,
     data: []const []const u8,
     splat: usize,
 ) net.Stream.Writer.Error!usize {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-
     var iovecs: [8]Impl.Vector(.@"const") = undefined;
     var iovecs_count: usize = 0;
 
@@ -1980,14 +1981,14 @@ pub const Operation = union(enum) {
     pub const Tag = @typeInfo(Operation).@"union".tag_type.?;
 
     pub const Result = Result: {
-        const operation_fields = @typeInfo(Operation).@"union".fields;
-        var field_names: [operation_fields.len][]const u8 = undefined;
-        var field_types: [operation_fields.len]type = undefined;
-        for (operation_fields, &field_names, &field_types) |field, *field_name, *field_type| {
-            field_name.* = field.name;
-            field_type.* = if (field.type == noreturn) noreturn else field.type.Result;
+        const operation_info = @typeInfo(Operation).@"union";
+
+        var result_types: [operation_info.field_types.len]type = undefined;
+        for (&result_types, operation_info.field_types) |*ResultType, OperationType| {
+            ResultType.* = if (OperationType == noreturn) noreturn else OperationType.Result;
         }
-        break :Result @Union(.auto, Tag, &field_names, &field_types, &@splat(.{}));
+
+        break :Result @Union(.auto, Tag, operation_info.field_names, &result_types, &@splat(.{}));
     };
 
     /// This structure must be pinned.
@@ -2102,7 +2103,7 @@ test {
 
 const is_windows = native_os == .windows;
 const native_os = builtin.os.tag;
-const is_debug = builtin.mode == .Debug;
+const is_debug = builtin.mode == .debug;
 
 const abort = std.process.abort;
 

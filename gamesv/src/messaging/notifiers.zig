@@ -14,17 +14,15 @@ pub fn notifyLogicChanges(
     frame: *const Server.Frame,
     changes: *const logic.Changes,
 ) Error!void {
-    inline for (namespaces) |ns| inline for (@typeInfo(ns).@"struct".decls) |decl| {
-        const Fn = @TypeOf(@field(ns, decl.name));
+    inline for (namespaces) |ns| inline for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
+        const Fn = @TypeOf(@field(ns, decl_name));
         const Args = std.meta.ArgsTuple(Fn);
 
         var args: Args = undefined;
         var notify: NotifyOf(Fn) = .init(arena);
 
         call_notifier: {
-            inline for (&args, @typeInfo(Args).@"struct".fields) |*arg, arg_info| {
-                const ArgType = arg_info.type;
-
+            inline for (&args, @typeInfo(Args).@"struct".field_types) |*arg, ArgType| {
                 if (ArgType == *NotifyOf(Fn)) {
                     arg.* = &notify;
                     continue;
@@ -63,10 +61,10 @@ pub fn notifyLogicChanges(
                     continue;
                 }
 
-                @compileError(decl.name ++ ": invalid argument type: " ++ @typeName(ArgType));
+                @compileError(decl_name ++ ": invalid argument type: " ++ @typeName(ArgType));
             }
 
-            @call(.auto, @field(ns, decl.name), args) catch |err| switch (@as(Error, err)) {
+            @call(.auto, @field(ns, decl_name), args) catch |err| switch (@as(Error, err)) {
                 else => |e| return e,
             };
 
@@ -119,8 +117,8 @@ pub fn Notify(comptime OutNotify: type) type {
 fn NotifyOf(Fn: type) type {
     var Type: ?type = null;
 
-    inline for (@typeInfo(Fn).@"fn".params) |param| {
-        switch (@typeInfo(param.type.?)) {
+    inline for (@typeInfo(Fn).@"fn".param_types) |maybe_param| {
+        switch (@typeInfo(maybe_param.?)) {
             .pointer => |pointer| if (@hasDecl(pointer.child, "Notify")) {
                 if (Type != null) @compileError("notifiers: multiple notifies are not allowed");
                 Type = pointer.child;

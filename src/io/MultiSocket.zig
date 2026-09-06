@@ -3,21 +3,20 @@ sockets: *Sockets,
 batch: Io.Batch,
 
 pub const Context = struct {
-    address: net.IpAddress,
     message: net.IncomingMessage,
     buffer: []u8,
 };
 
 /// Trailing:
-/// * `handles: [len]Socket.Handle`
+/// * `handles: [len]Socket`
 /// * `storage: [len]Io.Operation.Storage`
 /// * `contexts: [len]Context`
 pub const Sockets = extern struct {
     capacity: u32,
 
-    pub fn handles(sockets: *Sockets) []Socket.Handle {
+    pub fn handles(sockets: *Sockets) []Socket {
         const base: usize = @intFromPtr(sockets);
-        const ptr: [*]Socket.Handle = @ptrFromInt(mem.alignForward(
+        const ptr: [*]Socket = @ptrFromInt(mem.alignForward(
             usize,
             base + @sizeOf(Sockets),
             @alignOf(Socket.Handle),
@@ -69,7 +68,6 @@ pub fn init(ms: *MultiSocket, sockets: *Sockets, buffers: []const []u8) void {
 
     for (contexts, buffers) |*context, buffer|
         context.* = .{
-            .address = undefined,
             .message = .init,
             .buffer = buffer,
         };
@@ -84,7 +82,7 @@ pub fn init(ms: *MultiSocket, sockets: *Sockets, buffers: []const []u8) void {
 /// Cancels any outstanding receive `Operation`s and closes the sockets.
 pub fn deinit(ms: *MultiSocket, io: Io) void {
     ms.batch.cancel(io);
-    io.vtable.netClose(io.userdata, ms.sockets.handles()[0..ms.count]);
+    Socket.closeMany(io, ms.sockets.handles());
 }
 
 /// Associates an address with a `Socket` which will be used to receive UDP messages.
@@ -102,10 +100,8 @@ pub fn bind(ms: *MultiSocket, io: Io, address: net.IpAddress) !usize {
     const index = ms.count;
     defer ms.count += 1;
 
-    ms.sockets.handles()[index] = socket.handle;
+    ms.sockets.handles()[index] = socket;
     const context = &ms.sockets.contexts()[index];
-
-    context.address = socket.address;
 
     ms.batch.addAt(@intCast(index), .{ .net_receive = .{
         .socket_handle = socket.handle,
@@ -118,10 +114,7 @@ pub fn bind(ms: *MultiSocket, io: Io, address: net.IpAddress) !usize {
 }
 
 pub fn get(ms: *MultiSocket, index: usize) Socket {
-    return .{
-        .handle = ms.sockets.handles()[index],
-        .address = ms.sockets.contexts()[index].address,
-    };
+    return ms.sockets.handles()[index];
 }
 
 pub const ReceiveError = Io.Batch.AwaitConcurrentError;
@@ -139,7 +132,7 @@ pub fn receive(ms: *MultiSocket, io: Io) ReceiveError!Completion {
             const context = &ms.sockets.contexts()[completion.index];
 
             defer ms.batch.addAt(completion.index, .{ .net_receive = .{
-                .socket_handle = ms.sockets.handles()[completion.index],
+                .socket_handle = ms.sockets.handles()[completion.index].handle,
                 .message_buffer = (&context.message)[0..1],
                 .data_buffer = context.buffer,
                 .flags = .{},

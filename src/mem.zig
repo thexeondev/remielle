@@ -41,14 +41,10 @@ pub fn LimitedString(comptime limit: usize) type {
 /// Deprecated.
 fn SoaBucket(comptime capacity: usize, comptime Struct: type) type {
     const struct_info = @typeInfo(Struct).@"struct";
+    var field_types: [struct_info.field_names.len]type = undefined;
 
-    var field_names: [struct_info.fields.len][]const u8 = undefined;
-    var field_types: [struct_info.fields.len]type = undefined;
-
-    inline for (struct_info.fields, &field_names, &field_types) |struct_field, *field_name, *field_type| {
-        field_name.* = struct_field.name;
-
-        field_type.* = switch (struct_field.type) {
+    inline for (&field_types, struct_info.field_types) |*BucketField, StructField|
+        BucketField.* = switch (StructField) {
             bool => std.StaticBitSet(capacity),
             else => |Field| switch (@typeInfo(Field)) {
                 .bool => unreachable,
@@ -56,9 +52,8 @@ fn SoaBucket(comptime capacity: usize, comptime Struct: type) type {
                 else => @compileError("you're holding it wrong"),
             },
         };
-    }
 
-    return @Struct(.auto, null, &field_names, &field_types, &@splat(.{}));
+    return @Struct(.auto, null, struct_info.field_names, &field_types, &@splat(.{}));
 }
 
 /// Deprecated.
@@ -122,7 +117,7 @@ pub fn RemielleArrayList(
                 try list.mapBucket();
 
             defer list.item_count += 1;
-            return if (enum_indexing) @enumFromInt(list.item_count) else @intCast(list.item_count);
+            return if (enum_indexing) @fromBackingInt(@intCast(list.item_count)) else @intCast(list.item_count);
         }
 
         pub inline fn get(
@@ -197,27 +192,30 @@ pub fn RemielleArrayList(
         }
 
         pub fn swapRemove(list: *List, index: Index) void {
-            @setRuntimeSafety(false); // implicit boundary checks are for amateurs
-
             const remove_at_bucket = list.buckets.items[@divFloor(intFromIndex(index), bucket_size)];
             const last_bucket = list.buckets.items[@divFloor(list.item_count - 1, bucket_size)];
 
             const remove_at = intFromIndex(index) % bucket_size;
             const last = (list.item_count - 1) % bucket_size;
 
-            inline for (@typeInfo(Struct).@"struct".fields) |field| switch (field.type) {
-                bool => @field(remove_at_bucket, field.name).setValue(
+            const struct_info = @typeInfo(Struct).@"struct";
+
+            inline for (
+                struct_info.field_names,
+                struct_info.field_types,
+            ) |field_name, FieldType| switch (FieldType) {
+                bool => @field(remove_at_bucket, field_name).setValue(
                     remove_at,
-                    @field(last_bucket, field.name).isSet(last),
+                    @field(last_bucket, field_name).isSet(last),
                 ),
-                else => @field(remove_at_bucket, field.name)[remove_at] = @field(last_bucket, field.name)[last],
+                else => @field(remove_at_bucket, field_name)[remove_at] = @field(last_bucket, field_name)[last],
             };
 
             list.item_count -= 1;
         }
 
         inline fn intFromIndex(index: Index) usize {
-            return if (enum_indexing) @intFromEnum(index) else index;
+            return if (enum_indexing) @backingInt(index) else index;
         }
     };
 }

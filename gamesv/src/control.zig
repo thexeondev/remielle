@@ -66,7 +66,7 @@ pub fn process(
     if (header.protocol_version != remielle.control.Version.current)
         return send(remielle.control.Event.Nak, io, socket, from, header.userdata, .{
             .reason = .protocol_version_mismatch,
-            .extra = @intFromEnum(remielle.control.Version.current),
+            .extra = @backingInt(remielle.control.Version.current),
         });
 
     switch (header.operation_tag) {
@@ -84,15 +84,15 @@ pub fn process(
             try send(remielle.control.Event.Ack, io, socket, from, header.userdata, .{});
         },
         inline else => |operation_tag| lookup: inline for (namespaces) |ns| {
-            inline for (@typeInfo(ns).@"struct".decls) |decl| {
-                const fn_info = switch (@typeInfo(@TypeOf(@field(ns, decl.name)))) {
+            inline for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
+                const fn_info = switch (@typeInfo(@TypeOf(@field(ns, decl_name)))) {
                     .@"fn" => |fn_info| fn_info,
                     else => continue,
                 };
 
                 // The signature should look like this:
                 // fn(Operation(T), *const Context)
-                const OperationParam = fn_info.params[0].type.?;
+                const OperationParam = fn_info.param_types[0].?;
 
                 if (OperationParam.Data.tag != operation_tag)
                     continue;
@@ -129,7 +129,7 @@ pub fn process(
                     if (entries_end - @intFromPtr(data.ptr) != data.len)
                         return error.InvalidPacket;
 
-                    try @field(ns, decl.name)(
+                    try @field(ns, decl_name)(
                         .{
                             .operation = &base.operation,
                             .entries = entries_base[0..entries_count],
@@ -151,7 +151,7 @@ pub fn process(
                         return error.InvalidPacket;
 
                     const message: *ExpectedMessage = @ptrCast(data);
-                    try @field(ns, decl.name)(.{ .data = &message.operation }, &.{
+                    try @field(ns, decl_name)(.{ .data = &message.operation }, &.{
                         .io = io,
                         .time = current_time,
                         .server = server,

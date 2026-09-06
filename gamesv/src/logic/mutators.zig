@@ -9,15 +9,13 @@ const namespaces: []const type = &.{
 };
 
 pub fn dispatchLogicChanges(frame: *const Server.Frame, changes: *const logic.Changes) Error!void {
-    inline for (namespaces) |ns| inline for (@typeInfo(ns).@"struct".decls) |decl| {
-        const Fn = @TypeOf(@field(ns, decl.name));
+    inline for (namespaces) |ns| inline for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
+        const Fn = @TypeOf(@field(ns, decl_name));
         const Args = std.meta.ArgsTuple(Fn);
         var args: Args = undefined;
 
         call_mutator: {
-            inline for (&args, @typeInfo(Args).@"struct".fields) |*arg, arg_info| {
-                const ArgType = arg_info.type;
-
+            inline for (&args, @typeInfo(Args).@"struct".field_types) |*arg, ArgType| {
                 if (@hasField(ArgType, logic.Changes.subset_marker_name)) {
                     arg.* = changes.extract(ArgType) orelse break :call_mutator;
                     continue;
@@ -34,10 +32,10 @@ pub fn dispatchLogicChanges(frame: *const Server.Frame, changes: *const logic.Ch
                     continue;
                 }
 
-                @compileError(decl.name ++ ": invalid argument type: " ++ @typeName(ArgType));
+                @compileError(decl_name ++ ": invalid argument type: " ++ @typeName(ArgType));
             }
 
-            @call(.auto, @field(ns, decl.name), args) catch |err| switch (@as(Error, err)) {
+            @call(.auto, @field(ns, decl_name), args) catch |err| switch (@as(Error, err)) {
                 else => |e| return e,
             };
         }

@@ -71,7 +71,7 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
         };
 
         inline for (&avatar.meta[i].skill_levels, 0..) |*level, skill_type|
-            level.* = .maxFor(@enumFromInt(skill_type));
+            level.* = .maxFor(@fromBackingInt(@intCast(skill_type)));
 
         avatar.weapon_uids[i] = .none;
         avatar.equipment_uids[i] = @splat(.none);
@@ -109,10 +109,8 @@ fn unlockAllBuddies(props: *Properties.List, at: Player) void {
             .flags = .init,
         };
 
-        inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
-            const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+        inline for (std.enums.values(Properties.Buddy.Skill)) |skill|
             buddy.meta[i].skill_levels.set(skill, .maxFor(skill));
-        }
     };
 }
 
@@ -123,7 +121,7 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
         defer weapon.count += 1;
         const i = weapon.count;
 
-        weapon.uids[i] = @enumFromInt(i);
+        weapon.uids[i] = @fromBackingInt(@intCast(i));
         weapon.ids[i] = template.getId();
         weapon.levels[i] = .max;
         weapon.stars[i] = .max;
@@ -151,7 +149,7 @@ fn Subset(
     var field_types: [types.len + 1]type = undefined;
     var field_names: [types.len + 1][]const u8 = undefined;
 
-    const properties_fields = @typeInfo(Properties).@"struct".fields;
+    const properties_info = @typeInfo(Properties).@"struct";
 
     // Add a ZST field as a marker
     field_types[0] = void;
@@ -161,14 +159,17 @@ fn Subset(
     };
 
     for (types, field_types[1..], field_names[1..]) |P, *field_type, *field_name| {
-        search: for (properties_fields) |properties_field| {
-            if (properties_field.type == P) {
+        search: for (
+            properties_info.field_types,
+            properties_info.field_names,
+        ) |PropertyType, property_name| {
+            if (PropertyType == P) {
                 field_type.* = switch (access) {
                     .immutable => *const P,
                     .mutable => *P,
                 };
 
-                field_name.* = properties_field.name;
+                field_name.* = property_name;
                 break :search;
             }
         } else @compileError("Invalid property type: " ++ @typeName(P));
@@ -183,10 +184,13 @@ pub fn extractFor(properties: *Properties.List, comptime Sub: type, index: u32) 
     const bucket = properties.buckets.items[index / Properties.List.bucket_capacity];
     const i = index % Properties.List.bucket_capacity;
 
-    inline for (@typeInfo(Sub).@"struct".fields) |field| {
-        if (field.type == void) continue;
+    inline for (
+        @typeInfo(Sub).@"struct".field_types,
+        @typeInfo(Sub).@"struct".field_names,
+    ) |FieldType, field_name| {
+        if (FieldType == void) continue;
 
-        @field(subset, field.name) = &@field(bucket, field.name)[i];
+        @field(subset, field_name) = &@field(bucket, field_name)[i];
     }
 
     return subset;
@@ -197,7 +201,7 @@ pub const Player = enum(u32) {
     _,
 
     pub fn toInt(player: Player) u32 {
-        return @intFromEnum(player);
+        return @backingInt(player);
     }
 };
 
@@ -217,16 +221,16 @@ pub const MainCityTime = struct {
         night = 4,
 
         pub inline fn toTimeInMinutes(time_period: TimePeriod) u11 {
-            return @mod(@intFromEnum(time_period) * 360, 1440);
+            return @mod(@backingInt(time_period) * 360, 1440);
         }
 
         pub inline fn fromTimeInMinutes(time_in_minutes: u11) TimePeriod {
             const t = @mod(time_in_minutes, 1440) / 360;
-            return @enumFromInt(if (t == 0) 4 else t);
+            return @fromBackingInt(@intCast(if (t == 0) 4 else t));
         }
 
         pub inline fn isNextDayOf(next: TimePeriod, prev: TimePeriod) bool {
-            return @intFromEnum(prev) > @intFromEnum(next);
+            return @backingInt(prev) > @backingInt(next);
         }
     };
 
@@ -240,7 +244,7 @@ pub const MainCityTime = struct {
         saturday,
 
         pub inline fn nextDay(day: DayOfWeek) DayOfWeek {
-            return @enumFromInt(@mod(@intFromEnum(day) + 1, 7));
+            return @fromBackingInt(@intCast(@mod(@backingInt(day) + 1, 7)));
         }
     };
 };
@@ -267,14 +271,14 @@ pub const Level = enum(u8) {
     _,
 
     pub fn toInt(level: Level) u32 {
-        return @intFromEnum(level);
+        return @backingInt(level);
     }
 };
 
 pub const HallAvatar = enum(u32) {
     none = 0,
-    wise = @intFromEnum(templates.avatar_base.Id.wise),
-    belle = @intFromEnum(templates.avatar_base.Id.belle),
+    wise = @backingInt(templates.avatar_base.Id.wise),
+    belle = @backingInt(templates.avatar_base.Id.belle),
 
     /// Doesn't allow zero.
     pub fn fromInt(int: u32) ?HallAvatar {
@@ -288,13 +292,13 @@ pub const HallAvatar = enum(u32) {
     }
 
     pub fn toInt(avatar: HallAvatar) u32 {
-        return @intFromEnum(avatar);
+        return @backingInt(avatar);
     }
 
     pub const Guise = enum(u32) {
         none = 0,
-        wise = @intFromEnum(HallAvatar.wise),
-        belle = @intFromEnum(HallAvatar.belle),
+        wise = @backingInt(HallAvatar.wise),
+        belle = @backingInt(HallAvatar.belle),
         _,
 
         pub const Skin = Properties.Avatar.Skin;
@@ -324,24 +328,24 @@ pub const HallAvatar = enum(u32) {
                 .none => .none,
                 .wise, .belle => player_accessory_prop.meta.get(.fromGuiseUnchecked(guise)).skin,
                 _ => |guise_avatar_id| guise_avatar_id: {
-                    const index = player_avatar_prop.indexes.get(@enumFromInt(guise_avatar_id.toInt())).?;
+                    const index = player_avatar_prop.indexes.get(@fromBackingInt(@intCast(guise_avatar_id.toInt()))).?;
                     break :guise_avatar_id player_avatar_prop.meta[index].skin;
                 },
             };
         }
 
         pub fn fromIdUnchecked(id: templates.avatar_base.Id) Guise {
-            return @enumFromInt(@intFromEnum(id));
+            return @fromBackingInt(@intCast(@backingInt(id)));
         }
 
         pub fn toInt(guise: Guise) u32 {
-            return @intFromEnum(guise);
+            return @backingInt(guise);
         }
     };
 };
 
 pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) Allocator.Error!pb.PlayerSave {
-    const index = @intFromEnum(player);
+    const index = @backingInt(player);
 
     const basic_info = props.getPtr(.basic_info, index);
     const basic_save: pb.BasicSave = .{
@@ -358,8 +362,8 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
     try player_accessory_save.avatars.ensureTotalCapacity(arena, PlayerAccessory.slots);
 
     inline for (std.enums.values(PlayerAccessory.Avatar)) |avatar| player_accessory_save.avatars.appendAssumeCapacity(.{
-        .id = @intFromEnum(avatar),
-        .skin_id = @intFromEnum(player_accessory.meta.get(avatar).skin),
+        .id = @backingInt(avatar),
+        .skin_id = @backingInt(player_accessory.meta.get(avatar).skin),
     });
 
     const avatar = props.getPtr(.avatar, index);
@@ -381,20 +385,20 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
             skill_levels.appendAssumeCapacity(level.toInt());
 
         avatar_save.items.appendAssumeCapacity(.{
-            .id = @intFromEnum(id),
+            .id = @backingInt(id),
             .level = meta.level.toInt(),
             .exp = meta.exp,
             .rank = meta.rank.toInt(),
             .talents = meta.talents.toInt(),
-            .mindscape_tab_state = @intFromEnum(meta.mindscape_tab_state),
+            .mindscape_tab_state = @backingInt(meta.mindscape_tab_state),
             .favorite = meta.flags.favorite,
             .skill_levels = skill_levels,
             .skin_id = meta.skin.toInt(),
             .awake_available = meta.flags.awake_available,
             .awake_enabled = meta.flags.awake_enabled,
             .awake_id = meta.awakening.toInt(),
-            .show_weapon = @intFromEnum(meta.flags.show_weapon),
-            .weapon_uid = @intFromEnum(weapon_uid),
+            .show_weapon = @backingInt(meta.flags.show_weapon),
+            .weapon_uid = @backingInt(weapon_uid),
             .equipment_uids = .fromOwnedSlice(try arena.dupe(u32, @ptrCast(equipment_uids))),
             .awake_material_count = awake_material_count.toInt(),
         });
@@ -409,13 +413,11 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
     for (buddy.ids[0..buddy_count], buddy.meta[0..buddy_count]) |id, *meta| {
         var skill_levels: std.ArrayList(u32) = try .initCapacity(arena, Properties.Buddy.Skill.Levels.len);
 
-        inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
-            const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+        inline for (std.enums.values(Properties.Buddy.Skill)) |skill|
             skill_levels.appendAssumeCapacity(meta.skill_levels.get(skill).toInt());
-        }
 
         buddy_save.items.appendAssumeCapacity(.{
-            .id = @intFromEnum(id),
+            .id = @backingInt(id),
             .level = meta.level.toInt(),
             .exp = meta.exp,
             .rank = meta.rank.toInt(),
@@ -437,8 +439,8 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         weapon.refines[0..weapon.count],
     ) |uid, id, level, star, refine| {
         weapon_save.items.appendAssumeCapacity(.{
-            .id = @intFromEnum(id),
-            .uid = @intFromEnum(uid),
+            .id = @backingInt(id),
+            .uid = @backingInt(uid),
             .level = level.toInt(),
             .star = star.toInt(),
             .refine = refine.toInt(),
@@ -462,13 +464,13 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         );
 
         for (properties) |*prop| equip_properties.appendAssumeCapacity(.{
-            .key = @intFromEnum(prop.key),
+            .key = @backingInt(prop.key),
             .base_value = prop.base_value,
             .add_value = prop.add_value,
         });
 
         equip_save.items.appendAssumeCapacity(.{
-            .uid = @intFromEnum(uid),
+            .uid = @backingInt(uid),
             .id = id,
             .level = level.toInt(),
             .star = star.toInt(),
@@ -478,7 +480,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
 
     const hall = props.getPtr(.hall, index);
     const hall_save: pb.HallSave = .{
-        .section_id = @intFromEnum(hall.section_id),
+        .section_id = @backingInt(hall.section_id),
         .position_id = switch (hall.position) {
             .id => |*id| id.view(),
             .transform => "",
@@ -495,7 +497,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
     const main_city_time = props.getPtr(.main_city_time, index);
     const main_city_time_save: pb.MainCityTimeSave = .{
         .time_in_minutes = main_city_time.time_in_minutes,
-        .day_of_week = @intFromEnum(main_city_time.day_of_week),
+        .day_of_week = @backingInt(main_city_time.day_of_week),
     };
 
     const quick_team = props.getPtr(.quick_team, index);
@@ -509,11 +511,11 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         team.* = .{
             .name = meta.name.view(),
             .avatar_ids = try .initCapacity(arena, Properties.QuickTeam.avatar_slots),
-            .buddy_id = @intFromEnum(meta.buddy_id),
+            .buddy_id = @backingInt(meta.buddy_id),
         };
 
         for (meta.avatar_ids) |avatar_id|
-            team.avatar_ids.appendAssumeCapacity(@intFromEnum(avatar_id));
+            team.avatar_ids.appendAssumeCapacity(@backingInt(avatar_id));
     }
 
     return .{
@@ -534,13 +536,13 @@ pub fn fromPlayerSave(
     player: Player,
     save: *const pb.PlayerSave,
 ) !void {
-    const index = @intFromEnum(player);
+    const index = @backingInt(player);
     props.getPtr(.basic_info, index).* = if (save.basic) |basic| .{
-        .level = @enumFromInt(basic.level),
-        .avatar = @enumFromInt(basic.avatar_id),
-        .control_avatar = @enumFromInt(basic.control_avatar_id),
-        .control_guise_avatar = @enumFromInt(basic.control_guise_avatar_id),
-        .control_guise_avatar_skin = @enumFromInt(basic.control_guise_avatar_skin_id),
+        .level = @fromBackingInt(@intCast(basic.level)),
+        .avatar = @fromBackingInt(@intCast(basic.avatar_id)),
+        .control_avatar = @fromBackingInt(@intCast(basic.control_avatar_id)),
+        .control_guise_avatar = @fromBackingInt(@intCast(basic.control_guise_avatar_id)),
+        .control_guise_avatar_skin = @fromBackingInt(@intCast(basic.control_guise_avatar_skin_id)),
     } else .init;
 
     const player_accessory = props.getPtr(.player_accessory, index);
@@ -548,48 +550,48 @@ pub fn fromPlayerSave(
 
     if (save.player_accessory) |player_accessory_save|
         for (player_accessory_save.avatars.items) |avatar|
-            player_accessory.meta.set(@enumFromInt(avatar.id), .{ .skin = @enumFromInt(avatar.skin_id) });
+            player_accessory.meta.set(@fromBackingInt(@intCast(avatar.id)), .{ .skin = @fromBackingInt(@intCast(avatar.skin_id)) });
 
     if (save.avatar) |avatar_save| {
         const avatar = props.getPtr(.avatar, index);
         avatar.* = .init;
 
         for (avatar_save.items.items, 0..) |*item, i| {
-            avatar.indexes.put(@enumFromInt(item.id), @intCast(i));
-            avatar.ids[i] = @enumFromInt(item.id);
+            avatar.indexes.put(@fromBackingInt(@intCast(item.id)), @intCast(i));
+            avatar.ids[i] = @fromBackingInt(@intCast(item.id));
 
             avatar.meta[i] = .{
-                .level = @enumFromInt(item.level),
+                .level = @fromBackingInt(@intCast(item.level)),
                 .exp = item.exp,
-                .rank = @enumFromInt(item.rank),
-                .talents = @enumFromInt(item.talents),
-                .mindscape_tab_state = @enumFromInt(item.mindscape_tab_state),
+                .rank = @fromBackingInt(@intCast(item.rank)),
+                .talents = @fromBackingInt(@intCast(item.talents)),
+                .mindscape_tab_state = @fromBackingInt(@intCast(item.mindscape_tab_state)),
                 .flags = .{
                     .favorite = item.favorite,
                     .awake_available = item.awake_available,
                     .awake_enabled = item.awake_enabled,
-                    .show_weapon = @enumFromInt(item.show_weapon),
+                    .show_weapon = @fromBackingInt(@intCast(item.show_weapon)),
                 },
                 .skill_levels = undefined,
-                .skin = @enumFromInt(item.skin_id),
-                .awakening = @enumFromInt(item.awake_id),
+                .skin = @fromBackingInt(@intCast(item.skin_id)),
+                .awakening = @fromBackingInt(@intCast(item.awake_id)),
             };
 
             inline for (&avatar.meta[i].skill_levels, 0..) |*level, skill_i|
                 level.* = if (item.skill_levels.items.len > skill_i)
-                    @enumFromInt(item.skill_levels.items[skill_i])
+                    @fromBackingInt(@intCast(item.skill_levels.items[skill_i]))
                 else
-                    .maxFor(@enumFromInt(skill_i));
+                    .maxFor(@fromBackingInt(@intCast(skill_i)));
 
-            avatar.weapon_uids[i] = @enumFromInt(item.weapon_uid);
+            avatar.weapon_uids[i] = @fromBackingInt(@intCast(item.weapon_uid));
 
             for (&avatar.equipment_uids[i], 0..) |*equipment_uid, slot_i|
                 equipment_uid.* = if (item.equipment_uids.items.len > slot_i)
-                    @enumFromInt(item.equipment_uids.items[slot_i])
+                    @fromBackingInt(@intCast(item.equipment_uids.items[slot_i]))
                 else
                     .none;
 
-            avatar.awake_material_counts[i] = @enumFromInt(item.awake_material_count);
+            avatar.awake_material_counts[i] = @fromBackingInt(@intCast(item.awake_material_count));
         }
     } else {
         props.getPtr(.avatar, index).* = .init;
@@ -601,24 +603,23 @@ pub fn fromPlayerSave(
         buddy.* = .init;
 
         for (buddy_save.items.items, 0..) |*item, i| {
-            buddy.indexes.put(@enumFromInt(item.id), @intCast(i));
-            buddy.ids[i] = @enumFromInt(item.id);
+            buddy.indexes.put(@fromBackingInt(@intCast(item.id)), @intCast(i));
+            buddy.ids[i] = @fromBackingInt(@intCast(item.id));
 
             buddy.meta[i] = .{
-                .level = @enumFromInt(item.level),
+                .level = @fromBackingInt(@intCast(item.level)),
                 .exp = item.exp,
-                .rank = @enumFromInt(item.rank),
-                .star = @enumFromInt(item.star),
+                .rank = @fromBackingInt(@intCast(item.rank)),
+                .star = @fromBackingInt(@intCast(item.star)),
                 .skill_levels = .initUndefined(),
                 .flags = .{
                     .favorite = item.favorite,
                 },
             };
 
-            inline for (std.meta.fields(Properties.Buddy.Skill), 0..) |field, skill_i| {
-                const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+            inline for (std.enums.values(Properties.Buddy.Skill), 0..) |skill, skill_i| {
                 buddy.meta[i].skill_levels.set(skill, if (item.skill_levels.items.len > skill_i)
-                    @enumFromInt(item.skill_levels.items[skill_i])
+                    @fromBackingInt(@intCast(item.skill_levels.items[skill_i]))
                 else
                     .maxFor(skill));
             }
@@ -635,11 +636,11 @@ pub fn fromPlayerSave(
         weapon.count = @intCast(weapon_save.items.items.len);
 
         for (weapon_save.items.items, 0..) |*item, i| {
-            weapon.uids[i] = @enumFromInt(item.uid);
-            weapon.ids[i] = @enumFromInt(item.id);
-            weapon.levels[i] = @enumFromInt(item.level);
-            weapon.stars[i] = @enumFromInt(item.star);
-            weapon.refines[i] = @enumFromInt(item.refine);
+            weapon.uids[i] = @fromBackingInt(@intCast(item.uid));
+            weapon.ids[i] = @fromBackingInt(@intCast(item.id));
+            weapon.levels[i] = @fromBackingInt(@intCast(item.level));
+            weapon.stars[i] = @fromBackingInt(@intCast(item.star));
+            weapon.refines[i] = @fromBackingInt(@intCast(item.refine));
         }
     } else {
         props.getPtr(.weapon, index).* = .init;
@@ -653,17 +654,17 @@ pub fn fromPlayerSave(
         equip.count = @intCast(equip_save.items.items.len);
 
         for (equip_save.items.items, 0..) |*item, i| {
-            equip.uids[i] = @enumFromInt(item.uid);
+            equip.uids[i] = @fromBackingInt(@intCast(item.uid));
             equip.ids[i] = item.id;
-            equip.levels[i] = @enumFromInt(item.level);
-            equip.stars[i] = @enumFromInt(item.star);
+            equip.levels[i] = @fromBackingInt(@intCast(item.level));
+            equip.stars[i] = @fromBackingInt(@intCast(item.star));
             equip.properties[i] = @splat(.none);
 
             const prop_count = @min(item.properties.items.len, Equipment.Property.count);
 
             for (item.properties.items[0..prop_count], equip.properties[i][0..prop_count]) |saved, *property|
                 property.* = .{
-                    .key = @enumFromInt(saved.key),
+                    .key = @fromBackingInt(@intCast(saved.key)),
                     .base_value = @truncate(saved.base_value),
                     .add_value = @truncate(saved.add_value),
                 };
@@ -673,7 +674,7 @@ pub fn fromPlayerSave(
     }
 
     props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
-        .section_id = @enumFromInt(hall_save.section_id),
+        .section_id = @fromBackingInt(@intCast(hall_save.section_id)),
         .position = (if (hall_save.position_transform) |transform|
             Hall.Position.fromVectors(
                 transform.position.items,
@@ -685,7 +686,7 @@ pub fn fromPlayerSave(
 
     props.getPtr(.main_city_time, index).* = if (save.main_city_time) |main_city_time_save| .{
         .time_in_minutes = @truncate(main_city_time_save.time_in_minutes),
-        .day_of_week = @enumFromInt(main_city_time_save.day_of_week),
+        .day_of_week = @fromBackingInt(@intCast(main_city_time_save.day_of_week)),
     } else .init;
 
     if (save.quick_team) |quick_team_save| {
@@ -695,7 +696,7 @@ pub fn fromPlayerSave(
             quick_team.meta[i] = .{
                 .name = try .fromSlice(team.name),
                 .avatar_ids = @splat(.none),
-                .buddy_id = @enumFromInt(team.buddy_id),
+                .buddy_id = @fromBackingInt(@intCast(team.buddy_id)),
             };
 
             const count = @min(QuickTeam.avatar_slots, team.avatar_ids.items.len);

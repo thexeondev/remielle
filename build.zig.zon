@@ -1,7 +1,7 @@
 .{
     .name = .remielle,
     .version = "0.2.0",
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0-dev.2018+ab30a0b9a",
     .paths = .{""},
     .fingerprint = 0xcb34a77719cd1337,
 }

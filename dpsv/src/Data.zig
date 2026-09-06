@@ -39,7 +39,7 @@ pub fn build(arena: Allocator) Allocator.Error!Data {
 
 fn buildRegionListMap(arena: Allocator) Allocator.Error!RegionListMap {
     var map: RegionListMap = .empty;
-    try map.ensureTotalCapacity(arena, @typeInfo(Version).@"enum".fields.len);
+    try map.ensureTotalCapacity(arena, @typeInfo(Version).@"enum".field_names.len);
 
     const ServerListInfo = struct {
         retcode: i32,

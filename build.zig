@@ -1,3 +1,7 @@
+const std = @import("std");
+const Io = std.Io;
+const Build = std.Build;
+
 const stable_protos: []const []const u8 = &.{
     "lib/proto/head.proto",
     "lib/proto/action.proto",
@@ -31,7 +35,7 @@ pub fn build(b: *Build) void {
     const compile_main_descriptors = b.addUpdateSourceFiles();
     const compile_stable_definitions = b.addUpdateSourceFiles();
 
-    if (b.build_root.handle.access(io, "lib/proto/main.proto", .{ .read = true })) {
+    if (b.root.access(io, "lib/proto/main.proto", .{ .read = true })) {
         const rmprotoc_descs_pass = b.addRunArtifact(rmprotoc);
         rmprotoc_descs_pass.expectExitCode(0);
         rmprotoc_descs_pass.addArg("-descriptors");
@@ -53,7 +57,7 @@ pub fn build(b: *Build) void {
         );
     } else |_| {}
 
-    if (filesReadable(io, b.build_root.handle, stable_protos)) {
+    if (filesReadable(io, b.root, stable_protos)) {
         const rmprotoc_stable_pass = b.addRunArtifact(rmprotoc);
         rmprotoc_stable_pass.expectExitCode(0);
         rmprotoc_stable_pass.addArg("-full");
@@ -133,12 +137,10 @@ pub fn build(b: *Build) void {
     const serve_sdk = b.addRunArtifact(sdksv);
     const serve_game = b.addRunArtifact(gamesv);
 
-    if (b.args) |args| {
-        ctl.addArgs(args);
-        serve_dp.addArgs(args);
-        serve_sdk.addArgs(args);
-        serve_game.addArgs(args);
-    }
+    ctl.addPassthruArgs();
+    serve_dp.addPassthruArgs();
+    serve_sdk.addPassthruArgs();
+    serve_game.addPassthruArgs();
 
     b.step(
         "ctl",
@@ -242,7 +244,7 @@ const sdksv_assets: []const StaticAsset = &.{
     .asset("config", "sdksv/config.zon"),
 };
 
-fn filesReadable(io: Io, dir: Io.Dir, path_list: []const []const u8) bool {
+fn filesReadable(io: Io, dir: Build.Cache.Path, path_list: []const []const u8) bool {
     for (path_list) |sub_path|
         dir.access(io, sub_path, .{ .read = true }) catch return false;
 
@@ -265,8 +267,3 @@ const StaticAsset = struct {
             );
     }
 };
-
-const Io = std.Io;
-const Build = std.Build;
-
-const std = @import("std");

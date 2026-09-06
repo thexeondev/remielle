@@ -103,7 +103,7 @@ inline fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
     exit(1);
 }
 
-const is_debug = builtin.mode == .Debug;
+const is_debug = builtin.mode == .debug;
 
 const Io = std.Io;
 const Init = std.process.Init;

@@ -15,20 +15,20 @@ pub const HadalZone = extern struct {
     pub const init: HadalZone = .{
         .entrance_zones = entrance_zones: {
             var ez: [Entrance.count]OptionalZone = @splat(.none);
-            ez[Entrance.free_training.toIndex()] = @enumFromInt(890011);
-            ez[Entrance.hadal_zone_scheduled_1.toIndex()] = @enumFromInt(620571);
-            ez[Entrance.hadal_zone_stable.toIndex()] = @enumFromInt(61001);
-            ez[Entrance.hadal_zone_defensive.toIndex()] = @enumFromInt(61002);
-            ez[Entrance.hadal_zone_ambush.toIndex()] = @enumFromInt(61003);
-            ez[Entrance.boss_challenge_trial_1.toIndex()] = @enumFromInt(6904511);
-            ez[Entrance.boss_challenge_trial_2.toIndex()] = @enumFromInt(6904611);
-            ez[Entrance.boss_challenge_trial_3.toIndex()] = @enumFromInt(6904711);
-            ez[Entrance.hadal_zone_scheduled_2.toIndex()] = @enumFromInt(620581);
-            ez[Entrance.hadal_zone_scheduled_3.toIndex()] = @enumFromInt(620591);
-            ez[Entrance.boss_challenge_adversity_1.toIndex()] = @enumFromInt(690422);
-            ez[Entrance.boss_challenge_adversity_2.toIndex()] = @enumFromInt(6904521);
-            ez[Entrance.boss_challenge_adversity_3.toIndex()] = @enumFromInt(6904621);
-            ez[Entrance.boss_challenge_adversity_4.toIndex()] = @enumFromInt(6904721);
+            ez[Entrance.free_training.toIndex()] = @fromBackingInt(@intCast(890011));
+            ez[Entrance.hadal_zone_scheduled_1.toIndex()] = @fromBackingInt(@intCast(620571));
+            ez[Entrance.hadal_zone_stable.toIndex()] = @fromBackingInt(@intCast(61001));
+            ez[Entrance.hadal_zone_defensive.toIndex()] = @fromBackingInt(@intCast(61002));
+            ez[Entrance.hadal_zone_ambush.toIndex()] = @fromBackingInt(@intCast(61003));
+            ez[Entrance.boss_challenge_trial_1.toIndex()] = @fromBackingInt(@intCast(6904511));
+            ez[Entrance.boss_challenge_trial_2.toIndex()] = @fromBackingInt(@intCast(6904611));
+            ez[Entrance.boss_challenge_trial_3.toIndex()] = @fromBackingInt(@intCast(6904711));
+            ez[Entrance.hadal_zone_scheduled_2.toIndex()] = @fromBackingInt(@intCast(620581));
+            ez[Entrance.hadal_zone_scheduled_3.toIndex()] = @fromBackingInt(@intCast(620591));
+            ez[Entrance.boss_challenge_adversity_1.toIndex()] = @fromBackingInt(@intCast(690422));
+            ez[Entrance.boss_challenge_adversity_2.toIndex()] = @fromBackingInt(@intCast(6904521));
+            ez[Entrance.boss_challenge_adversity_3.toIndex()] = @fromBackingInt(@intCast(6904621));
+            ez[Entrance.boss_challenge_adversity_4.toIndex()] = @fromBackingInt(@intCast(6904721));
 
             break :entrance_zones ez;
         },
@@ -54,21 +54,21 @@ pub const HadalZone = extern struct {
 
         const count: u32 = count: {
             var highest: u32 = 0;
-            for (@typeInfo(Entrance).@"enum".fields) |enum_field| {
-                highest = @max(highest, enum_field.value);
+            for (@typeInfo(Entrance).@"enum".field_values) |value| {
+                highest = @max(highest, value);
             }
 
             break :count highest + 1;
         };
 
         pub fn toIndex(e: Entrance) u32 {
-            return @intFromEnum(e);
+            return @backingInt(e);
         }
 
         pub fn toEntranceId(e: Entrance) u32 {
             return switch (e) {
                 .free_training => 901, // hard-coded to reduce array size
-                else => @intFromEnum(e),
+                else => @backingInt(e),
             };
         }
 
@@ -90,7 +90,7 @@ pub const HadalZone = extern struct {
         pub fn unwrap(oz: OptionalZone) ?u32 {
             return switch (oz) {
                 .none => null,
-                _ => |zone| @intFromEnum(zone),
+                _ => |zone| @backingInt(zone),
             };
         }
     };

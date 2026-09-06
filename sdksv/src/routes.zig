@@ -11,8 +11,8 @@ pub const Route = Route: {
     var values: []const u8 = &.{};
     var i: u8 = 0;
 
-    for (namespaces) |ns| for (@typeInfo(ns).@"struct".decls) |decl| {
-        names = names ++ [1][:0]const u8{decl.name};
+    for (namespaces) |ns| for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
+        names = names ++ [1][:0]const u8{decl_name};
         values = values ++ [1]u8{i};
         i += 1;
     };
@@ -58,9 +58,9 @@ pub fn process(
 
     switch (path) {
         inline else => |route| lookup: inline for (namespaces) |ns| {
-            inline for (@typeInfo(ns).@"struct".decls) |decl|
-                if (comptime std.mem.eql(u8, decl.name, @tagName(route))) {
-                    try @field(ns, decl.name)(&request);
+            inline for (@typeInfo(ns).@"struct".decl_names) |decl_name|
+                if (comptime std.mem.eql(u8, decl_name, @tagName(route))) {
+                    try @field(ns, decl_name)(&request);
                     break :lookup;
                 };
         },

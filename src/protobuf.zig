@@ -139,16 +139,19 @@ pub fn encode(comptime desc_set: Descriptors, writer: *Io.Writer, message: anyty
         return;
 
     const struct_info = @typeInfo(Message).@"struct";
-    @setEvalBranchQuota(struct_info.fields.len * struct_info.fields.len);
+    @setEvalBranchQuota(struct_info.field_names.len * struct_info.field_names.len);
 
-    inline for (struct_info.fields) |struct_field| switch (FieldKind.of(struct_field.type)) {
+    inline for (
+        struct_info.field_names,
+        struct_info.field_types,
+    ) |field_name, FieldType| switch (FieldKind.of(FieldType)) {
         .single => try encodeField(
             desc_set,
-            descriptor.field(struct_field.name) orelse continue,
+            descriptor.field(field_name) orelse continue,
             writer,
-            @field(message, struct_field.name),
+            @field(message, field_name),
         ),
-        .oneof => if (@field(message, struct_field.name)) |oneof| switch (oneof) {
+        .oneof => if (@field(message, field_name)) |oneof| switch (oneof) {
             inline else => |value, tag| try encodeField(
                 desc_set,
                 descriptor.field(@tagName(tag)) orelse continue,
@@ -181,7 +184,7 @@ fn encodeField(
                     try writer.writeAll(value);
                 },
                 else => switch (@typeInfo(Value)) {
-                    .@"enum" => try writeVarInt(writer, i32, @intFromEnum(value)),
+                    .@"enum" => try writeVarInt(writer, i32, @backingInt(value)),
                     .@"struct" => {
                         const length = encodingLength(desc_set, value);
                         try writeVarInt(writer, u64, length);
@@ -226,11 +229,10 @@ pub fn decode(
     comptime var field_count: u32 = 0;
 
     const FieldNumber = comptime FieldNumber: {
-        var field_names: [struct_info.fields.len][:0]const u8 = undefined;
-        var field_numbers: [struct_info.fields.len]u32 = undefined;
+        var field_names: [struct_info.field_names.len][:0]const u8 = undefined;
+        var field_numbers: [struct_info.field_names.len]u32 = undefined;
 
-        for (struct_info.fields) |struct_field| {
-            const field_name = struct_field.name;
+        for (struct_info.field_names) |field_name| {
             const field_desc = descriptor.field(field_name) orelse
                 continue;
 
@@ -245,15 +247,18 @@ pub fn decode(
 
     if (field_count == 0) return .init;
 
-    comptime var oneof_names: [struct_info.fields.len][:0]const u8 = undefined;
-    comptime var oneof_types: [struct_info.fields.len]type = undefined;
+    comptime var oneof_names: [struct_info.field_names.len][:0]const u8 = undefined;
+    comptime var oneof_types: [struct_info.field_names.len]type = undefined;
     comptime var oneof_count: u32 = 0;
 
-    inline for (struct_info.fields) |struct_field| switch (FieldKind.of(struct_field.type)) {
+    inline for (
+        struct_info.field_names,
+        struct_info.field_types,
+    ) |field_name, FieldType| switch (FieldKind.of(FieldType)) {
         .single => continue,
         .oneof => {
-            oneof_names[oneof_count] = struct_field.name;
-            oneof_types[oneof_count] = struct_field.type;
+            oneof_names[oneof_count] = field_name;
+            oneof_types[oneof_count] = FieldType;
             oneof_count += 1;
         },
     };
@@ -358,7 +363,7 @@ fn decodeValue(
         else => switch (@typeInfo(Value)) {
             .@"enum" => enumeration: {
                 const value = try readVarInt(i32, reader);
-                break :enumeration std.enums.fromInt(Value, value) orelse @enumFromInt(0);
+                break :enumeration std.enums.fromInt(Value, value) orelse @fromBackingInt(@intCast(0));
             },
             .@"struct" => message: {
                 const limit: Io.Limit = .limited(try readVarInt(u32, reader));

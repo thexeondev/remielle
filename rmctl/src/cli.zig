@@ -92,42 +92,48 @@ pub const Command = union(enum) {
         switch (user_tag) {
             inline else => |tag| {
                 const Struct = @FieldType(Command, @tagName(tag));
+                const struct_info = @typeInfo(Struct).@"struct";
+
                 var params: Struct = undefined;
                 var cursor = args[1..];
 
-                inline for (@typeInfo(Struct).@"struct".fields) |field| {
+                inline for (
+                    struct_info.field_types,
+                    struct_info.field_names,
+                    struct_info.field_attrs,
+                ) |FieldType, field_name, field_attrs| {
                     if (cursor.len == 0) {
-                        if (field.defaultValue()) |default_value|
-                            @field(params, field.name) = default_value
+                        if (field_attrs.defaultValue(FieldType)) |default_value|
+                            @field(params, field_name) = default_value
                         else
                             fatal("not enough provided arguments for command " ++ @tagName(tag), .{});
                     } else {
                         const string = cursor[0];
                         cursor = cursor[1..];
 
-                        switch (@typeInfo(field.type)) {
+                        switch (@typeInfo(FieldType)) {
                             .int => {
-                                const int = std.fmt.parseInt(field.type, string, 10) catch
-                                    fatal("invalid value for " ++ field.name, .{});
+                                const int = std.fmt.parseInt(FieldType, string, 10) catch
+                                    fatal("invalid value for " ++ field_name, .{});
 
-                                @field(params, field.name) = int;
+                                @field(params, field_name) = int;
                             },
-                            .@"enum" => {
+                            .@"enum" => |enum_info| {
                                 const e = blk: {
                                     if (std.fmt.parseInt(
-                                        std.meta.Tag(field.type),
+                                        enum_info.tag_type,
                                         string,
                                         10,
                                     )) |int| {
-                                        break :blk std.enums.fromInt(field.type, int);
+                                        break :blk std.enums.fromInt(FieldType, int);
                                     } else |_| {
-                                        break :blk std.meta.stringToEnum(field.type, string);
+                                        break :blk std.meta.stringToEnum(FieldType, string);
                                     }
-                                } orelse fatal("invalid value for " ++ field.name, .{});
+                                } orelse fatal("invalid value for " ++ field_name, .{});
 
-                                @field(params, field.name) = e;
+                                @field(params, field_name) = e;
                             },
-                            else => @compileError("unsupported argument type: " ++ @typeName(field.type)),
+                            else => @compileError("unsupported argument type: " ++ @typeName(FieldType)),
                         }
                     }
                 }

@@ -23,8 +23,8 @@ const CmdId = CmdId: {
     var names: []const []const u8 = &.{};
     var values: []const u16 = &.{};
 
-    for (namespaces) |ns| for (@typeInfo(ns).@"struct".decls) |decl| {
-        const Fn = @TypeOf(@field(ns, decl.name));
+    for (namespaces) |ns| for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
+        const Fn = @TypeOf(@field(ns, decl_name));
         const Msg = MessageOf(Fn);
 
         values = values ++ .{protobuf.cmdId(Msg.Data) orelse continue};
@@ -82,11 +82,11 @@ pub fn process(
 
     switch (cmd_id) {
         inline else => |id| lookup: inline for (namespaces) |ns| {
-            inline for (@typeInfo(ns).@"struct".decls) |decl| {
-                const Fn = @TypeOf(@field(ns, decl.name));
+            inline for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
+                const Fn = @TypeOf(@field(ns, decl_name));
 
                 const InMessage = MessageOf(Fn);
-                if (@intFromEnum(id) != protobuf.cmdId(InMessage.Data)) continue;
+                if (@backingInt(id) != protobuf.cmdId(InMessage.Data)) continue;
 
                 const data = protobuf.decode(
                     .main,
@@ -113,8 +113,8 @@ pub fn process(
                     .data = null,
                 };
 
-                inline for (&args, @typeInfo(Args).@"struct".fields) |*arg, arg_info| {
-                    switch (arg_info.type) {
+                inline for (&args, @typeInfo(Args).@"struct".field_types) |*arg, ArgType| {
+                    switch (ArgType) {
                         InMessage => arg.* = message,
                         *const assets.Lookup => arg.* = frame.asset_lookup,
                         *const logic.Calendar => arg.* = frame.calendar,
@@ -124,7 +124,7 @@ pub fn process(
                             .utc_offset = 3, // TODO: configuration field + cli option
                         },
 
-                        else => |ArgType| {
+                        else => {
                             switch (@typeInfo(ArgType)) {
                                 .pointer => |pointer| switch (pointer.child) {
                                     @TypeOf(out_response) => {
@@ -152,12 +152,12 @@ pub fn process(
                                 },
                             }
 
-                            @compileError(decl.name ++ ": invalid argument type: " ++ @typeName(ArgType));
+                            @compileError(decl_name ++ ": invalid argument type: " ++ @typeName(ArgType));
                         },
                     }
                 }
 
-                if (@call(.auto, @field(ns, decl.name), args)) {
+                if (@call(.auto, @field(ns, decl_name), args)) {
                     // Success, run the pipeline
                     try logic.mutators.dispatchLogicChanges(frame, &changes);
                     try messaging.notifiers.notifyLogicChanges(arena, frame, &changes);
@@ -246,8 +246,8 @@ pub fn Response(Msg: type) type {
 }
 
 fn MessageOf(comptime Fn: type) type {
-    inline for (@typeInfo(Fn).@"fn".params) |param| {
-        const Param = param.type.?;
+    inline for (@typeInfo(Fn).@"fn".param_types) |param_maybe| {
+        const Param = param_maybe.?;
 
         switch (@typeInfo(Param)) {
             .@"struct" => {},
@@ -265,8 +265,8 @@ fn MessageOf(comptime Fn: type) type {
 }
 
 fn ResponseOf(comptime Fn: type) ?type {
-    inline for (@typeInfo(Fn).@"fn".params) |param| {
-        const ParamIndirect = param.type.?;
+    inline for (@typeInfo(Fn).@"fn".param_types) |param_maybe| {
+        const ParamIndirect = param_maybe.?;
         const Param = switch (@typeInfo(ParamIndirect)) {
             .pointer => |pointer| pointer.child,
             else => continue,
