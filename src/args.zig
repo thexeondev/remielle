@@ -58,6 +58,18 @@ pub fn parse(
                 switch (arg_types[field_index]) {
                     []const u8 => @field(result, @tagName(key_comptime)) = value_string,
                     else => |ArgType| switch (@typeInfo(ArgType)) {
+                        .bool => {
+                            const value_bool = if (mem.eql(u8, value_string, "true"))
+                                true
+                            else if (mem.eql(u8, value_string, "false"))
+                                false
+                            else {
+                                log.err("invalid boolean value for {q}", .{key_string});
+                                return null;
+                            };
+
+                            @field(result, @tagName(key_comptime)) = value_bool;
+                        },
                         .int => {
                             const value_int = std.fmt.parseInt(ArgType, value_string, 0) catch {
                                 log.err("invalid integer value for {q}", .{key_string});
