@@ -1,18 +1,42 @@
+const builtin = @import("builtin");
+const is_debug = builtin.mode == .debug;
+
+const std = @import("std");
+
+const Io = std.Io;
+const net = std.Io.net;
+const process = std.process;
+
 const remielle = @import("remielle");
 
-const log = std.log.scoped(.@"remielle-sdksv");
+const app = @import("app.zig");
 
-pub const Options = struct {
-    listen_address: []const u8 = @import("config").listen_address,
-    concurrent_connections_limit: u64 = @import("config").concurrent_connections_limit,
-};
+const log = std.log.scoped(.@"remielle-sdksv");
 
 pub const std_options: std.Options = .{
     .logFn = remielle.log.logFn,
 };
 
-pub fn main(init: Init.Minimal) void {
-    var debug_allocator: heap.DebugAllocator(.{}) = .init;
+pub const Args = struct {
+    @"--listen-address": []const u8 = @import("config").listen_address,
+};
+
+pub fn usage(io: Io) noreturn {
+    const defaults: Args = .{};
+
+    Io.File.stdout().writeStreamingAll(io, std.fmt.comptimePrint(
+        \\Usage: remielle-sdksv [options]
+        \\
+        \\Options:
+        \\  --help, -h        Print this help and exit
+        \\  --listen-address  TCP listen address; default is {q}
+        \\
+    , .{defaults.@"--listen-address"})) catch {};
+    process.exit(0);
+}
+
+pub fn main(init: process.Init.Minimal) void {
+    var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
     defer if (is_debug) {
         _ = debug_allocator.deinit();
     };
@@ -20,57 +44,43 @@ pub fn main(init: Init.Minimal) void {
     const gpa = if (is_debug)
         debug_allocator.allocator()
     else
-        heap.smp_allocator;
+        std.heap.smp_allocator;
 
-    var arena: heap.ArenaAllocator = .init(heap.page_allocator);
-
-    const args = init.args.toSlice(arena.allocator()) catch |err|
-        fatal("failed to collect cli arguments: {t}", .{err});
-
-    var options_err: remielle.cli.ErrorDescription = undefined;
-    const options = remielle.cli.parseOptions(Options, args[1..], &options_err) orelse fatal(
-        "{f}\nusage: {s} {f}",
-        .{ options_err, args[0], remielle.cli.Usage(Options) },
-    );
-
-    const listen_address = net.IpAddress.parseLiteral(options.listen_address) catch |err|
-        fatal("bad listen address specified: {t}", .{err});
-
-    const concurrency_units: Io.Limit = if (options.concurrent_connections_limit != 0)
-        // One extra for the initial `io.concurrent`
-        .limited64(1 +| options.concurrent_connections_limit)
-    else
-        .unlimited;
+    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
 
     var io_impl = if (remielle.io.RemiellIo.supported)
-        remielle.io.RemiellIo.init(heap.page_allocator, .{
-            .coroutine_limit = concurrency_units,
+        remielle.io.RemiellIo.init(gpa, .{
+            .coroutine_limit = .unlimited, // TODO
             .stack_size = 1024 * 512,
         }) catch |err|
             fatal("failed to init I/O implementation: {t}", .{err})
     else
-        Io.Threaded.init(heap.page_allocator, .{ .concurrent_limit = concurrency_units });
+        Io.Threaded.init(gpa, .{
+            .argv0 = .init(init.args),
+            .environ = init.environ,
+        });
 
     defer io_impl.deinit();
     const io = io_impl.io();
+
+    const args_slice = init.args.toSlice(arena.allocator()) catch |err|
+        fatal("failed to collect cli arguments: {t}", .{err});
+
+    const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
+
+    const listen_address = net.IpAddress.parseLiteral(args.@"--listen-address") catch |err|
+        fatal("bad listen address specified: {t}", .{err});
 
     remielle.splash.print();
 
     const listen_args = .{ io, gpa, &listen_address };
 
-    var listen = io.concurrent(app.listen, listen_args) catch |concurrent_err| switch (concurrent_err) {
-        error.ConcurrencyUnavailable => {
-            @call(.auto, app.listen, listen_args) catch |err| switch (err) {
-                error.Canceled => unreachable,
-            };
-
-            return;
-        },
-    };
+    var listen = io.concurrent(app.listen, listen_args) catch |err|
+        fatal("failed to start: {t}", .{err});
+    defer listen.cancel(io) catch {};
 
     if (remielle.io.RemiellIo.supported) {
         io_impl.waitForShutdown();
-        listen.cancel(io) catch {};
     } else {
         listen.await(io) catch {};
     }
@@ -80,16 +90,3 @@ inline fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
     log.err(fmt, args);
     std.process.exit(1);
 }
-
-const Io = std.Io;
-const Init = std.process.Init;
-
-const heap = std.heap;
-const net = std.Io.net;
-
-const is_debug = builtin.mode == .debug;
-
-const app = @import("app.zig");
-
-const builtin = @import("builtin");
-const std = @import("std");

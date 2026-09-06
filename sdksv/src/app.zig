@@ -10,7 +10,6 @@ pub fn listen(
 ) Cancelable!void {
     var passwd = Passwd.load(io, gpa, .cwd()) catch |err|
         fatal("failed to load passwd file: {t}", .{err});
-
     defer passwd.deinit(gpa);
 
     var server = address.listen(io, .{
@@ -24,13 +23,12 @@ pub fn listen(
         ),
         else => |e| fatal("failed to listen at {f}: {t}", .{ address, e }),
     };
-
     defer server.deinit(io);
 
     var client_group: Io.Group = .init;
     defer client_group.cancel(io);
 
-    log.info("waiting for requests at {f}", .{address});
+    log.info("waiting for requests at {f}", .{server.socket.address});
     defer log.info("shutting down...", .{});
 
     while (true) {

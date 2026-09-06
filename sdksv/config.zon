@@ -2,9 +2,4 @@
     // TCP listen address.
     // Can be overridden by the `-l` option.
     .listen_address = "127.0.0.1:20100",
-
-    // The amount of connections allowed to be processed concurrently.
-    // Zero means unlimited amount.
-    // Can be overridden by the `-c` option.
-    .concurrent_connections_limit = 0,
 }
