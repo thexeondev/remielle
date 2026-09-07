@@ -2,12 +2,13 @@ const builtin = @import("builtin");
 const is_debug = builtin.mode == .debug;
 
 const std = @import("std");
-
 const Io = std.Io;
 const net = std.Io.net;
 const process = std.process;
+const Threaded = std.Io.Threaded;
 
 const remielle = @import("remielle");
+const Evented = remielle.io.Evented;
 
 const app = @import("app.zig");
 
@@ -16,6 +17,11 @@ const log = std.log.scoped(.@"remielle-sdksv");
 pub const std_options: std.Options = .{
     .logFn = remielle.log.logFn,
 };
+
+var evented_instance: Evented = undefined;
+var threaded_instance: Threaded = undefined;
+
+const io_mode: remielle.io.Mode = .configured;
 
 pub const Args = struct {
     @"--listen-address": []const u8 = @import("config").listen_address,
@@ -35,7 +41,7 @@ pub fn usage(io: Io) noreturn {
     process.exit(0);
 }
 
-pub fn main(init: process.Init.Minimal) void {
+pub fn main(init: process.Init.Minimal) !void {
     var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
     defer if (is_debug) {
         _ = debug_allocator.deinit();
@@ -48,24 +54,31 @@ pub fn main(init: process.Init.Minimal) void {
 
     var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
 
-    var io_impl = if (remielle.io.Evented.supported)
-        remielle.io.Evented.init(gpa, .{
-            .coroutine_limit = .unlimited, // TODO
-            .stack_size = 1024 * 512,
-        }) catch |err|
-            fatal("failed to init I/O implementation: {t}", .{err})
-    else
-        Io.Threaded.init(gpa, .{
-            .argv0 = .init(init.args),
-            .environ = init.environ,
-        });
+    const io = switch (io_mode) {
+        .evented => evented: {
+            evented_instance = try .init(gpa, .{
+                .coroutine_limit = .unlimited,
+                .stack_size = 1024 * 512,
+            });
 
-    defer io_impl.deinit();
-    const io = io_impl.io();
+            break :evented evented_instance.io();
+        },
+        .threaded => threaded: {
+            threaded_instance = .init(gpa, .{
+                .argv0 = .init(init.args),
+                .environ = init.environ,
+            });
 
-    const args_slice = init.args.toSlice(arena.allocator()) catch |err|
-        fatal("failed to collect cli arguments: {t}", .{err});
+            break :threaded threaded_instance.io();
+        },
+    };
 
+    defer switch (io_mode) {
+        .evented => evented_instance.deinit(),
+        .threaded => threaded_instance.deinit(),
+    };
+
+    const args_slice = try init.args.toSlice(arena.allocator());
     const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
 
     const listen_address = net.IpAddress.parseLiteral(args.@"--listen-address") catch |err|
@@ -73,16 +86,12 @@ pub fn main(init: process.Init.Minimal) void {
 
     remielle.splash.print();
 
-    const listen_args = .{ io, gpa, &listen_address };
-
-    var listen = io.concurrent(app.listen, listen_args) catch |err|
-        fatal("failed to start: {t}", .{err});
+    var listen = try io.concurrent(app.listen, .{ io, gpa, &listen_address });
     defer listen.cancel(io) catch {};
 
-    if (remielle.io.Evented.supported) {
-        io_impl.waitForShutdown();
-    } else {
-        listen.await(io) catch {};
+    switch (io_mode) {
+        .evented => evented_instance.waitForShutdown(),
+        .threaded => remielle.io.waitForShutdownThreaded(&threaded_instance),
     }
 }
 
