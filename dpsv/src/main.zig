@@ -2,12 +2,13 @@ const builtin = @import("builtin");
 
 const std = @import("std");
 const Io = std.Io;
-const net = std.Io.net;
+const mem = std.mem;
 const process = std.process;
+const IpAddress = std.Io.net.IpAddress;
 
 const remielle = @import("remielle");
+const http = remielle.http;
 
-const app = @import("app.zig");
 const Data = @import("Data.zig");
 
 const log = std.log.scoped(.@"remielle-dpsv");
@@ -23,8 +24,11 @@ const use_safe_allocator = switch (builtin.optimize) {
     .small, .fast => false,
 };
 
+const use_evented_io = remielle.io.RemiellIo.supported;
+
 pub const Args = struct {
     @"--listen-address": []const u8 = @import("config").listen_address,
+    @"--concurrency": u32 = 16,
 };
 
 pub fn usage(io: Io) noreturn {
@@ -36,8 +40,12 @@ pub fn usage(io: Io) noreturn {
         \\Options:
         \\  --help, -h        Print this help and exit
         \\  --listen-address  TCP listen address; default is {q}
+        \\  --concurrency     Limit of concurrent connections; default is {d}
         \\
-    , .{defaults.@"--listen-address"})) catch {};
+    , .{
+        defaults.@"--listen-address",
+        defaults.@"--concurrency",
+    })) catch {};
     process.exit(0);
 }
 
@@ -56,9 +64,9 @@ pub fn main(init: process.Init.Minimal) !void {
     defer arena_instance.deinit();
     const arena = arena_instance.allocator();
 
-    var io_impl = if (remielle.io.RemiellIo.supported)
+    var io_impl = if (use_evented_io)
         remielle.io.RemiellIo.init(gpa, .{
-            .coroutine_limit = .unlimited, // TODO
+            .coroutine_limit = .unlimited,
             .stack_size = 1024 * 128,
         }) catch |err|
             fatal("failed to init I/O implementation: {t}", .{err})
@@ -73,24 +81,115 @@ pub fn main(init: process.Init.Minimal) !void {
     const args_slice = try init.args.toSlice(arena);
     const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
 
-    const listen_address = net.IpAddress.parseLiteral(args.@"--listen-address") catch |err|
-        fatal("bad listen address specified: {t}", .{err});
-
     const data = Data.build(arena) catch |err| switch (err) {
         error.OutOfMemory => fatal("failed to build static responses", .{}),
     };
 
-    remielle.splash.print();
+    const listen_address = IpAddress.parseLiteral(args.@"--listen-address") catch |err|
+        fatal("bad listen address specified: {t}", .{err});
 
-    const listen_args = .{ io, &data, &listen_address };
+    const listen_options: IpAddress.ListenOptions = .{
+        .reuse_address = true,
+        .kernel_backlog = 64,
+    };
 
-    var app_future = io.concurrent(app.listen, listen_args) catch |err|
-        fatal("failed to start: {t}", .{err});
-    defer app_future.cancel(io) catch {};
+    var net_server = listen_address.listen(io, listen_options) catch |err| switch (err) {
+        error.AddressInUse => fatal(
+            \\address {qf} is already in use
+            \\likely cause: another instance of this server is already running
+        , .{listen_address}),
+        else => |e| fatal("failed to start: {t}", .{e}),
+    };
+    defer net_server.deinit(io);
 
-    if (remielle.io.RemiellIo.supported) {
+    var http_server = http.Server.init(io, gpa, &net_server, .{
+        .task_count = args.@"--concurrency",
+        .rx_buf_len = 4096,
+        .tx_buf_len = 16384,
+    }) catch |err| switch (err) {
+        error.ConcurrencyUnavailable, error.OutOfMemory => |e| fatal(
+            \\failed to initialize http server ({t})
+            \\likely cause: --concurrency is higher than the system can process
+        , .{e}),
+    };
+    defer http_server.deinit(io, gpa);
+
+    if (use_evented_io) {
+        var server_task = try io.concurrent(
+            runServerTask,
+            .{ io, &listen_address, &data, &http_server },
+        );
+        defer server_task.cancel(io) catch {};
+
         io_impl.waitForShutdown();
     } else {
-        app_future.await(io) catch {};
+        // TODO: waitForShutdownThreaded
+        try runServerTask(io, &data, &http_server);
+    }
+}
+
+fn runServerTask(
+    io: Io,
+    address: *const IpAddress,
+    data: *const Data,
+    server: *http.Server,
+) Io.Cancelable!void {
+    remielle.splash.print();
+
+    log.info("waiting for requests at {f}", .{address});
+    defer log.info("shutting down...", .{});
+
+    while (server.next(io)) |request| {
+        defer request.finish(io);
+        serve(data, request) catch |err| log.warn(
+            "failed to serve request {q}: {t}",
+            .{ request.data.line.target, err },
+        );
+    } else |err| switch (err) {
+        error.Canceled => |e| return e,
+    }
+}
+
+const fallback_response =
+    \\{"retcode":70}
+;
+
+fn serve(data: *const Data, request: *http.Server.Request) !void {
+    const DispatchQuery = struct {
+        version: []const u8,
+    };
+
+    const GatewayQuery = struct {
+        version: []const u8,
+    };
+
+    const path, const query_string = request.data.line.splitTarget();
+
+    if (mem.eql(u8, path, "/query_dispatch")) {
+        const query = http.Request.parseQuery(DispatchQuery, query_string) orelse
+            return request.respondString(.bad_request, "400 Bad Request");
+
+        return request.respondString(.ok, data.region_list_map.get(query.version) orelse
+            unsupported: {
+                log.warn("unsupported version: {s}", .{query.version});
+                break :unsupported fallback_response;
+            });
+    } else if (mem.cutPrefix(u8, path, "/query_gateway/")) |server_name| {
+        const server_tag = std.meta.stringToEnum(Data.Server, server_name) orelse
+            return request.respondString(.not_found, "404 Not Found");
+
+        const query = http.Request.parseQuery(GatewayQuery, query_string) orelse
+            return request.respondString(.bad_request, "400 Bad Request");
+
+        const version = std.meta.stringToEnum(Data.Version, query.version) orelse
+            return request.respondString(.ok, fallback_response);
+
+        return request.respondString(.ok, data.gateway_map.get(.{
+            .version = version,
+            .server = server_tag,
+        }) orelse
+            fallback_response);
+    } else {
+        return request.respondString(.not_found, "404 Not Found");
     }
 }
