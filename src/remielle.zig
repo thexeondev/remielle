@@ -10,6 +10,7 @@ pub const mem = @import("mem.zig");
 pub const control = @import("control.zig");
 pub const protobuf = @import("protobuf.zig");
 pub const assets = @import("assets.zig");
+pub const http = @import("http.zig");
 
 test {
     std.testing.refAllDecls(@This());
