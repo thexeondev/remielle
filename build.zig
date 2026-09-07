@@ -4,12 +4,23 @@ const Build = std.Build;
 const Optimize = std.lang.Optimize;
 const ResolvedTarget = std.Build.ResolvedTarget;
 
+pub const IoMode = enum {
+    default,
+    threaded,
+    evented,
+};
+
 pub fn build(b: *Build) void {
     // TODO: use b.dependOn* functionality once it's implemented by the build system.
     b.graph.poisonCache();
 
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const io_mode = b.option(
+        IoMode,
+        "io-mode",
+        "How the servers perform I/O",
+    ) orelse .default;
 
     const serve_all_exe = b.addExecutable(.{
         .name = "serve-all",
@@ -41,6 +52,7 @@ pub fn build(b: *Build) void {
     }, .{
         .target = target,
         .optimize = optimize,
+        .io_mode = io_mode,
     });
 
     const protobuf_comp = configureProtobufCompilation(b, .{
@@ -102,6 +114,7 @@ fn configureRemielleModule(
     options: struct {
         optimize: Optimize,
         target: ResolvedTarget,
+        io_mode: IoMode,
     },
 ) *Build.Module {
     const remielle = b.addModule(
@@ -116,6 +129,10 @@ fn configureRemielleModule(
     importAllFrom(b, remielle, "assets/filecfg");
     importAllFrom(b, remielle, "assets/bincfg");
     importAllFrom(b, remielle, "assets/graphs");
+
+    const module_options = b.addOptions();
+    module_options.addOption(IoMode, "io_mode", options.io_mode);
+    remielle.addOptions("build_options", module_options);
 
     const tests = b.addTest(.{ .root_module = remielle });
     steps.@"test".dependOn(&b.addRunArtifact(tests).step);

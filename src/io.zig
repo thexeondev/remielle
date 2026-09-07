@@ -5,6 +5,8 @@ const std = @import("std");
 const Io = std.Io;
 const assert = std.debug.assert;
 
+const build_options = @import("build_options");
+
 pub const Evented = @import("io/Evented.zig");
 pub const MultiSocket = @import("io/MultiSocket.zig");
 
@@ -21,6 +23,18 @@ pub const Mode = enum {
         .evented
     else
         .threaded;
+
+    /// Based on `io_mode` build option.
+    pub const configured: Mode = switch (build_options.io_mode) {
+        .default => .preferred,
+        .threaded => .threaded,
+        .evented => evented: {
+            if (!Evented.supported)
+                @compileError("Evented I/O is not supported by the target");
+
+            break :evented .evented;
+        },
+    };
 };
 
 pub fn waitForShutdownThreaded(threaded: *Io.Threaded) void {
