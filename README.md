@@ -26,12 +26,12 @@ cd remielle
 . ./envrc # The `envrc` script will setup the zig compiler for you.
 zig build serve-all
 ```
-Windows (powershell):
+Windows:
 ```ps1
 # git(1) must be available in the $PATH
 git clone https://git.xeondev.com/remielle/remielle.git
 cd remielle
-./envrc.ps1 # The `envrc.ps1` script will setup the zig compiler for you.
+.\envrc.cmd # The `envrc.cmd` script will setup the zig compiler for you.
 zig build serve-all
 ```
 
