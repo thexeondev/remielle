@@ -1,5 +1,4 @@
 const builtin = @import("builtin");
-const is_debug = builtin.mode == .debug;
 
 const std = @import("std");
 const Io = std.Io;
@@ -18,16 +17,23 @@ pub const std_options: std.Options = .{
     .logFn = remielle.log.logFn,
 };
 
+var safe_allocator: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
+
+const use_safe_allocator = switch (builtin.optimize) {
+    .debug, .safe => true,
+    .small, .fast => false,
+};
+
 var evented_instance: Evented = undefined;
 var threaded_instance: Threaded = undefined;
 
 const io_mode: remielle.io.Mode = .configured;
 
-pub const Args = struct {
+const Args = struct {
     @"--listen-address": []const u8 = @import("config").listen_address,
 };
 
-pub fn usage(io: Io) noreturn {
+fn usage(io: Io) noreturn {
     const defaults: Args = .{};
 
     Io.File.stdout().writeStreamingAll(io, std.fmt.comptimePrint(
@@ -41,16 +47,16 @@ pub fn usage(io: Io) noreturn {
     process.exit(0);
 }
 
-pub fn main(init: process.Init.Minimal) !void {
-    var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
-    defer if (is_debug) {
-        _ = debug_allocator.deinit();
-    };
+fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
+    log.err(fmt, args);
+    std.process.exit(1);
+}
 
-    const gpa = if (is_debug)
-        debug_allocator.allocator()
-    else
-        std.heap.smp_allocator;
+pub fn main(init: process.Init.Minimal) !void {
+    const gpa = if (use_safe_allocator) safe_allocator.allocator() else std.heap.smp_allocator;
+    defer if (use_safe_allocator) {
+        _ = safe_allocator.deinit();
+    };
 
     var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
 
@@ -93,9 +99,4 @@ pub fn main(init: process.Init.Minimal) !void {
         .evented => evented_instance.waitForShutdown(),
         .threaded => remielle.io.waitForShutdownThreaded(&threaded_instance),
     }
-}
-
-inline fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
-    log.err(fmt, args);
-    std.process.exit(1);
 }
