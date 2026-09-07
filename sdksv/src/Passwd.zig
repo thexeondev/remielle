@@ -13,7 +13,6 @@ const LimitedString = remielle.mem.LimitedString;
 
 const save_path = "Persistent/SDK/passwd";
 
-sync: Io.RwLock,
 name_map: array_hash_map.Auto(Name, void),
 list: MultiArrayList(struct {
     token: Token,
@@ -49,7 +48,6 @@ pub const Id = enum(u64) {
 
 pub fn load(io: Io, gpa: Allocator, root: Io.Dir) !Passwd {
     var passwd: Passwd = .{
-        .sync = .init,
         .name_map = .empty,
         .list = .empty,
     };

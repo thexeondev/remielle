@@ -147,16 +147,15 @@ pub const Request = struct {
         };
     }
 
-    pub fn respondJson(
+    pub fn respondPrint(
         request: *Request,
         status: Status,
-        body: anytype,
+        comptime fmt: []const u8,
+        args: anytype,
     ) RespondError!void {
-        const fmt = std.json.fmt(body, .{});
-        const content_length = std.fmt.count("{f}", .{fmt});
-
+        const content_length = std.fmt.count(fmt, args);
         const writer = try request.beginResponse(status, content_length);
-        writer.print("{f}", .{fmt}) catch |err| switch (err) {
+        writer.print(fmt, args) catch |err| switch (err) {
             error.WriteFailed => return error.HttpResponseOversize,
         };
     }
