@@ -4,10 +4,12 @@ const std = @import("std");
 const Io = std.Io;
 const mem = std.mem;
 const process = std.process;
+const Threaded = std.Io.Threaded;
 const IpAddress = std.Io.net.IpAddress;
 
 const remielle = @import("remielle");
 const http = remielle.http;
+const Evented = remielle.io.Evented;
 const StaticAllocator = remielle.StaticAllocator;
 
 const Data = @import("Data.zig");
@@ -25,7 +27,10 @@ const use_safe_allocator = switch (builtin.optimize) {
     .small, .fast => false,
 };
 
-const use_evented_io = remielle.io.Evented.supported;
+var evented_instance: Evented = undefined;
+var threaded_instance: Threaded = undefined;
+
+const io_mode: remielle.io.Mode = .configured;
 
 pub const Args = struct {
     @"--listen-address": []const u8 = @import("config").listen_address,
@@ -64,19 +69,29 @@ pub fn main(init: process.Init.Minimal) !void {
     var static_allocator: StaticAllocator = .init(backing_gpa);
     const gpa = static_allocator.allocator();
 
-    var io_impl = if (use_evented_io)
-        remielle.io.Evented.init(gpa, .{
-            .coroutine_limit = .unlimited,
-            .stack_size = 1024 * 128,
-        }) catch |err|
-            fatal("failed to init I/O implementation: {t}", .{err})
-    else
-        Io.Threaded.init(gpa, .{
-            .argv0 = .init(init.args),
-            .environ = init.environ,
-        });
-    defer io_impl.deinit();
-    const io = io_impl.io();
+    const io = switch (io_mode) {
+        .evented => evented: {
+            evented_instance = try .init(gpa, .{
+                .coroutine_limit = .unlimited,
+                .stack_size = 1024 * 128,
+            });
+
+            break :evented evented_instance.io();
+        },
+        .threaded => threaded: {
+            threaded_instance = .init(gpa, .{
+                .argv0 = .init(init.args),
+                .environ = init.environ,
+            });
+
+            break :threaded threaded_instance.io();
+        },
+    };
+
+    defer switch (io_mode) {
+        .evented => evented_instance.deinit(),
+        .threaded => threaded_instance.deinit(),
+    };
 
     var arena_instance: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
     defer arena_instance.deinit();
@@ -130,10 +145,10 @@ pub fn main(init: process.Init.Minimal) !void {
     static_allocator.setBehavior(.@"unreachable");
     defer static_allocator.setBehavior(.allow_dealloc);
 
-    if (use_evented_io)
-        io_impl.waitForShutdown()
-    else
-        remielle.io.waitForShutdownThreaded(&io_impl);
+    switch (io_mode) {
+        .evented => evented_instance.waitForShutdown(),
+        .threaded => remielle.io.waitForShutdownThreaded(&threaded_instance),
+    }
 }
 
 fn runServerTask(
