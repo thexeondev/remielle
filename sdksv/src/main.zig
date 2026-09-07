@@ -430,7 +430,7 @@ fn respondPassportApiLoginSuccess(
     account_index: Account.Index,
     account: *const Account,
 ) !void {
-    var id_buf: ["-2147483648".len]u8 = undefined;
+    var id_buf: ["4294967295".len]u8 = undefined;
     const id = mem.print(&id_buf, "{d}", .{account_index.toUid()}) catch unreachable;
 
     const response = .{
