@@ -16,6 +16,7 @@ const remielle = @import("remielle");
 const rsa = remielle.rsa;
 const http = remielle.http;
 const Evented = remielle.io.Evented;
+const StaticAllocator = remielle.StaticAllocator;
 
 const json = @import("json.zig");
 const Account = @import("Account.zig");
@@ -88,10 +89,13 @@ const Sdk = struct {
 };
 
 pub fn main(init: process.Init.Minimal) !void {
-    const gpa = if (use_safe_allocator) safe_allocator.allocator() else std.heap.smp_allocator;
+    const backing_gpa = if (use_safe_allocator) safe_allocator.allocator() else std.heap.smp_allocator;
     defer if (use_safe_allocator) {
         _ = safe_allocator.deinit();
     };
+
+    var static_allocator: StaticAllocator = .init(backing_gpa);
+    const gpa = static_allocator.allocator();
 
     const io = switch (io_mode) {
         .evented => evented: {
@@ -203,6 +207,9 @@ pub fn main(init: process.Init.Minimal) !void {
 
     var server_task = try io.concurrent(runServerTask, .{ io, &sdk, net_server.socket.address });
     defer server_task.cancel(io) catch {};
+
+    static_allocator.setBehavior(.@"unreachable");
+    defer static_allocator.setBehavior(.allow_dealloc);
 
     switch (io_mode) {
         .evented => evented_instance.waitForShutdown(),
