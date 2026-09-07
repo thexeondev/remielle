@@ -85,9 +85,8 @@ pub fn main(init: process.Init.Minimal) !void {
     const args_slice = try init.args.toSlice(arena);
     const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
 
-    const data = Data.build(arena) catch |err| switch (err) {
-        error.OutOfMemory => fatal("failed to build static responses", .{}),
-    };
+    if (args.@"--concurrency" == 0)
+        fatal("--concurrency may not be zero", .{});
 
     const listen_address = IpAddress.parseLiteral(args.@"--listen-address") catch |err|
         fatal("bad listen address specified: {t}", .{err});
@@ -95,6 +94,10 @@ pub fn main(init: process.Init.Minimal) !void {
     const listen_options: IpAddress.ListenOptions = .{
         .reuse_address = true,
         .kernel_backlog = 64,
+    };
+
+    const data = Data.build(arena) catch |err| switch (err) {
+        error.OutOfMemory => fatal("failed to build static responses", .{}),
     };
 
     var net_server = listen_address.listen(io, listen_options) catch |err| switch (err) {
