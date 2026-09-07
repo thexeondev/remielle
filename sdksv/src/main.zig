@@ -3,10 +3,13 @@ const builtin = @import("builtin");
 const std = @import("std");
 const Io = std.Io;
 const mem = std.mem;
+const Random = std.Random;
 const process = std.process;
+const assert = std.debug.assert;
 const Threaded = std.Io.Threaded;
 const Allocator = std.mem.Allocator;
 const IpAddress = std.Io.net.IpAddress;
+const DefaultCsprng = std.Random.DefaultCsprng;
 const Base64Decoder = std.base64.standard.Decoder;
 
 const remielle = @import("remielle");
@@ -15,7 +18,7 @@ const http = remielle.http;
 const Evented = remielle.io.Evented;
 
 const json = @import("json.zig");
-const Passwd = @import("Passwd.zig");
+const Account = @import("Account.zig");
 
 const log = std.log.scoped(.@"remielle-sdksv");
 
@@ -38,6 +41,9 @@ const io_mode: remielle.io.Mode = .configured;
 const Args = struct {
     @"--listen-address": []const u8 = @import("config").listen_address,
     @"--concurrency": u32 = 16,
+    @"--account-limit": u32 = 32,
+    @"--storage-file": []const u8 = "storage/account.bin",
+    @"--require-secure-random": bool = true,
 };
 
 fn usage(io: Io) noreturn {
@@ -47,13 +53,19 @@ fn usage(io: Io) noreturn {
         \\Usage: remielle-sdksv [options]
         \\
         \\Options:
-        \\  --help, -h        Print this help and exit
-        \\  --listen-address  TCP listen address; default is {q}
-        \\  --concurrency     Limit of concurrent connections; default is {d}
+        \\  --help, -h                Print this help and exit
+        \\  --listen-address          TCP listen address; default is {q}
+        \\  --concurrency             Limit of concurrent connections; default is {d}
+        \\  --account-limit           Allowed number of accounts to register; default is {d}
+        \\  --storage-file            On-disk account storage file path; default is {q}
+        \\  --require-secure-random   Whether to abort on entropy unavailability; default is {any}
         \\
     , .{
         defaults.@"--listen-address",
         defaults.@"--concurrency",
+        defaults.@"--account-limit",
+        defaults.@"--storage-file",
+        defaults.@"--require-secure-random",
     })) catch {};
     process.exit(0);
 }
@@ -68,14 +80,18 @@ const name_too_long_message = "Username is too long";
 const password_mismatch_message = "Account or password error";
 const token_mismatch_message = "For account safety, please log in again.";
 
+const Sdk = struct {
+    csprng: Random,
+    server: *http.Server,
+    account_storage: *Account.Storage,
+    account_storage_path: []const u8,
+};
+
 pub fn main(init: process.Init.Minimal) !void {
     const gpa = if (use_safe_allocator) safe_allocator.allocator() else std.heap.smp_allocator;
     defer if (use_safe_allocator) {
         _ = safe_allocator.deinit();
     };
-
-    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
-    defer arena.deinit();
 
     const io = switch (io_mode) {
         .evented => evented: {
@@ -101,8 +117,15 @@ pub fn main(init: process.Init.Minimal) !void {
         .threaded => threaded_instance.deinit(),
     };
 
-    const args_slice = try init.args.toSlice(arena.allocator());
+    var arena_instance: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
+    defer arena_instance.deinit();
+    const arena = arena_instance.allocator();
+
+    const args_slice = try init.args.toSlice(arena);
     const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
+
+    if (args.@"--concurrency" == 0)
+        fatal("--concurrency may not be zero", .{});
 
     const listen_address = IpAddress.parseLiteral(args.@"--listen-address") catch |err|
         fatal("bad listen address specified: {t}", .{err});
@@ -112,9 +135,43 @@ pub fn main(init: process.Init.Minimal) !void {
         .kernel_backlog = 64,
     };
 
-    var passwd = Passwd.load(io, gpa, .cwd()) catch |err|
-        fatal("failed to load passwd file: {t}", .{err});
-    defer passwd.deinit(gpa);
+    var csprng_seed: [DefaultCsprng.secret_seed_length]u8 = undefined;
+    io.randomSecure(&csprng_seed) catch |err| switch (err) {
+        error.Canceled => unreachable, // no
+        error.EntropyUnavailable => if (args.@"--require-secure-random")
+            fatal("secure entropy source is uavailable", .{})
+        else
+            io.random(&csprng_seed),
+    };
+    var csprng: DefaultCsprng = .init(csprng_seed);
+
+    var account_storage = Account.Storage.initCapacity(
+        arena,
+        args.@"--account-limit",
+    ) catch |err| switch (err) {
+        error.OutOfMemory => fatal(
+            \\failed to allocate in-memory account storage
+            \\likely cause: --account-limit is higher than the system can process
+        , .{}),
+    };
+
+    if (Io.Dir.path.dirname(args.@"--storage-file")) |dir_path|
+        try Io.Dir.cwd().createDirPath(io, dir_path);
+
+    loadAccountStorageFromFileIfExists(
+        io,
+        &account_storage,
+        args.@"--storage-file",
+    ) catch |err| switch (err) {
+        error.StorageFileVersionMismatch => fatal(
+            \\storage file version doesn't match
+        , .{}),
+        error.StorageFileOversize => fatal(
+            \\storage file contents exceed --account-limit
+            \\likely cause: storage file is produced by a server with higher limit
+        , .{}),
+        else => |e| return e,
+    };
 
     var net_server = listen_address.listen(io, listen_options) catch |err| switch (err) {
         error.AddressInUse => fatal(
@@ -127,8 +184,8 @@ pub fn main(init: process.Init.Minimal) !void {
 
     var http_server = http.Server.init(io, gpa, &net_server, .{
         .task_count = args.@"--concurrency",
-        .rx_buf_len = 16384,
-        .tx_buf_len = 16384,
+        .rx_buf_len = 8192,
+        .tx_buf_len = 8192,
     }) catch |err| switch (err) {
         error.ConcurrencyUnavailable, error.OutOfMemory => |e| fatal(
             \\failed to initialize http server ({t})
@@ -137,9 +194,14 @@ pub fn main(init: process.Init.Minimal) !void {
     };
     defer http_server.deinit(io, gpa);
 
-    remielle.splash.print();
+    const sdk: Sdk = .{
+        .csprng = csprng.random(),
+        .server = &http_server,
+        .account_storage = &account_storage,
+        .account_storage_path = args.@"--storage-file",
+    };
 
-    var server_task = try io.concurrent(runServerTask, .{ io, gpa, &http_server, &passwd });
+    var server_task = try io.concurrent(runServerTask, .{ io, &sdk, net_server.socket.address });
     defer server_task.cancel(io) catch {};
 
     switch (io_mode) {
@@ -148,15 +210,15 @@ pub fn main(init: process.Init.Minimal) !void {
     }
 }
 
-fn runServerTask(
-    io: Io,
-    gpa: Allocator,
-    server: *http.Server,
-    passwd: *Passwd,
-) Io.Cancelable!void {
-    while (server.next(io)) |request| {
+fn runServerTask(io: Io, sdk: *const Sdk, address: IpAddress) Io.Cancelable!void {
+    remielle.splash.print();
+
+    log.info("waiting for requests at {f}", .{address});
+    defer log.info("shutting down...", .{});
+
+    while (sdk.server.next(io)) |request| {
         defer request.finish(io);
-        serve(io, gpa, request, passwd) catch |err| log.warn(
+        serve(io, sdk, request) catch |err| log.warn(
             "failed to serve request {q}: {t}",
             .{ request.data.line.target, err },
         );
@@ -171,9 +233,8 @@ const mdk_shield_config_json =
 
 fn serve(
     io: Io,
-    gpa: Allocator,
+    sdk: *const Sdk,
     request: *http.Server.Request,
-    passwd: *Passwd,
 ) !void {
     const Path = enum {
         @"/mdk/shield/api/loadConfig",
@@ -183,6 +244,7 @@ fn serve(
     };
 
     const path_string, _ = request.data.line.splitTarget();
+
     const path_tag_maybe = std.meta.stringToEnum(Path, path_string) orelse strip_prefix: {
         // findScalarPos - starting with index `1`,
         // because at index `0` there's the leading separator.
@@ -203,10 +265,10 @@ fn serve(
             return serveComboGranterLoginV2(request);
         },
         .@"/account/ma-passport/api/appLoginByPassword" => {
-            return serveLoginByPassword(io, gpa, request, passwd);
+            return serveLoginByPassword(io, sdk, request);
         },
         .@"/account/ma-passport/token/verifySToken" => {
-            return serveVerifyToken(request, passwd);
+            return serveVerifyToken(sdk, request);
         },
     }
 }
@@ -230,9 +292,8 @@ fn serveComboGranterLoginV2(request: *http.Server.Request) !void {
 
 fn serveLoginByPassword(
     io: Io,
-    gpa: Allocator,
+    sdk: *const Sdk,
     request: *http.Server.Request,
-    passwd: *Passwd,
 ) !void {
     const LoginByPasswordParam = struct {
         account: []const u8,
@@ -294,61 +355,49 @@ fn serveLoginByPassword(
         => return try respondError(request, decrypt_fail_message),
     };
 
-    const name = Passwd.Name.fromSlice(param.account) catch |err| switch (err) {
-        error.TooLongString => return try respondError(request, name_too_long_message),
+    const username = Account.Username.fromSlice(param.account) orelse
+        return try respondError(request, name_too_long_message);
+
+    const account_new: Account = .{
+        .username = username,
+        .password = .init(sdk.csprng, param.password),
+        .token = .random(sdk.csprng),
     };
 
-    const id = passwd.loginByPassword(name, param.password) catch |login_err| {
-        switch (login_err) {
-            error.UsernameNotExist => {
-                const old_cancel_protection = io.swapCancelProtection(.blocked);
-                defer _ = io.swapCancelProtection(old_cancel_protection);
+    const result = sdk.account_storage.getOrInsertByUsername(
+        account_new,
+    ) catch |err| switch (err) {
+        error.AccountStorageCapacityExceeded => {
+            log.warn("account storage is full; aborting new account creation", .{});
+            return try respondError(request, password_mismatch_message);
+        },
+    };
 
-                const id = passwd.create(
-                    io,
-                    gpa,
-                    name,
-                    param.password,
-                ) catch |err| {
-                    switch (err) {
-                        error.Canceled => unreachable, // blocked
-                        else => return error.Internal,
-                    }
-                };
+    const account: Account = account: {
+        if (!result.found) {
+            // New account has been created, save it.
+            try saveAccountStorage(io, sdk);
+            break :account account_new;
+        } else {
+            // Verify password of existing account.
+            const account_old = sdk.account_storage.list.get(@backingInt(result.index));
+            if (account_old.password.verify(param.password))
+                break :account account_old;
 
-                passwd.save(io, .cwd()) catch |err| switch (err) {
-                    error.Canceled => unreachable, // blocked
-                    else => return error.Internal,
-                };
-
-                var id_buf: [Passwd.Id.fmt_len]u8 = undefined;
-
-                return try respondPassportApiLoginSuccess(
-                    request,
-                    id.toString(&id_buf),
-                    param.account,
-                    &passwd.getToken(id).?.string,
-                );
-            },
-            error.PasswordMismatch => return try respondError(
-                request,
-                password_mismatch_message,
-            ),
+            return try respondError(request, password_mismatch_message);
         }
     };
 
-    var id_buf: [Passwd.Id.fmt_len]u8 = undefined;
     try respondPassportApiLoginSuccess(
         request,
-        id.toString(&id_buf),
-        param.account,
-        &passwd.getToken(id).?.string,
+        result.index,
+        &account,
     );
 }
 
 fn serveVerifyToken(
+    sdk: *const Sdk,
     request: *http.Server.Request,
-    passwd: *Passwd,
 ) !void {
     const VerifyTokenParam = struct {
         mid: []const u8,
@@ -357,42 +406,43 @@ fn serveVerifyToken(
     const param = json.view(VerifyTokenParam, .none, request.data.body) orelse
         return error.BadRequest;
 
-    const id = Passwd.Id.fromSlice(param.mid) orelse
-        return error.BadRequest;
+    const id_int = std.fmt.parseInt(u32, param.mid, 10) catch
+        return try request.respondString(.bad_request, "400 Bad Request");
 
-    const token = passwd.getToken(id) orelse
+    const account_index = Account.Index.fromUid(id_int) orelse
+        return try request.respondString(.bad_request, "400 Bad Request");
+
+    const account = sdk.account_storage.getByIndex(account_index) orelse
         return try respondError(request, token_mismatch_message);
 
-    if (!token.eql(param.stoken))
+    if (!account.token.eql(param.stoken))
         return try respondError(request, token_mismatch_message);
-
-    const name = passwd.getName(id).?;
-    var id_buf: [Passwd.Id.fmt_len]u8 = undefined;
 
     try respondPassportApiLoginSuccess(
         request,
-        id.toString(&id_buf),
-        name.string.view(),
-        &token.string,
+        account_index,
+        &account,
     );
 }
 
 fn respondPassportApiLoginSuccess(
     request: *http.Server.Request,
-    id: []const u8,
-    account: []const u8,
-    token: []const u8,
+    account_index: Account.Index,
+    account: *const Account,
 ) !void {
+    var id_buf: ["-2147483648".len]u8 = undefined;
+    const id = mem.print(&id_buf, "{d}", .{account_index.toUid()}) catch unreachable;
+
     const response = .{
         .retcode = 0,
         .message = "OK",
         .data = .{
-            .token = .{ .token_type = 1, .token = token },
+            .token = .{ .token_type = 1, .token = &account.token.chars },
             .user_info = .{
                 .aid = id,
                 .mid = id,
                 .account_name = "",
-                .email = account,
+                .email = account.username.toSlice(),
                 .is_email_verify = 0,
                 .area_code = "**",
                 .mobile = "",
@@ -428,4 +478,67 @@ fn respondError(request: *http.Server.Request, comptime msg: []const u8) !void {
     ++ msg ++
         \\","data":null}
     );
+}
+
+fn loadAccountStorageFromFileIfExists(
+    io: Io,
+    storage: *Account.Storage,
+    sub_path: []const u8,
+) !void {
+    const file = Io.Dir.cwd().openFile(io, sub_path, .{}) catch |err| switch (err) {
+        error.FileNotFound => return,
+        else => |e| return e,
+    };
+    defer file.close(io);
+
+    // with vectored read this buffer might be not useful,
+    // but some operating systems may not support
+    // vectored I/O, for these it is possible
+    // to lower the amount of syscalls
+    // by saving data to this extra buffer especially for small files.
+    var file_reader_buffer: [1024]u8 = undefined;
+    var file_reader = file.readerStreaming(io, &file_reader_buffer);
+
+    const header = file_reader.interface.takeStruct(
+        Account.Storage.Header,
+        .little,
+    ) catch |err| switch (err) {
+        error.EndOfStream => |e| return e,
+        error.ReadFailed => return file_reader.err.?,
+    };
+
+    if (header.version != Account.Storage.Header.current_version)
+        return error.StorageFileVersionMismatch;
+
+    if (header.item_count > storage.list.capacity)
+        return error.StorageFileOversize;
+
+    assert(storage.list.len == 0);
+    storage.list.len = header.item_count;
+
+    var vector = storage.writableVector();
+    file_reader.interface.readVecAll(&vector) catch |err| switch (err) {
+        error.EndOfStream => |e| return e,
+        error.ReadFailed => return file_reader.err.?,
+    };
+
+    storage.reIndexAssumeFirstIndexing();
+}
+
+fn saveAccountStorage(io: Io, sdk: *const Sdk) !void {
+    const file = try Io.Dir.cwd().createFile(io, sdk.account_storage_path, .{});
+    defer file.close(io);
+
+    var file_writer_buffer: [1024]u8 = undefined;
+    var file_writer = file.writerStreaming(io, &file_writer_buffer);
+
+    const header: Account.Storage.Header = .{
+        .version = Account.Storage.Header.current_version,
+        .item_count = @intCast(sdk.account_storage.count()),
+    };
+    file_writer.interface.writeAll(@ptrCast(&header)) catch return file_writer.err.?;
+
+    var vector = sdk.account_storage.readableVector();
+    file_writer.interface.writeVecAll(&vector) catch return file_writer.err.?;
+    file_writer.interface.flush() catch return file_writer.err.?;
 }

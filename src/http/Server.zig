@@ -127,7 +127,7 @@ pub const Request = struct {
     ) RespondError!*Io.Writer {
         assert(request.response_writer.end == 0); // tried to `respond` multiple times.
         request.response_writer.print(
-            "HTTP/1.1 {d} {s}\r\nConnection: close\r\nContent-Length: {d}\r\n\r\n",
+            "HTTP/1.1 {d} {s}\r\nConnection: close\r\nContent-Length: {d}\r\nContent-Type: application/json\r\n\r\n",
             .{ @backingInt(status), status.phrase(), content_length },
         ) catch |err| switch (err) {
             error.WriteFailed => return error.HttpResponseOversize,

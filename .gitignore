@@ -7,3 +7,4 @@ rmpb/cs_proto/
 *.proto
 
 Persistent/
+storage/
