@@ -12,6 +12,17 @@ test {
     std.testing.refAllDecls(@This());
 }
 
+pub const Mode = enum {
+    evented,
+    threaded,
+
+    /// Prefers `evented` if it's supported.
+    pub const preferred: Mode = if (Evented.supported)
+        .evented
+    else
+        .threaded;
+};
+
 pub fn waitForShutdownThreaded(threaded: *Io.Threaded) void {
     const shared = struct {
         var threaded_io: Io = undefined;
