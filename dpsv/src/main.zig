@@ -118,24 +118,19 @@ pub fn main(init: process.Init.Minimal) !void {
     };
     defer http_server.deinit(io, gpa);
 
-    if (use_evented_io) {
-        var server_task = try io.concurrent(
-            runServerTask,
-            .{ io, &listen_address, &data, &http_server },
-        );
-        defer server_task.cancel(io) catch {};
+    var server_task = try io.concurrent(
+        runServerTask,
+        .{ io, &listen_address, &data, &http_server },
+    );
+    defer server_task.cancel(io) catch {};
 
-        static_allocator.setBehavior(.@"unreachable");
-        defer static_allocator.setBehavior(.allow_dealloc);
+    static_allocator.setBehavior(.@"unreachable");
+    defer static_allocator.setBehavior(.allow_dealloc);
 
-        io_impl.waitForShutdown();
-    } else {
-        static_allocator.setBehavior(.@"unreachable");
-        defer static_allocator.setBehavior(.allow_dealloc);
-
-        // TODO: waitForShutdownThreaded
-        try runServerTask(io, &listen_address, &data, &http_server);
-    }
+    if (use_evented_io)
+        io_impl.waitForShutdown()
+    else
+        remielle.io.waitForShutdownThreaded(&io_impl);
 }
 
 fn runServerTask(
