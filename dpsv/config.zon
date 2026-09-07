@@ -22,25 +22,25 @@
     },
 
     .versions = .{
-        .@"OSPRODWin3.1.0" = .{
+        .@"OSPRODWin3.2.0" = .{
             .servers = .{"remielle"},
             .cdn_conf = .{
                 .design_data = .{
-                    .base_url = "https://autopatchos.zenlesszonezero.com/design_data/3.1_live/output_17833330_9ea4b6e821/client/",
-                    .data_revision = "17833330",
-                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6523,\"fileMD5\":\"3929790491390205340\"}]",
+                    .base_url = "https://autopatchos.zenlesszonezero.com/design_data/3.2_live/output_18404427_078d3ac3df/client/",
+                    .data_revision = "18404427",
+                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":3083,\"fileMD5\":\"6857798948916090469\"}]",
                 },
                 .game_res = .{
-                    .audio_revision = "17810152",
-                    .base_url = "https://autopatchos.zenlesszonezero.com/game_res/3.1_live/output_17833330_9ea4b6e821/client/",
-                    .branch = "3.1_live",
-                    .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":3105330,\"fileMD5\":\"7410886050446341389\"},{\"fileName\":\"audio_version\",\"fileSize\":91998,\"fileMD5\":\"11109759056101552225\"},{\"fileName\":\"base_revision\",\"fileSize\":19,\"fileMD5\":\"15801020283497470157\"},{\"fileName\":\"audio_diff_14925139-17503706_version\",\"fileSize\":25893,\"fileMD5\":\"6281214948705511306\"},{\"fileName\":\"audio_diff_16229018-17503706_version\",\"fileSize\":26086,\"fileMD5\":\"16203518428806316821\"}]",
-                    .res_revision = "17833330",
+                    .audio_revision = "18404427",
+                    .base_url = "https://autopatchos.zenlesszonezero.com/game_res/3.2_live/output_18404427_078d3ac3df/client/",
+                    .branch = "3.2_live",
+                    .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":1491688,\"fileMD5\":\"5700683332820007188\"},{\"fileName\":\"audio_version\",\"fileSize\":44306,\"fileMD5\":\"8610070075041381431\"},{\"fileName\":\"base_revision\",\"fileSize\":4,\"fileMD5\":\"4524394692449115962\"}]",
+                    .res_revision = "18404427",
                 },
                 .silence_data = .{
-                    .base_url = "https://autopatchos.zenlesszonezero.com/design_data/3.1_live/output_17833330_9ea4b6e821/client_silence/",
-                    .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":552,\"fileMD5\":\"15801380799876527489\"}]",
-                    .silence_revision = "17830322",
+                    .base_url = "https://autopatchos.zenlesszonezero.com/design_data/3.2_live/output_18404427_078d3ac3df/client_silence/",
+                    .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":146,\"fileMD5\":\"1149625509894631313\"}]",
+                    .silence_revision = "18404427",
                 },
             },
         },

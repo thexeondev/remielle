@@ -15,8 +15,8 @@ pub const HadalZone = extern struct {
             ez[Entrance.hadal_zone_scheduled.toInt()] = @enumFromInt(620561);
             ez[Entrance.hadal_zone_stable.toInt()] = @enumFromInt(61001);
             ez[Entrance.hadal_zone_defensive.toInt()] = @enumFromInt(61002);
-            ez[Entrance.boss_challenge_normal.toInt()] = @enumFromInt(6904211);
-            ez[Entrance.boss_challenge_hard.toInt()] = @enumFromInt(690422);
+            ez[Entrance.boss_challenge_normal.toInt()] = @enumFromInt(690471);
+            ez[Entrance.boss_challenge_hard.toInt()] = @enumFromInt(690472);
 
             break :entrance_zones ez;
         },

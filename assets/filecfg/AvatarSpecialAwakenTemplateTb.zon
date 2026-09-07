@@ -60,6 +60,36 @@
         .upgrade_item_ids = .{20104},
     },
     .{
+        .id = 110100,
+        .avatar_id = 1101,
+        .upgrade_item_ids = .{20110},
+    },
+    .{
+        .id = 110101,
+        .avatar_id = 1101,
+        .upgrade_item_ids = .{20110},
+    },
+    .{
+        .id = 110102,
+        .avatar_id = 1101,
+        .upgrade_item_ids = .{20110},
+    },
+    .{
+        .id = 110103,
+        .avatar_id = 1101,
+        .upgrade_item_ids = .{20110},
+    },
+    .{
+        .id = 110104,
+        .avatar_id = 1101,
+        .upgrade_item_ids = .{20110},
+    },
+    .{
+        .id = 110105,
+        .avatar_id = 1101,
+        .upgrade_item_ids = .{20110},
+    },
+    .{
         .id = 114100,
         .avatar_id = 1141,
         .upgrade_item_ids = .{20114},
