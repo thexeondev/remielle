@@ -8,6 +8,7 @@ const IpAddress = std.Io.net.IpAddress;
 
 const remielle = @import("remielle");
 const http = remielle.http;
+const StaticAllocator = remielle.StaticAllocator;
 
 const Data = @import("Data.zig");
 
@@ -55,14 +56,13 @@ fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
 }
 
 pub fn main(init: process.Init.Minimal) !void {
-    const gpa = if (use_safe_allocator) safe_allocator.allocator() else std.heap.smp_allocator;
+    const backing_gpa = if (use_safe_allocator) safe_allocator.allocator() else std.heap.smp_allocator;
     defer if (use_safe_allocator) {
         _ = safe_allocator.deinit();
     };
 
-    var arena_instance: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
-    defer arena_instance.deinit();
-    const arena = arena_instance.allocator();
+    var static_allocator: StaticAllocator = .init(backing_gpa);
+    const gpa = static_allocator.allocator();
 
     var io_impl = if (use_evented_io)
         remielle.io.RemiellIo.init(gpa, .{
@@ -77,6 +77,10 @@ pub fn main(init: process.Init.Minimal) !void {
         });
     defer io_impl.deinit();
     const io = io_impl.io();
+
+    var arena_instance: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
+    defer arena_instance.deinit();
+    const arena = arena_instance.allocator();
 
     const args_slice = try init.args.toSlice(arena);
     const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
@@ -121,10 +125,16 @@ pub fn main(init: process.Init.Minimal) !void {
         );
         defer server_task.cancel(io) catch {};
 
+        static_allocator.setBehavior(.@"unreachable");
+        defer static_allocator.setBehavior(.allow_dealloc);
+
         io_impl.waitForShutdown();
     } else {
+        static_allocator.setBehavior(.@"unreachable");
+        defer static_allocator.setBehavior(.allow_dealloc);
+
         // TODO: waitForShutdownThreaded
-        try runServerTask(io, &data, &http_server);
+        try runServerTask(io, &listen_address, &data, &http_server);
     }
 }
 
