@@ -1,15 +1,21 @@
+const std = @import("std");
+const Io = std.Io;
+const testing = std.testing;
+
+const Evented = @import("../Evented.zig");
+
 const loopback = Io.net.IpAddress.parseIp4("127.0.0.1", 0) catch unreachable;
 
 test "netBind with unspecified port" {
-    if (!RemiellIo.supported) return error.SkipZigTest;
+    if (!Evented.supported) return error.SkipZigTest;
 
-    var rmio: RemiellIo = try .init(testing.allocator, .{
+    var evented: Evented = try .init(testing.allocator, .{
         .coroutine_limit = .limited(1),
         .stack_size = 1024 * 1024,
     });
 
-    defer rmio.deinit();
-    const io = rmio.io();
+    defer evented.deinit();
+    const io = evented.io();
 
     const socket = try loopback.bind(io, .{ .mode = .dgram, .protocol = .udp });
     defer socket.close(io);
@@ -18,15 +24,15 @@ test "netBind with unspecified port" {
 }
 
 test "Batch netReceive" {
-    if (!RemiellIo.supported) return error.SkipZigTest;
+    if (!Evented.supported) return error.SkipZigTest;
 
-    var rmio: RemiellIo = try .init(testing.allocator, .{
+    var evented: Evented = try .init(testing.allocator, .{
         .coroutine_limit = .nothing,
         .stack_size = 0,
     });
 
-    defer rmio.deinit();
-    const io = rmio.io();
+    defer evented.deinit();
+    const io = evented.io();
 
     var receivers: [2]Io.net.Socket = undefined;
 
@@ -68,15 +74,15 @@ test "Batch netReceive" {
 }
 
 test "Batch.awaitConcurrent fails without memory allocations but Batch.awaitAsync succeeds" {
-    if (!RemiellIo.supported) return error.SkipZigTest;
+    if (!Evented.supported) return error.SkipZigTest;
 
-    var rmio: RemiellIo = try .init(.failing, .{
+    var evented: Evented = try .init(.failing, .{
         .coroutine_limit = .nothing,
         .stack_size = 0,
     });
 
-    defer rmio.deinit();
-    const io = rmio.io();
+    defer evented.deinit();
+    const io = evented.io();
 
     const receiver = try loopback.bind(io, .{ .mode = .dgram, .protocol = .udp });
     defer receiver.close(io);
@@ -110,15 +116,15 @@ test "Batch.awaitConcurrent fails without memory allocations but Batch.awaitAsyn
 }
 
 test "futex operations: Io.Queue with an empty buffer" {
-    if (!RemiellIo.supported) return error.SkipZigTest;
+    if (!Evented.supported) return error.SkipZigTest;
 
-    var rmio: RemiellIo = try .init(testing.allocator, .{
+    var evented: Evented = try .init(testing.allocator, .{
         .coroutine_limit = .limited(1),
         .stack_size = 1024 * 1024,
     });
 
-    defer rmio.deinit();
-    const io = rmio.io();
+    defer evented.deinit();
+    const io = evented.io();
 
     var queue: Io.Queue(u8) = .init(&.{});
     var consumer = try io.concurrent(queueConsumer, .{ io, &queue });
@@ -142,10 +148,3 @@ fn queueConsumer(io: Io, queue: *Io.Queue(u8)) !void {
 
     _ = try get_result;
 }
-
-const Io = std.Io;
-
-const testing = std.testing;
-
-const RemiellIo = @import("../RemiellIo.zig");
-const std = @import("std");

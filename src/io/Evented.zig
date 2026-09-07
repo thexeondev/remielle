@@ -18,8 +18,8 @@ shutdown: enum(u2) {
 shutdown_wait_point: *WaitPoint, // Populated by `waitForShutdown`
 
 pub const Impl = switch (native_os) {
-    .linux => @import("RemiellIo/Uring.zig"),
-    .windows => @import("RemiellIo/Iocp.zig"),
+    .linux => @import("Evented/Uring.zig"),
+    .windows => @import("Evented/Iocp.zig"),
     else => |os_tag| @compileError("Unsupported OS " ++ @tagName(os_tag)),
 };
 
@@ -84,7 +84,7 @@ pub const InitError = error{
     Unsupported,
 } || Allocator.Error || Io.UnexpectedError;
 
-pub fn init(gpa: Allocator, options: InitOptions) InitError!RemiellIo {
+pub fn init(gpa: Allocator, options: InitOptions) InitError!Evented {
     return .{
         .impl = try .init(),
         .gpa = gpa,
@@ -104,9 +104,9 @@ pub fn init(gpa: Allocator, options: InitOptions) InitError!RemiellIo {
     };
 }
 
-pub fn deinit(rio: *RemiellIo) void {
-    rio.impl.deinit();
-    rio.arena.deinit();
+pub fn deinit(ev: *Evented) void {
+    ev.impl.deinit();
+    ev.arena.deinit();
 }
 
 /// Treats `Io.Group` as a DoublyLinkedList.
@@ -165,7 +165,7 @@ const Coroutine = struct {
     context_ptr: *const anyopaque,
     list_node: DoublyLinkedList.Node,
     wait_point: WaitPoint,
-    rio: *RemiellIo,
+    evented: *Evented,
     awaiter: ?*WaitPoint,
 
     pub fn hasExited(coro: *Coroutine) bool {
@@ -267,7 +267,7 @@ const Coroutine = struct {
         }
 
         fn call(coro: *Coroutine) callconv(.c) noreturn {
-            const rio = coro.rio;
+            const ev = coro.evented;
 
             switch (coro.scheduling) {
                 .awaitable => |awaitable| {
@@ -278,14 +278,14 @@ const Coroutine = struct {
 
                     // Done. We can recycle self immediately.
                     grouped.group.remove(coro);
-                    rio.coro_storage.recycle(coro);
+                    ev.coro_storage.recycle(coro);
                 },
             }
 
             if (coro.awaiter) |awaiter|
-                rio.schedule(awaiter);
+                ev.schedule(awaiter);
 
-            rio.yield(.exit);
+            ev.yield(.exit);
             unreachable; // resumed an exited coroutine.
         }
     };
@@ -326,8 +326,8 @@ const vtable: Io.VTable = vtable: {
     break :vtable v;
 };
 
-pub fn io(rio: *RemiellIo) Io {
-    return .{ .userdata = rio, .vtable = &vtable };
+pub fn io(ev: *Evented) Io {
+    return .{ .userdata = ev, .vtable = &vtable };
 }
 
 fn futexWait(
@@ -336,7 +336,7 @@ fn futexWait(
     expected: u32,
     timeout: Io.Timeout,
 ) Io.Cancelable!void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     switch (timeout) {
         .none => {},
@@ -344,30 +344,30 @@ fn futexWait(
         .deadline, .duration => return,
     }
 
-    if (rio.current_coro) |coro|
+    if (ev.current_coro) |coro|
         try coro.cancelation.acknowledge();
 
-    rio.yield(.{ .futex = .{
+    ev.yield(.{ .futex = .{
         .ptr = ptr,
         .expected = expected,
         .cancelation = .unblocked,
         .wait_list_node = .{},
     } });
 
-    switch (rio.waitPoint().awaitee.futex.cancelation) {
+    switch (ev.waitPoint().awaitee.futex.cancelation) {
         .blocked => unreachable,
         .unblocked => {},
         .canceled => {
-            try rio.current_coro.?.cancelation.acknowledge();
+            try ev.current_coro.?.cancelation.acknowledge();
             unreachable; // `acknowledge` must return `error.Canceled`
         },
     }
 }
 
 fn futexWaitUncancelable(userdata: ?*anyopaque, ptr: *const u32, expected: u32) void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
-    rio.yield(.{ .futex = .{
+    ev.yield(.{ .futex = .{
         .ptr = ptr,
         .expected = expected,
         .cancelation = .blocked,
@@ -376,12 +376,12 @@ fn futexWaitUncancelable(userdata: ?*anyopaque, ptr: *const u32, expected: u32) 
 }
 
 fn futexWake(userdata: ?*anyopaque, ptr: *const u32, max_waiters: u32) void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
     if (max_waiters == 0) return;
 
     var waiters: u32 = max_waiters;
 
-    var next = rio.wait_list.first;
+    var next = ev.wait_list.first;
     while (next) |node| {
         next = node.next;
 
@@ -395,8 +395,8 @@ fn futexWake(userdata: ?*anyopaque, ptr: *const u32, max_waiters: u32) void {
         const awaitee: *WaitPoint.Awaitee = @alignCast(@fieldParentPtr("futex", futex));
         const wait_point: *WaitPoint = @alignCast(@fieldParentPtr("awaitee", awaitee));
 
-        rio.wait_list.remove(node);
-        rio.schedule(wait_point);
+        ev.wait_list.remove(node);
+        ev.schedule(wait_point);
 
         waiters = switch (waiters) {
             1 => break,
@@ -404,13 +404,13 @@ fn futexWake(userdata: ?*anyopaque, ptr: *const u32, max_waiters: u32) void {
         };
     }
 
-    const point = rio.waitPoint();
-    rio.schedule(point); // schedule self at last.
-    rio.yield(.handoff);
+    const point = ev.waitPoint();
+    ev.schedule(point); // schedule self at last.
+    ev.yield(.handoff);
 }
 
 fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Operation.Result {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     switch (operation) {
         .net_receive => |*o| {
@@ -419,7 +419,7 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
 
             const message = &o.message_buffer[0];
 
-            const bytes_received = rio.syscall(.net_receive, .{
+            const bytes_received = ev.syscall(.net_receive, .{
                 .socket_handle = o.socket_handle,
                 .from = &message.from,
                 .buffer = o.data_buffer,
@@ -435,14 +435,14 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
 
         .net_send => |*o| {
             for (o.messages, 0..) |*message, sent|
-                rio.netSendOne(o.socket_handle, message, o.flags) catch |err| {
+                ev.netSendOne(o.socket_handle, message, o.flags) catch |err| {
                     return .{ .net_send = .{ err, sent } };
                 };
 
             return .{ .net_send = .{ null, o.messages.len } };
         },
 
-        .net_read => |*o| return .{ .net_read = rio.syscall(.net_read, .{
+        .net_read => |*o| return .{ .net_read = ev.syscall(.net_read, .{
             .stream_handle = o.socket_handle,
             .buffer = o.data[0],
         }) catch |err| switch (err) {
@@ -450,7 +450,7 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
             else => |e| e,
         } },
 
-        .net_write => |*o| return .{ .net_write = rio.netWrite(
+        .net_write => |*o| return .{ .net_write = ev.netWrite(
             o.socket_handle,
             o.header,
             o.data,
@@ -465,7 +465,7 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
             var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"const") = undefined;
 
             return .{
-                .file_write_streaming = rio.fileWrite(
+                .file_write_streaming = ev.fileWrite(
                     &iovecs_buffer,
                     o.file.handle,
                     .streaming,
@@ -485,7 +485,7 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
             var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"var") = undefined;
 
             return .{
-                .file_read_streaming = rio.fileRead(
+                .file_read_streaming = ev.fileRead(
                     &iovecs_buffer,
                     o.file.handle,
                     .streaming,
@@ -669,15 +669,15 @@ fn batchAwaitConcurrent(
     batch: *Io.Batch,
     timeout: Io.Timeout,
 ) Io.Batch.AwaitConcurrentError!void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    const wait_point = rio.waitPoint();
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
+    const wait_point = ev.waitPoint();
 
     switch (timeout) {
         .none => {},
         .deadline, .duration => return error.ConcurrencyUnavailable, // TODO: submit `Operation.Sleep`.
     }
 
-    if (rio.current_coro) |coro|
+    if (ev.current_coro) |coro|
         try coro.cancelation.acknowledge();
 
     const batch_userdata: *BatchUserdata = if (batch.userdata) |type_erased| existing: {
@@ -695,7 +695,7 @@ fn batchAwaitConcurrent(
 
         break :existing batch_userdata;
     } else create: {
-        const batch_userdata = BatchUserdata.create(rio.gpa, batch.storage.len) catch
+        const batch_userdata = BatchUserdata.create(ev.gpa, batch.storage.len) catch
             return error.ConcurrencyUnavailable;
 
         batch.userdata = batch_userdata;
@@ -732,7 +732,7 @@ fn batchAwaitConcurrent(
                     } }),
                 };
 
-                rio.impl.submissions.append(&batched_list[index].storage.submission.node);
+                ev.impl.submissions.append(&batched_list[index].storage.submission.node);
 
                 storage.* = .{
                     .pending = .{
@@ -772,12 +772,12 @@ fn batchAwaitConcurrent(
     };
 
     batch_userdata.wait_point = wait_point;
-    rio.yield(.wait_for_io);
+    ev.yield(.wait_for_io);
     batch_userdata.wait_point = null;
 
     if (batch_userdata.completions_head == null) {
         // Must be due to cancelation.
-        try rio.current_coro.?.cancelation.acknowledge();
+        try ev.current_coro.?.cancelation.acknowledge();
         unreachable; // `acknowledge` must return `error.Canceled`
     }
 
@@ -788,12 +788,12 @@ fn batchAwaitConcurrent(
 }
 
 fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
     const batch_userdata: *BatchUserdata = @ptrCast(@alignCast(batch.userdata orelse return));
 
     if (batch_userdata.pending_count != 0) {
-        const maybe_coro = rio.current_coro;
-        const wait_point = rio.waitPoint();
+        const maybe_coro = ev.current_coro;
+        const wait_point = ev.waitPoint();
         batch_userdata.wait_point = wait_point;
 
         const batched_list = batch_userdata.operations()[0..batch.storage.len];
@@ -824,7 +824,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
                     .storage = .init(.{ .cancel = .{ .operation = &batched_list[index].storage } }),
                 };
 
-                rio.impl.submissions.append(&cancelation.storage.submission.node);
+                ev.impl.submissions.append(&cancelation.storage.submission.node);
             }
 
             var unacknowledged = oneshot_size;
@@ -837,7 +837,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
                     .status = .waiting_for_one_or_more,
                 } };
 
-                rio.yield(.wait_for_io);
+                ev.yield(.wait_for_io);
 
                 while (batch_userdata.popCompletion()) |with_awaiter| {
                     switch (with_awaiter.storage.completion.result) {
@@ -858,7 +858,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
                 .status = .waiting_for_all,
             } };
 
-            rio.yield(.wait_for_io);
+            ev.yield(.wait_for_io);
 
             while (batch_userdata.popCompletion()) |with_awaiter| {
                 switch (with_awaiter.storage.completion.result) {
@@ -873,7 +873,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
     }
 
     debug.assert(batch_userdata.pending_count == 0);
-    batch_userdata.destroy(rio.gpa, batch.storage.len);
+    batch_userdata.destroy(ev.gpa, batch.storage.len);
     batch.userdata = null;
 }
 
@@ -930,13 +930,13 @@ fn concurrent(
     context_alignment: std.mem.Alignment,
     start: *const fn (context: *const anyopaque, result: *anyopaque) void,
 ) Io.ConcurrentError!*Io.AnyFuture {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
-    const coro = rio.coro_storage.allocate(rio.arena.allocator()) catch |err| switch (err) {
+    const coro = ev.coro_storage.allocate(ev.arena.allocator()) catch |err| switch (err) {
         error.OutOfMemory, error.LimitExceeded => return error.ConcurrencyUnavailable,
     };
 
-    errdefer rio.coro_storage.recycle(coro);
+    errdefer ev.coro_storage.recycle(coro);
 
     const buf_aligned = result_alignment.forward(@intFromPtr(coro.buffer.ptr));
     const owned_context_ptr: [*]u8 = @ptrFromInt(context_alignment.forward(buf_aligned + result_len));
@@ -964,7 +964,7 @@ fn concurrent(
 
     coro.context_ptr = owned_context_ptr;
     coro.cancelation = .init;
-    coro.rio = rio;
+    coro.evented = ev;
     coro.awaiter = null;
 
     coro.wait_point = .{
@@ -980,7 +980,7 @@ fn concurrent(
     @memcpy(owned_context_ptr[0..context.len], context);
     @memcpy(stack_pointer[0..8], std.mem.asBytes(&coro));
 
-    rio.schedule(&coro.wait_point);
+    ev.schedule(&coro.wait_point);
     return @ptrCast(coro);
 }
 
@@ -992,26 +992,26 @@ fn cancel(
 ) void {
     _ = result_alignment;
 
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
     const coroutine: *Coroutine = @ptrCast(@alignCast(any_future));
-    rio.cancelAndWait(coroutine);
+    ev.cancelAndWait(coroutine);
 
     @memcpy(result, @as([*]u8, @ptrCast(coroutine.scheduling.awaitable.result_ptr))[0..result.len]);
-    rio.coro_storage.recycle(coroutine);
+    ev.coro_storage.recycle(coroutine);
 }
 
 /// Puts a cancelation request on `coro` and waits until it finishes.
-fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
+fn cancelAndWait(ev: *Evented, coro: *Coroutine) void {
     if (coro.hasExited()) return; // There's nothing to do
 
-    coro.awaiter = rio.waitPoint();
+    coro.awaiter = ev.waitPoint();
     coro.cancelation.request();
 
     if (coro.cancelation.protection == .unblocked) switch (coro.wait_point.awaitee) {
         .operation => |o| switch (o.outstanding) {
             // Nothing to do. The task is already scheduled since its operation is complete.
             0 => {},
-            else => rio.schedule(&coro.wait_point),
+            else => ev.schedule(&coro.wait_point),
         },
 
         // TODO: should it propagate cancelation request?
@@ -1025,14 +1025,14 @@ fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
                 const awaitee: *WaitPoint.Awaitee = @alignCast(@fieldParentPtr("futex", futex));
                 const wait_point: *WaitPoint = @alignCast(@fieldParentPtr("awaitee", awaitee));
 
-                rio.wait_list.remove(&futex.wait_list_node);
-                rio.schedule(wait_point);
+                ev.wait_list.remove(&futex.wait_list_node);
+                ev.schedule(wait_point);
             },
             .canceled => unreachable, // always a race condition
         },
     };
 
-    rio.yield(.{ .join = .{ .awaitee = coro } });
+    ev.yield(.{ .join = .{ .awaitee = coro } });
 }
 
 fn groupConcurrent(
@@ -1042,14 +1042,14 @@ fn groupConcurrent(
     context_alignment: std.mem.Alignment,
     start: *const fn (*const anyopaque) void,
 ) Io.ConcurrentError!void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
     const group: Group = .{ .ptr = g };
 
-    const coro = rio.coro_storage.allocate(rio.arena.allocator()) catch |err| switch (err) {
+    const coro = ev.coro_storage.allocate(ev.arena.allocator()) catch |err| switch (err) {
         error.OutOfMemory, error.LimitExceeded => return error.ConcurrencyUnavailable,
     };
 
-    errdefer rio.coro_storage.recycle(coro);
+    errdefer ev.coro_storage.recycle(coro);
 
     const owned_context_ptr: [*]u8 = @ptrFromInt(context_alignment.forward(@intFromPtr(coro.buffer.ptr)));
 
@@ -1074,7 +1074,7 @@ fn groupConcurrent(
 
     coro.context_ptr = owned_context_ptr;
     coro.cancelation = .init;
-    coro.rio = rio;
+    coro.evented = ev;
     coro.awaiter = null;
 
     coro.wait_point = .{
@@ -1090,7 +1090,7 @@ fn groupConcurrent(
     @memcpy(owned_context_ptr[0..context.len], context);
     @memcpy(stack_pointer[0..8], std.mem.asBytes(&coro));
 
-    rio.schedule(&coro.wait_point);
+    ev.schedule(&coro.wait_point);
     group.append(coro);
 }
 
@@ -1099,17 +1099,17 @@ fn groupCancel(
     g: *Io.Group,
     _: *anyopaque,
 ) void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
     const group: Group = .{ .ptr = g };
 
     while (group.peek()) |coro|
-        rio.cancelAndWait(coro);
+        ev.cancelAndWait(coro);
 }
 
 fn recancel(userdata: ?*anyopaque) void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
-    const coro = rio.current_coro orelse
+    const coro = ev.current_coro orelse
         // This is unreachable because first of all main frame cannot be canceled,
         // second of all, recancel() may only be called to re-arm cancelation request
         unreachable;
@@ -1131,8 +1131,8 @@ fn fileClose(userdata: ?*anyopaque, files: []const Io.File) void {
         return;
     }
 
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    rio.closeMany(Io.File, files);
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
+    ev.closeMany(Io.File, files);
 }
 
 fn netClose(userdata: ?*anyopaque, sockets: []const net.Socket) void {
@@ -1145,13 +1145,13 @@ fn netClose(userdata: ?*anyopaque, sockets: []const net.Socket) void {
         return;
     }
 
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    rio.closeMany(net.Socket, sockets);
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
+    ev.closeMany(net.Socket, sockets);
 }
 
-fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
-    const maybe_coro = rio.current_coro;
-    const wp = rio.waitPoint();
+fn closeMany(ev: *Evented, comptime T: type, list: []const T) void {
+    const maybe_coro = ev.current_coro;
+    const wp = ev.waitPoint();
 
     // resource deallocation must succeed.
     const old_cancelation_protection: Io.CancelProtection = if (maybe_coro) |coro|
@@ -1182,7 +1182,7 @@ fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
                 } },
             ) };
 
-            rio.impl.submissions.append(&op.storage.submission.node);
+            ev.impl.submissions.append(&op.storage.submission.node);
         }
 
         wp.awaitee = .{ .operation = .{
@@ -1190,7 +1190,7 @@ fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
             .status = .waiting_for_all,
         } };
 
-        rio.yield(.wait_for_io);
+        ev.yield(.wait_for_io);
         debug.assert(wp.awaitee.operation.outstanding == 0);
     }
 }
@@ -1200,19 +1200,19 @@ fn netBindIp(
     address: *const net.IpAddress,
     options: net.IpAddress.BindOptions,
 ) net.IpAddress.BindError!net.Socket {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    return rio.impl.netBind(address, options, false);
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
+    return ev.impl.netBind(address, options, false);
 }
 
 fn netSendOne(
-    rio: *RemiellIo,
+    ev: *Evented,
     socket_handle: net.Socket.Handle,
     message: *net.OutgoingMessage,
     flags: net.SendFlags,
 ) net.Socket.SendError!void {
     _ = flags;
 
-    if (rio.syscall(.net_send, .{
+    if (ev.syscall(.net_send, .{
         .socket_handle = socket_handle,
         .to = message.address,
         .buffer = message.data_ptr[0..message.data_len],
@@ -1229,8 +1229,8 @@ fn netListenIp(
     address: *const net.IpAddress,
     options: net.IpAddress.ListenOptions,
 ) net.IpAddress.ListenError!net.Socket {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    return rio.impl.netListen(address, options);
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
+    return ev.impl.netListen(address, options);
 }
 
 fn netAccept(
@@ -1238,16 +1238,16 @@ fn netAccept(
     listener: net.Socket.Handle,
     options: net.Server.AcceptOptions,
 ) net.Server.AcceptError!net.Socket {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
     _ = options;
 
-    return rio.syscall(.net_accept, .{
+    return ev.syscall(.net_accept, .{
         .listener_handle = listener,
     });
 }
 
 fn netWrite(
-    rio: *RemiellIo,
+    ev: *Evented,
     socket: net.Socket.Handle,
     header: []const u8,
     data: []const []const u8,
@@ -1286,16 +1286,16 @@ fn netWrite(
         },
     };
 
-    return rio.syscall(.net_write, .{
+    return ev.syscall(.net_write, .{
         .stream_handle = socket,
         .data = iovecs[0..iovecs_count],
     });
 }
 
 fn random(userdata: ?*anyopaque, buffer: []u8) void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
-    if (rio.csprng == null) {
+    if (ev.csprng == null) {
         @branchHint(.unlikely);
         var seed: [DefaultCsprng.secret_seed_length]u8 = undefined;
 
@@ -1305,15 +1305,15 @@ fn random(userdata: ?*anyopaque, buffer: []u8) void {
             std.mem.writeInt(usize, buffer[8..][0..@sizeOf(usize)], @intFromPtr(userdata), .native);
         };
 
-        rio.csprng = .init(seed);
+        ev.csprng = .init(seed);
     }
 
-    rio.csprng.?.fill(buffer);
+    ev.csprng.?.fill(buffer);
 }
 
 fn randomSecure(userdata: ?*anyopaque, buffer: []u8) Io.RandomSecureError!void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-    _ = rio;
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
+    _ = ev;
 
     try randomSecureFill(buffer);
 }
@@ -1389,16 +1389,16 @@ fn fillFromDeviceCng(buffer: []u8) !void {
 }
 
 fn checkCancel(userdata: ?*anyopaque) Io.Cancelable!void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
-    if (rio.current_coro) |coro|
+    if (ev.current_coro) |coro|
         try coro.cancelation.acknowledge();
 }
 
 fn swapCancelProtection(userdata: ?*anyopaque, protection: Io.CancelProtection) Io.CancelProtection {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
-    return if (rio.current_coro) |coro|
+    return if (ev.current_coro) |coro|
         coro.cancelation.swapProtection(protection)
     else
         .unblocked;
@@ -1419,12 +1419,12 @@ fn dirOpenFile(
     sub_path: []const u8,
     options: Io.Dir.OpenFileOptions,
 ) Io.File.OpenError!Io.File {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     var path_buffer: Impl.PathBuffer = undefined;
     try path_buffer.initPinned(dir.handle, sub_path);
 
-    const handle = try rio.syscall(.dir_open_file, .{
+    const handle = try ev.syscall(.dir_open_file, .{
         .dir_handle = dir.handle,
         .sub_path = &path_buffer,
         .options = options,
@@ -1442,12 +1442,12 @@ fn fileReadPositional(
     data: []const []u8,
     offset: u64,
 ) Io.File.ReadPositionalError!usize {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     const iovecs_capacity = if (Operation.FileRead.vectored) 8 else 0;
     var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"var") = undefined;
 
-    return rio.fileRead(
+    return ev.fileRead(
         &iovecs_buffer,
         file.handle,
         .{ .positional = offset },
@@ -1467,12 +1467,12 @@ fn dirCreateDir(
     sub_path: []const u8,
     permissions: Io.Dir.Permissions,
 ) Io.Dir.CreateDirError!void {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     var path_buffer: Impl.PathBuffer = undefined;
     try path_buffer.initPinned(dir.handle, sub_path);
 
-    return rio.syscall(.create_dir, .{
+    return ev.syscall(.create_dir, .{
         .at = dir.handle,
         .sub_path = &path_buffer,
         .permissions = permissions,
@@ -1510,12 +1510,12 @@ fn dirCreateFile(
     sub_path: []const u8,
     options: Io.Dir.CreateFileOptions,
 ) Io.File.OpenError!Io.File {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     var path_buffer: Impl.PathBuffer = undefined;
     try path_buffer.initPinned(dir.handle, sub_path);
 
-    const handle = try rio.syscall(.dir_create_file, .{
+    const handle = try ev.syscall(.dir_create_file, .{
         .at = dir.handle,
         .sub_path = &path_buffer,
         .options = options,
@@ -1535,16 +1535,16 @@ fn fileWritePositional(
     splat: usize,
     offset: u64,
 ) Io.File.WritePositionalError!usize {
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const ev: *Evented = @ptrCast(@alignCast(userdata));
 
     const iovecs_capacity = if (Operation.FileWrite.vectored) 8 else 0;
     var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"const") = undefined;
 
-    return try rio.fileWrite(&iovecs_buffer, file.handle, .{ .positional = offset }, header, data, splat);
+    return try ev.fileWrite(&iovecs_buffer, file.handle, .{ .positional = offset }, header, data, splat);
 }
 
 fn fileWrite(
-    rio: *RemiellIo,
+    ev: *Evented,
     iovecs_buffer: []Impl.Vector(.@"const"),
     file: Io.File.Handle,
     mode: FileOperationMode,
@@ -1567,7 +1567,7 @@ fn fileWrite(
         if (iovecs_count == 0)
             return 0;
 
-        return rio.syscall(.file_write, .{
+        return ev.syscall(.file_write, .{
             .file_handle = file,
             .mode = mode,
             .data = iovecs_buffer[0..iovecs_count],
@@ -1586,7 +1586,7 @@ fn fileWrite(
             break :buffer data[data.len - 1];
         };
 
-        return rio.syscall(.file_write, .{
+        return ev.syscall(.file_write, .{
             .file_handle = file,
             .mode = mode,
             .data = buffer,
@@ -1595,7 +1595,7 @@ fn fileWrite(
 }
 
 fn fileRead(
-    rio: *RemiellIo,
+    ev: *Evented,
     iovecs_buffer: []Impl.Vector(.@"var"),
     file: Io.File.Handle,
     mode: FileOperationMode,
@@ -1608,7 +1608,7 @@ fn fileRead(
             addVector(.@"var", iovecs_buffer, &iovecs_count, buf);
     }
 
-    return rio.syscall(.file_read, .{
+    return ev.syscall(.file_read, .{
         .file_handle = file,
         .mode = mode,
         .data = if (Operation.FileRead.vectored)
@@ -1618,8 +1618,8 @@ fn fileRead(
     });
 }
 
-fn waitPoint(rio: *RemiellIo) *WaitPoint {
-    const current = rio.current_coro orelse return &rio.naked_wait;
+fn waitPoint(ev: *Evented) *WaitPoint {
+    const current = ev.current_coro orelse return &ev.naked_wait;
     return &current.wait_point;
 }
 
@@ -1649,14 +1649,14 @@ const YieldReason = union(enum) {
 
 /// Performs one synchronous (in relation to coroutine) I/O operation.
 fn syscall(
-    rio: *RemiellIo,
+    ev: *Evented,
     comptime op: Operation.Tag,
     param: @FieldType(Operation, @tagName(op)),
 ) @TypeOf(param).Result {
-    if (rio.current_coro) |current_coro|
+    if (ev.current_coro) |current_coro|
         try current_coro.cancelation.acknowledge();
 
-    const wp = rio.waitPoint();
+    const wp = ev.waitPoint();
 
     var operation: Operation.Storage.WithAwaiter = .{
         .awaiter = .{ .synchronous = wp },
@@ -1675,9 +1675,9 @@ fn syscall(
 
     const wait = &wp.awaitee.operation;
 
-    rio.impl.submissions.append(&operation.storage.submission.node);
+    ev.impl.submissions.append(&operation.storage.submission.node);
 
-    rio.yield(.wait_for_io);
+    ev.yield(.wait_for_io);
 
     if (wait.outstanding == 0) {
         // Operation completed normally, we're done here.
@@ -1698,8 +1698,8 @@ fn syscall(
         .status = .waiting_for_all,
     };
 
-    rio.impl.submissions.append(&cancelation.storage.submission.node);
-    rio.yield(.wait_for_io);
+    ev.impl.submissions.append(&cancelation.storage.submission.node);
+    ev.yield(.wait_for_io);
 
     // Now we should be switched to only because outstanding ops are done.
     debug.assert(wait.outstanding == 0); // always a race condition
@@ -1710,7 +1710,7 @@ fn syscall(
     ) catch |err| switch (err) {
         error.Canceled => {
             // The operation was successfully canceled, acknowledge the task-level cancelation.
-            try rio.current_coro.?.cancelation.acknowledge();
+            try ev.current_coro.?.cancelation.acknowledge();
             unreachable; // `acknowledge` must return `error.Canceled`
         },
         else => |e| e,
@@ -1721,8 +1721,8 @@ fn syscall(
 /// This may result in the following:
 /// * Switching to another coroutine that is in `wakeup_queue`.
 /// * Blocking in `impl.await` until one or more I/O operations complete.
-fn yield(rio: *RemiellIo, reason: YieldReason) void {
-    const enter_wait_point = rio.waitPoint();
+fn yield(ev: *Evented, reason: YieldReason) void {
+    const enter_wait_point = ev.waitPoint();
 
     switch (reason) {
         .exit => enter_wait_point.awaitee = .idle,
@@ -1731,32 +1731,32 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
         .join => |join| enter_wait_point.awaitee = .{ .coroutine = join.awaitee },
         .futex => |futex| {
             enter_wait_point.awaitee = .{ .futex = futex };
-            rio.wait_list.append(&enter_wait_point.awaitee.futex.wait_list_node);
+            ev.wait_list.append(&enter_wait_point.awaitee.futex.wait_list_node);
         },
         .handoff => {},
     }
 
     wait_loop: while (true) {
-        if (rio.shutdown == .pending) {
-            rio.shutdown = .acknowledged;
-            rio.schedule(rio.shutdown_wait_point);
+        if (ev.shutdown == .pending) {
+            ev.shutdown = .acknowledged;
+            ev.schedule(ev.shutdown_wait_point);
         }
 
-        if (rio.wakeup_queue.popFirst()) |node| {
+        if (ev.wakeup_queue.popFirst()) |node| {
             const wakeup_wait_point: *WaitPoint = @fieldParentPtr("wakeup_queue_node", node);
 
-            if (!rio.wakeup(wakeup_wait_point))
+            if (!ev.wakeup(wakeup_wait_point))
                 break :wait_loop;
 
             break :wait_loop;
         }
 
-        _ = rio.impl.await() catch |err| if (is_debug)
-            debug.panic("rio.impl.await: {t}", .{err})
+        _ = ev.impl.await() catch |err| if (is_debug)
+            debug.panic("ev.impl.await: {t}", .{err})
         else
             abort();
 
-        while (rio.impl.completions.popFirst()) |node| {
+        while (ev.impl.completions.popFirst()) |node| {
             const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
             const storage = completion.parentPtr(Operation.Storage.WithAwaiter, "storage");
 
@@ -1775,32 +1775,32 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
                 .scheduled => {}, // already
                 .waiting_for_one_or_more => {
                     wait.status = .scheduled;
-                    rio.schedule(point);
+                    ev.schedule(point);
                 },
                 .waiting_for_all => if (wait.outstanding == 0) {
                     wait.status = .scheduled;
-                    rio.schedule(point);
+                    ev.schedule(point);
                 },
             }
         }
     }
 }
 
-fn schedule(rio: *RemiellIo, wait_point: *WaitPoint) void {
-    rio.wakeup_queue.append(&wait_point.wakeup_queue_node);
+fn schedule(ev: *Evented, wait_point: *WaitPoint) void {
+    ev.wakeup_queue.append(&wait_point.wakeup_queue_node);
 }
 
 /// Returns `false` if `wake_wait_point` is the current one.
 /// In which case, the caller should simply break out of the wait loop.
-fn wakeup(rio: *RemiellIo, wake_wait_point: *WaitPoint) bool {
-    const our_wait_point = rio.waitPoint();
+fn wakeup(ev: *Evented, wake_wait_point: *WaitPoint) bool {
+    const our_wait_point = ev.waitPoint();
 
     if (our_wait_point == wake_wait_point)
         return false;
 
     const save_into = &our_wait_point.context;
 
-    rio.current_coro = if (wake_wait_point == &rio.naked_wait)
+    ev.current_coro = if (wake_wait_point == &ev.naked_wait)
         null
     else
         @fieldParentPtr("wait_point", wake_wait_point);
@@ -2033,25 +2033,25 @@ pub const Operation = union(enum) {
     };
 };
 
-pub fn waitForShutdown(rio: *RemiellIo) void {
+pub fn waitForShutdown(ev: *Evented) void {
     const inner = struct {
-        var rio_instance: *RemiellIo = undefined;
+        var evented_instance: *Evented = undefined;
 
         // Windows only.
         var waiting_thread_handle: std.Thread.Handle = undefined;
 
         fn sigHandler(_: std.posix.SIG) callconv(.c) void {
-            switch (rio_instance.shutdown) {
+            switch (evented_instance.shutdown) {
                 .ignored => unreachable,
-                .waiting => rio_instance.shutdown = .pending,
+                .waiting => evented_instance.shutdown = .pending,
                 .pending, .acknowledged => {},
             }
         }
 
         fn shutdownApc(_: windows.ULONG_PTR) callconv(.winapi) void {
-            switch (rio_instance.shutdown) {
+            switch (evented_instance.shutdown) {
                 .ignored => unreachable,
-                .waiting => rio_instance.shutdown = .pending,
+                .waiting => evented_instance.shutdown = .pending,
                 .pending, .acknowledged => {},
             }
         }
@@ -2067,11 +2067,11 @@ pub fn waitForShutdown(rio: *RemiellIo) void {
         }
     };
 
-    debug.assert(rio.shutdown == .ignored); // Tried to wait for shutdown twice.
+    debug.assert(ev.shutdown == .ignored); // Tried to wait for shutdown twice.
 
-    inner.rio_instance = rio;
-    rio.shutdown = .waiting;
-    rio.shutdown_wait_point = rio.waitPoint();
+    inner.evented_instance = ev;
+    ev.shutdown = .waiting;
+    ev.shutdown_wait_point = ev.waitPoint();
 
     if (is_windows) {
         std.debug.assert(windows.ntdll.NtOpenThread(
@@ -2094,11 +2094,11 @@ pub fn waitForShutdown(rio: *RemiellIo) void {
         );
     }
 
-    rio.yield(.wait_for_shutdown);
+    ev.yield(.wait_for_shutdown);
 }
 
 test {
-    _ = @import("RemiellIo/test.zig");
+    _ = @import("Evented/test.zig");
 }
 
 const is_windows = native_os == .windows;
@@ -2118,8 +2118,8 @@ const posix = std.posix;
 const linux = std.os.linux;
 const windows = std.os.windows;
 
-const kernel32 = @import("RemiellIo/Iocp/kernel32.zig");
+const kernel32 = @import("Evented/Iocp/kernel32.zig");
 
 const std = @import("std");
 const builtin = @import("builtin");
-const RemiellIo = @This();
+const Evented = @This();

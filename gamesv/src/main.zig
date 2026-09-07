@@ -59,8 +59,8 @@ pub fn main(init: process.Init.Minimal) void {
     var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
     defer if (is_debug) arena.deinit();
 
-    var io_impl = if (remielle.io.RemiellIo.supported)
-        remielle.io.RemiellIo.init(gpa, .{ .coroutine_limit = .unlimited, .stack_size = 1024 * 1024 }) catch |err|
+    var io_impl = if (remielle.io.Evented.supported)
+        remielle.io.Evented.init(gpa, .{ .coroutine_limit = .unlimited, .stack_size = 1024 * 1024 }) catch |err|
             fatal("failed to init I/O implementation: {t}", .{err})
     else
         std.Io.Threaded.init(gpa, .{});
@@ -107,7 +107,7 @@ pub fn main(init: process.Init.Minimal) void {
         fatal("failed to start: {t}", .{err});
     defer app_future.cancel(io) catch {};
 
-    if (remielle.io.RemiellIo.supported) {
+    if (remielle.io.Evented.supported) {
         io_impl.waitForShutdown();
     } else {
         app_future.await(io) catch {};

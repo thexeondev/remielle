@@ -25,7 +25,7 @@ const use_safe_allocator = switch (builtin.optimize) {
     .small, .fast => false,
 };
 
-const use_evented_io = remielle.io.RemiellIo.supported;
+const use_evented_io = remielle.io.Evented.supported;
 
 pub const Args = struct {
     @"--listen-address": []const u8 = @import("config").listen_address,
@@ -65,7 +65,7 @@ pub fn main(init: process.Init.Minimal) !void {
     const gpa = static_allocator.allocator();
 
     var io_impl = if (use_evented_io)
-        remielle.io.RemiellIo.init(gpa, .{
+        remielle.io.Evented.init(gpa, .{
             .coroutine_limit = .unlimited,
             .stack_size = 1024 * 128,
         }) catch |err|

@@ -5,7 +5,7 @@ const std = @import("std");
 const Io = std.Io;
 const assert = std.debug.assert;
 
-pub const RemiellIo = @import("io/RemiellIo.zig");
+pub const Evented = @import("io/Evented.zig");
 pub const MultiSocket = @import("io/MultiSocket.zig");
 
 test {

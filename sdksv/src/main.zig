@@ -48,8 +48,8 @@ pub fn main(init: process.Init.Minimal) void {
 
     var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
 
-    var io_impl = if (remielle.io.RemiellIo.supported)
-        remielle.io.RemiellIo.init(gpa, .{
+    var io_impl = if (remielle.io.Evented.supported)
+        remielle.io.Evented.init(gpa, .{
             .coroutine_limit = .unlimited, // TODO
             .stack_size = 1024 * 512,
         }) catch |err|
@@ -79,7 +79,7 @@ pub fn main(init: process.Init.Minimal) void {
         fatal("failed to start: {t}", .{err});
     defer listen.cancel(io) catch {};
 
-    if (remielle.io.RemiellIo.supported) {
+    if (remielle.io.Evented.supported) {
         io_impl.waitForShutdown();
     } else {
         listen.await(io) catch {};

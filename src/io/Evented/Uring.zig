@@ -24,7 +24,7 @@ pub const PathBuffer = struct {
     }
 };
 
-pub fn init() RemiellIo.InitError!Uring {
+pub fn init() Evented.InitError!Uring {
     const ring = linux.IoUring.init(256, 0) catch |err| switch (err) {
         error.SystemOutdated,
         error.MemoryMappingNotSupported,
@@ -774,9 +774,9 @@ const panic = std.debug.panic;
 const abort = std.process.abort;
 
 const Io = std.Io;
-const Operation = RemiellIo.Operation;
+const Operation = Evented.Operation;
 
-const RemiellIo = @import("../RemiellIo.zig");
+const Evented = @import("../Evented.zig");
 const builtin = @import("builtin");
 const std = @import("std");
 const Uring = @This();

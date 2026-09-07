@@ -5,7 +5,7 @@
 
 **Remielle** makes heavy use of comptime semantics in order to ensure logic correctness on the level of the type system, this eliminates most common bugs and pitfalls that occur in most implementations.
 
-We maintain our own implementation of `Io` interface, `RemiellIo`. It's based on coroutines and supports both **Linux** and **Windows**. It utilizes high-end APIs these systems offer (Linux: **io_uring**; Windows: **I/O Completion Ports**).
+We maintain our own evented I/O implementation. It's based on coroutines and supports both **Linux** and **Windows**. It utilizes high-end APIs these systems offer (Linux: **io_uring**; Windows: **I/O Completion Ports**).
 
 We also maintain an in-house implementation of `protobuf` serializer and compiler, `rmpb`. This allows us to avoid a dependency on, for example, `protoc`. The replacement fulfilling the needs of this server is just ~600 lines of code!
 

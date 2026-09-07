@@ -5,7 +5,7 @@ outstanding: usize,
 
 pub const PathBuffer = @import("Iocp/PathBuffer.zig");
 
-pub fn init() RemiellIo.InitError!Iocp {
+pub fn init() Evented.InitError!Iocp {
     var data: ws2_32.WSADATA = undefined;
     switch (ws2_32.WSAStartup(0x0202, &data)) {
         0 => {},
@@ -672,7 +672,7 @@ const OverlappedUserdata = struct {
     const sockaddr_size = @sizeOf(ws2_32.sockaddr.in) + 16;
 
     comptime {
-        std.debug.assert(@sizeOf(OverlappedUserdata) <= @sizeOf(@FieldType(RemiellIo.Operation.Storage.Pending, "userdata")));
+        std.debug.assert(@sizeOf(OverlappedUserdata) <= @sizeOf(@FieldType(Evented.Operation.Storage.Pending, "userdata")));
     }
 
     const Extra = union(enum) {
@@ -996,11 +996,11 @@ pub const NtClose = windows.ntdll.NtClose;
 const windows = std.os.windows;
 
 const Io = std.Io;
-const Operation = RemiellIo.Operation;
+const Operation = Evented.Operation;
 
 const ws2_32 = @import("Iocp/ws2_32.zig");
 const kernel32 = @import("Iocp/kernel32.zig");
 
-const RemiellIo = @import("../RemiellIo.zig");
+const Evented = @import("../Evented.zig");
 const std = @import("std");
 const Iocp = @This();
