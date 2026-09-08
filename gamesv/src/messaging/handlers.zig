@@ -100,8 +100,6 @@ pub fn process(
 
                 const message: InMessage = .{ .data = &data };
 
-                var changes: logic.Changes = .init;
-
                 const Args = std.meta.ArgsTuple(Fn);
                 var args: Args = undefined;
 
@@ -136,12 +134,6 @@ pub fn process(
                                     else => {},
                                 },
                                 else => {
-                                    if (@hasField(ArgType, "pointers")) { // logic.Changes.Builder
-                                        arg.* = .init(arena, &changes);
-                                        continue;
-                                    }
-
-                                    // Accepting mutable properties is intentionally not allowed.
                                     if (@hasField(ArgType, logic.Properties.immutable_subset_marker_name)) {
                                         arg.* = logic.Properties.extractFor(
                                             frame.properties,
