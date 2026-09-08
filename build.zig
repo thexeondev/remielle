@@ -44,7 +44,6 @@ pub fn build(b: *Build) void {
             step.dependOn(&run.step);
             break :@"serve-all" run;
         },
-        .ctl = b.step("ctl", "execute the rmctl command"),
     };
 
     const remielle_module = configureRemielleModule(b, .{
@@ -91,16 +90,6 @@ pub fn build(b: *Build) void {
     }, .{
         .remielle_module = remielle_module,
         .protobuf_comp = protobuf_comp,
-        .target = target,
-        .optimize = optimize,
-    });
-
-    configureRemielleCtl(b, .{
-        .install = steps.install,
-        .@"test" = steps.@"test",
-        .ctl = steps.ctl,
-    }, .{
-        .remielle_module = remielle_module,
         .target = target,
         .optimize = optimize,
     });
@@ -339,40 +328,6 @@ fn configureGameServer(b: *Build, steps: struct {
     steps.@"serve-game".dependOn(&run.step);
 
     steps.@"serve-all".addFileArg(exe.getEmittedBin());
-}
-
-fn configureRemielleCtl(b: *Build, steps: struct {
-    install: *Build.Step,
-    @"test": *Build.Step,
-    ctl: *Build.Step,
-}, options: struct {
-    remielle_module: *Build.Module,
-    target: ResolvedTarget,
-    optimize: Optimize,
-}) void {
-    const module = b.createModule(.{
-        .root_source_file = b.path("rmctl/src/main.zig"),
-        .imports = &.{
-            .{ .name = "remielle", .module = options.remielle_module },
-        },
-        .target = options.target,
-        .optimize = options.optimize,
-    });
-
-    const tests = b.addTest(.{ .root_module = module });
-    steps.@"test".dependOn(&b.addRunArtifact(tests).step);
-
-    const exe = b.addExecutable(.{
-        .name = "rmctl",
-        .root_module = module,
-    });
-
-    const install = b.addInstallArtifact(exe, .{});
-    steps.install.dependOn(&install.step);
-
-    const run = b.addRunArtifact(exe);
-    run.addPassthruArgs();
-    steps.ctl.dependOn(&run.step);
 }
 
 fn importAllFrom(b: *Build, module: *Build.Module, dir_path: []const u8) void {
