@@ -4,7 +4,6 @@ const templates = remielle.assets.templates;
 game_mode: ?GameMode,
 player_accessory: ?PlayerAccessory,
 main_city_time: ?MainCityTime,
-pos_in_main_city: ?PosInMainCity,
 npc_interaction: ?NpcInteraction,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
@@ -18,7 +17,6 @@ pub const init: Changes = .{
     .game_mode = null,
     .player_accessory = null,
     .main_city_time = null,
-    .pos_in_main_city = null,
     .npc_interaction = null,
     .control_avatar = null,
     .control_guise_avatar = null,
@@ -190,10 +188,6 @@ pub const PlayerAccessory = struct {
 pub const MainCityTime = struct {
     time_in_minutes: u11,
     day_of_week: Properties.MainCityTime.DayOfWeek,
-};
-
-pub const PosInMainCity = struct {
-    new_position: Properties.Hall.Position,
 };
 
 pub const NpcInteraction = struct {

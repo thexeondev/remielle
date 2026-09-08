@@ -108,11 +108,8 @@ pub fn sectionRefresh(
 
 pub fn savePosInMainCity(
     message: Message(pb.SavePosInMainCityCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Hall,
-    }),
-    changes: Changes.Builder(.{
-        Changes.PosInMainCity,
     }),
     response: Response(pb.SavePosInMainCityScRsp),
 ) !void {
@@ -125,14 +122,10 @@ pub fn savePosInMainCity(
     // it'll have previous section_id in it. Simply ignore such requests for now,
     // later, maybe there will be a need to store positions for each section.
     if (message.data.position) |transform| if (properties.hall.section_id == section_id) {
-        const pos_in_main_city: Changes.PosInMainCity = .{
-            .new_position = Properties.Hall.Position.fromVectors(
-                transform.position.items,
-                transform.rotation.items,
-            ) orelse return response.fail(1),
-        };
-
-        changes.insert(pos_in_main_city);
+        properties.hall.position = Properties.Hall.Position.fromVectors(
+            transform.position.items,
+            transform.rotation.items,
+        ) orelse return response.fail(1);
     };
 
     response.set(.init);

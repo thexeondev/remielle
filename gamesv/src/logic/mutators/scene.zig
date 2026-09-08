@@ -1,7 +1,6 @@
 pub fn mutateHall(
     changes: logic.Changes.Subset(.{
         logic.Changes.GameMode,
-        logic.Changes.PosInMainCity,
     }),
     properties: logic.Properties.Mutable(.{
         logic.Properties.Hall,
@@ -15,9 +14,6 @@ pub fn mutateHall(
 
         .training, .hadal_zone => {},
     };
-
-    if (changes.pos_in_main_city) |pos_in_main_city|
-        properties.hall.position = pos_in_main_city.new_position;
 }
 
 const logic = @import("../../logic.zig");
