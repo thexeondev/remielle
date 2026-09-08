@@ -33,7 +33,7 @@ pub fn getAvatarData(
 
 pub fn avatarFavorite(
     message: Message(pb.AvatarFavoriteCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -51,7 +51,7 @@ pub fn avatarFavorite(
     const index = maybe_index orelse
         return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
     if (meta.flags.favorite != message.data.is_favorite) {
         meta.flags.favorite = message.data.is_favorite;
@@ -60,7 +60,7 @@ pub fn avatarFavorite(
 
         avatars[0] = .{
             .id = properties.avatar.ids[index],
-            .meta = meta,
+            .meta = meta.*,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
             .awake_material_count = properties.avatar.awake_material_counts[index],
@@ -74,7 +74,7 @@ pub fn avatarFavorite(
 
 pub fn avatarSkinDress(
     message: Message(pb.AvatarSkinDressCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
         Properties.BasicInfo,
     }),
@@ -100,7 +100,7 @@ pub fn avatarSkinDress(
     if (new_skin.avatar_id != @backingInt(properties.avatar.ids[index]))
         return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
     if (meta.skin.toInt() != new_skin.id) {
         // TODO: check if it's unlocked.
@@ -110,7 +110,7 @@ pub fn avatarSkinDress(
         meta.skin = @fromBackingInt(@intCast(new_skin.id));
         avatars[0] = .{
             .id = properties.avatar.ids[index],
-            .meta = meta,
+            .meta = meta.*,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
             .awake_material_count = properties.avatar.awake_material_counts[index],
@@ -119,6 +119,7 @@ pub fn avatarSkinDress(
         changes.insert(avatars);
 
         if (properties.basic_info.control_guise_avatar.toInt() == new_skin.avatar_id)
+            // TODO: perform direct modification of Properties.BasicInfo
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
                 .guise_skin = @fromBackingInt(@intCast(new_skin.id)),
@@ -130,7 +131,7 @@ pub fn avatarSkinDress(
 
 pub fn avatarSkinUnDress(
     message: Message(pb.AvatarSkinUnDressCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
         Properties.BasicInfo,
     }),
@@ -150,7 +151,7 @@ pub fn avatarSkinUnDress(
     const index = maybe_index orelse
         return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
     if (meta.skin != .none) {
         meta.skin = .none;
@@ -159,7 +160,7 @@ pub fn avatarSkinUnDress(
 
         avatars[0] = .{
             .id = properties.avatar.ids[index],
-            .meta = meta,
+            .meta = meta.*,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
             .awake_material_count = properties.avatar.awake_material_counts[index],
@@ -168,6 +169,7 @@ pub fn avatarSkinUnDress(
         changes.insert(avatars);
 
         if (properties.basic_info.control_guise_avatar.toInt() == @backingInt(properties.avatar.ids[index]))
+            // TODO: perform direct modification of Properties.BasicInfo
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
                 .guise_skin = .none,
@@ -179,7 +181,7 @@ pub fn avatarSkinUnDress(
 
 pub fn weaponDress(
     message: Message(pb.WeaponDressCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
         Properties.Weapon,
     }),
@@ -207,7 +209,7 @@ pub fn weaponDress(
         weapon_uid,
     ) orelse return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
     if (meta.flags.show_weapon == .locked) {
         const template = templates.weapon.map.get(properties.weapon.ids[weapon_index]).?;
@@ -219,7 +221,7 @@ pub fn weaponDress(
 
     avatars[0] = .{
         .id = properties.avatar.ids[index],
-        .meta = meta,
+        .meta = meta.*,
         .weapon_uid = @fromBackingInt(@intCast(weapon_uid.toInt())),
         .equipment_uids = properties.avatar.equipment_uids[index],
         .awake_material_count = properties.avatar.awake_material_counts[index],
@@ -235,6 +237,9 @@ pub fn weaponDress(
         // Another avatar has this weapon equipped, swap them.
         changes_count = 2;
 
+        properties.avatar.weapon_uids[prev_owner_index] =
+            properties.avatar.weapon_uids[index];
+
         avatars[1] = .{
             .id = properties.avatar.ids[prev_owner_index],
             .meta = properties.avatar.meta[prev_owner_index],
@@ -244,13 +249,15 @@ pub fn weaponDress(
         };
     }
 
+    properties.avatar.weapon_uids[index] = @fromBackingInt(weapon_uid.toInt());
+
     changes.insert(avatars[0..changes_count]);
     response.set(.init);
 }
 
 pub fn weaponUnDress(
     message: Message(pb.WeaponUnDressCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -269,6 +276,7 @@ pub fn weaponUnDress(
         return response.fail(1);
 
     const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+    properties.avatar.weapon_uids[index] = .none;
 
     avatars[0] = .{
         .id = properties.avatar.ids[index],
@@ -284,7 +292,7 @@ pub fn weaponUnDress(
 
 pub fn equipmentDress(
     message: Message(pb.EquipmentDressCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -348,7 +356,11 @@ pub fn equipmentDress(
             .equipment_uids = prev_owner_equipments_uids,
             .awake_material_count = properties.avatar.awake_material_counts[avatar_idx],
         };
+
+        properties.avatar.equipment_uids[prev_owner_index] = prev_owner_equipments_uids;
     }
+
+    properties.avatar.equipment_uids[index] = equipment_uids;
 
     changes.insert(avatars[0..changes_count]);
     response.set(.init);
@@ -356,71 +368,16 @@ pub fn equipmentDress(
 
 pub fn equipmentSuitDress(
     message: Message(pb.EquipmentSuitDressCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Avatar,
-        Properties.Equipment,
-    }),
-    changes: Changes.Builder(.{
-        Changes.Avatar,
-    }),
     response: Response(pb.EquipmentSuitDressScRsp),
 ) !void {
-    const index: u32 = avatar_index: {
-        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
-            break :avatar_index null;
-
-        break :avatar_index properties.avatar.indexes.get(id);
-    } orelse return response.fail(1);
-
-    const params = message.data.param_list.items;
-
-    switch (params.len) {
-        1...Properties.Avatar.equipment_slots => {},
-        else => return response.fail(1),
-    }
-
-    const equipments = @as(
-        [*]const Properties.Avatar.OptionalUID,
-        @ptrCast(&properties.avatar.equipment_uids),
-    )[0 .. properties.avatar.count() * Avatar.equipment_slots];
-
-    const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
-
-    avatars[0] = .{
-        .id = properties.avatar.ids[index],
-        .meta = properties.avatar.meta[index],
-        .weapon_uid = properties.avatar.weapon_uids[index],
-        .equipment_uids = properties.avatar.equipment_uids[index],
-        .awake_material_count = properties.avatar.awake_material_counts[index],
-    };
-
-    for (params) |param| {
-        const slot = Properties.Equipment.Slot.fromInt(param.dress_index) orelse
-            return response.fail(1);
-
-        const uid = Properties.Equipment.Uid.fromInt(param.equip_uid) orelse
-            return response.fail(1);
-
-        if (std.mem.findScalar(Properties.Equipment.Uid, &properties.equip.uids, uid) == null)
-            return response.fail(1);
-
-        if (std.mem.findScalar(
-            Properties.Avatar.OptionalUID,
-            equipments,
-            @fromBackingInt(@intCast(param.equip_uid)),
-        ) != null)
-            return response.fail(1); // EquipmentSuitDressCsReq requests only unused equipment.
-
-        avatars[0].equipment_uids[slot.toIndex()] = @fromBackingInt(@intCast(param.equip_uid));
-    }
-
-    changes.insert(avatars);
+    // TODO: reimplement once `Changes` is removed.
+    _ = message;
     response.set(.init);
 }
 
 pub fn equipmentUnDress(
     message: Message(pb.EquipmentUnDressCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -454,13 +411,15 @@ pub fn equipmentUnDress(
         .awake_material_count = properties.avatar.awake_material_counts[index],
     };
 
+    properties.avatar.equipment_uids[index] = equipment_uids;
+
     changes.insert(avatars);
     response.set(.init);
 }
 
 pub fn avatarUnlockAwake(
     message: Message(pb.AvatarUnlockAwakeCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -483,29 +442,32 @@ pub fn avatarUnlockAwake(
         return response.fail(1);
     }
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
-    for (templates.avatar_special_awaken.entries) |template| if (template.avatar_id == message.data.avatar_id) {
-        if (template.id > meta.awakening.toInt()) {
-            if (meta.awakening == .none) {
-                meta.flags.awake_available = true;
-                meta.flags.awake_enabled = true;
+    for (templates.avatar_special_awaken.entries) |template|
+        if (template.avatar_id == message.data.avatar_id) {
+            if (template.id > meta.awakening.toInt()) {
+                if (meta.awakening == .none) {
+                    meta.flags.awake_available = true;
+                    meta.flags.awake_enabled = true;
+                }
+                meta.awakening = @fromBackingInt(@intCast(template.id));
+
+                const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+                avatars[0] = .{
+                    .id = properties.avatar.ids[index],
+                    .meta = meta.*,
+                    .weapon_uid = properties.avatar.weapon_uids[index],
+                    .equipment_uids = properties.avatar.equipment_uids[index],
+                    .awake_material_count = @fromBackingInt(@intCast(
+                        avatar_awake_material_count.toInt() - 1,
+                    )),
+                };
+
+                changes.insert(avatars);
+                break;
             }
-            meta.awakening = @fromBackingInt(@intCast(template.id));
-
-            const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
-            avatars[0] = .{
-                .id = properties.avatar.ids[index],
-                .meta = meta,
-                .weapon_uid = properties.avatar.weapon_uids[index],
-                .equipment_uids = properties.avatar.equipment_uids[index],
-                .awake_material_count = @fromBackingInt(@intCast(avatar_awake_material_count.toInt() - 1)),
-            };
-
-            changes.insert(avatars);
-            break;
-        }
-    };
+        };
 
     if (meta.awakening == .none) {
         return response.fail(1);
@@ -516,7 +478,7 @@ pub fn avatarUnlockAwake(
 
 pub fn avatarSetAwake(
     message: Message(pb.AvatarSetAwakeCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -534,7 +496,7 @@ pub fn avatarSetAwake(
     const index = maybe_index orelse
         return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    var meta = &properties.avatar.meta[index];
     if (meta.awakening == .none) {
         return response.fail(1);
     }
@@ -545,7 +507,7 @@ pub fn avatarSetAwake(
         const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
         avatars[0] = .{
             .id = properties.avatar.ids[index],
-            .meta = meta,
+            .meta = meta.*,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
             .awake_material_count = properties.avatar.awake_material_counts[index],
@@ -558,7 +520,7 @@ pub fn avatarSetAwake(
 
 pub fn mindscapeChangeTabState(
     message: Message(pb.MindscapeChangeTabStateCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -581,7 +543,7 @@ pub fn mindscapeChangeTabState(
     ) orelse
         return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
     if (meta.talents.toInt() < tab_state.requiredTalentNum())
         return response.fail(1);
@@ -592,7 +554,7 @@ pub fn mindscapeChangeTabState(
         const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
         avatars[0] = .{
             .id = properties.avatar.ids[index],
-            .meta = meta,
+            .meta = meta.*,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
             .awake_material_count = properties.avatar.awake_material_counts[index],
@@ -605,7 +567,7 @@ pub fn mindscapeChangeTabState(
 
 pub fn avatarShowWeaponToggle(
     message: Message(pb.AvatarShowWeaponToggleCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.Avatar,
     }),
     changes: Changes.Builder(.{
@@ -623,7 +585,7 @@ pub fn avatarShowWeaponToggle(
     const index = maybe_index orelse
         return response.fail(1);
 
-    var meta = properties.avatar.meta[index];
+    const meta = &properties.avatar.meta[index];
 
     if (!meta.flags.show_weapon.isUnlocked())
         return response.fail(1);
@@ -640,7 +602,7 @@ pub fn avatarShowWeaponToggle(
         const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
         avatars[0] = .{
             .id = properties.avatar.ids[index],
-            .meta = meta,
+            .meta = meta.*,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
             .awake_material_count = properties.avatar.awake_material_counts[index],
