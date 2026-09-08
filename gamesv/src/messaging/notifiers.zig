@@ -1,9 +1,7 @@
 const remielle = @import("remielle");
 const assets = remielle.assets;
 
-const namespaces: []const type = &.{
-    @import("notifiers/player_sync.zig"),
-};
+const namespaces: []const type = &.{};
 
 pub const NotifierError = Allocator.Error;
 pub const Error = NotifierError || messaging.SendError;

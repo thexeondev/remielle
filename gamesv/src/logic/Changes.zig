@@ -10,20 +10,7 @@ const Properties = @import("Properties.zig");
 const packers = @import("../messaging/packers.zig");
 const AvatarSlot = packers.AvatarSlot;
 
-avatars: []const Avatar,
-
-pub const init: Changes = .{
-    .avatars = &.{},
-};
-
-/// Avatar modification.
-pub const Avatar = struct {
-    id: Properties.Avatar.Id,
-    meta: Properties.Avatar.Meta,
-    weapon_uid: Properties.Avatar.OptionalUID,
-    equipment_uids: [Properties.Avatar.equipment_slots]Properties.Avatar.OptionalUID,
-    awake_material_count: Properties.Avatar.Awakening.Material,
-};
+pub const init: Changes = .{};
 
 pub const subset_marker_name = "logic_changes_subset_marker";
 
