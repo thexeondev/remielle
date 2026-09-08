@@ -11,7 +11,6 @@ pub fn playerSync(
         logic.Changes.ControlGuiseAvatar,
         logic.Changes.Avatar,
         logic.Changes.PlayerAccessory,
-        logic.Changes.QuickTeam,
     }),
     notify: Notify(pb.PlayerSyncScNotify),
 ) !void {
@@ -33,7 +32,6 @@ pub fn playerSync(
             changes.control_guise_avatar,
             changes.player_accessory,
         ),
-        .quick_team = try buildQuickTeamSync(notify.allocator, changes.quick_teams),
     };
 
     sync.item = try buildItemSync(
@@ -119,10 +117,6 @@ fn buildItemSync(
             break :material_list list;
         },
     };
-}
-
-fn buildQuickTeamSync(allocator: Allocator, quick_teams: []const logic.Changes.QuickTeam) !?pb.QuickTeamSync {
-    return if (quick_teams.len == 0) null else try packers.packQuickTeamSync(allocator, quick_teams);
 }
 
 const Notify = notifiers.Notify;

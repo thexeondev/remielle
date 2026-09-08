@@ -74,7 +74,12 @@ pub fn getMiscData(
             .control_guise_avatar_skin_id = properties.basic_info.control_guise_avatar_skin.toInt(),
             .player_accessory_list = player_accessory_list,
         },
-        .quick_team = try packers.packQuickTeamData(response.allocator, &properties.quick_team.meta),
+        .quick_team = .{
+            .quick_team_list = try packers.packQuickTeamList(
+                response.allocator,
+                &properties.quick_team.meta,
+            ),
+        },
     } });
 }
 

@@ -214,17 +214,23 @@ pub fn packDungeonPackageInfo(
     };
 }
 
-pub fn packQuickTeamData(arena: Allocator, quick_teams: []const QuickTeam.Meta) !pb.QuickTeamData {
-    var quick_team_list: std.ArrayList(pb.QuickTeam) = try .initCapacity(arena, QuickTeam.slots);
+// TODO: a way to exclude slots.
+pub fn packQuickTeamList(
+    arena: Allocator,
+    quick_teams: []const QuickTeam.Meta,
+) !ArrayList(pb.QuickTeam) {
+    var list: std.ArrayList(pb.QuickTeam) = try .initCapacity(arena, QuickTeam.slots);
 
     for (quick_teams, 1..) |*quick_team, slot| {
         var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
-        for (quick_team.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @backingInt(avatar_id) });
+        for (quick_team.avatar_ids) |avatar_id|
+            avatar_list.appendAssumeCapacity(.{ .avatar_id = @backingInt(avatar_id) });
 
         var buddy_list: std.ArrayList(pb.QuickTeamBuddy) = .empty;
-        if (quick_team.buddy_id.unwrap()) |id| try buddy_list.append(arena, .{ .buddy_id = id });
+        if (quick_team.buddy_id.unwrap()) |id|
+            try buddy_list.append(arena, .{ .buddy_id = id });
 
-        quick_team_list.appendAssumeCapacity(.{
+        list.appendAssumeCapacity(.{
             .slot = @truncate(slot),
             .name = quick_team.name.view(),
             .avatar_list = avatar_list,
@@ -232,28 +238,7 @@ pub fn packQuickTeamData(arena: Allocator, quick_teams: []const QuickTeam.Meta) 
         });
     }
 
-    return .{ .quick_team_list = quick_team_list };
-}
-
-pub fn packQuickTeamSync(arena: Allocator, quick_teams: []const logic.Changes.QuickTeam) !pb.QuickTeamSync {
-    var quick_team_list: std.ArrayList(pb.QuickTeam) = try .initCapacity(arena, quick_teams.len);
-
-    for (quick_teams) |*quick_team| {
-        var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
-        for (quick_team.meta.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @backingInt(avatar_id) });
-
-        var buddy_list: std.ArrayList(pb.QuickTeamBuddy) = .empty;
-        if (quick_team.meta.buddy_id.unwrap()) |id| try buddy_list.append(arena, .{ .buddy_id = id });
-
-        quick_team_list.appendAssumeCapacity(.{
-            .slot = @backingInt(quick_team.slot),
-            .name = quick_team.meta.name.view(),
-            .avatar_list = avatar_list,
-            .buddy_list = buddy_list,
-        });
-    }
-
-    return .{ .quick_team_list = quick_team_list };
+    return list;
 }
 
 pub fn packZoneRecord(

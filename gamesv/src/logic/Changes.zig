@@ -14,14 +14,12 @@ player_accessory: ?PlayerAccessory,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
-quick_teams: []const QuickTeam,
 
 pub const init: Changes = .{
     .player_accessory = null,
     .control_avatar = null,
     .control_guise_avatar = null,
     .avatars = &.{},
-    .quick_teams = &.{},
 };
 
 pub const PlayerAccessory = struct {
@@ -43,11 +41,6 @@ pub const Avatar = struct {
     weapon_uid: Properties.Avatar.OptionalUID,
     equipment_uids: [Properties.Avatar.equipment_slots]Properties.Avatar.OptionalUID,
     awake_material_count: Properties.Avatar.Awakening.Material,
-};
-
-pub const QuickTeam = struct {
-    slot: Properties.QuickTeam.Slot,
-    meta: Properties.QuickTeam.Meta,
 };
 
 pub const subset_marker_name = "logic_changes_subset_marker";

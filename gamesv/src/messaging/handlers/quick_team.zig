@@ -6,13 +6,10 @@ pub fn quickTeamEdit(
     properties: Properties.Mutable(.{
         Properties.QuickTeam,
     }),
-    changes: Changes.Builder(.{
-        Changes.QuickTeam,
-    }),
+    sink: Sink,
     response: Response(pb.QuickTeamEditScRsp),
 ) !void {
     const quick_team_data = message.data.quick_team orelse return response.fail(1);
-    var quick_teams: std.ArrayList(Changes.QuickTeam) = try .initCapacity(changes.allocator, quick_team_data.quick_team_list.items.len);
 
     for (quick_team_data.quick_team_list.items) |quick_team| {
         const slot = Properties.QuickTeam.Slot.fromInt(quick_team.slot) orelse
@@ -35,15 +32,18 @@ pub fn quickTeamEdit(
         if (quick_team.buddy_list.items.len == 1)
             meta.buddy_id = @fromBackingInt(@intCast(quick_team.buddy_list.items[0].buddy_id));
 
-        quick_teams.appendAssumeCapacity(.{
-            .slot = slot,
-            .meta = meta,
-        });
-
         properties.quick_team.meta[slot.toIndex()] = meta;
     }
 
-    changes.insert(quick_teams.items);
+    try sink.notify(pb.PlayerSyncScNotify, .{
+        .misc = .{ .quick_team = .{
+            .quick_team_list = try packers.packQuickTeamList(
+                response.allocator,
+                &properties.quick_team.meta,
+            ),
+        } },
+    });
+
     response.set(.init);
 }
 
@@ -52,9 +52,7 @@ pub fn quickTeamModName(
     properties: Properties.Mutable(.{
         Properties.QuickTeam,
     }),
-    changes: Changes.Builder(.{
-        Changes.QuickTeam,
-    }),
+    sink: Sink,
     response: Response(pb.QuickTeamModNameScRsp),
 ) !void {
     const slot = Properties.QuickTeam.Slot.fromInt(message.data.slot) orelse
@@ -63,14 +61,19 @@ pub fn quickTeamModName(
     properties.quick_team.meta[slot.toIndex()].name.set(message.data.name) catch
         return response.fail(1);
 
-    var quick_teams = try changes.allocator.alloc(Changes.QuickTeam, 1);
-    quick_teams[0].slot = slot;
-    quick_teams[0].meta = properties.quick_team.meta[slot.toIndex()];
+    try sink.notify(pb.PlayerSyncScNotify, .{
+        .misc = .{ .quick_team = .{
+            .quick_team_list = try packers.packQuickTeamList(
+                response.allocator,
+                &properties.quick_team.meta,
+            ),
+        } },
+    });
 
-    changes.insert(quick_teams);
     response.set(.init);
 }
 
+const Sink = handlers.Sink;
 const Message = handlers.Message;
 const Response = handlers.Response;
 
@@ -79,5 +82,6 @@ const Properties = logic.Properties;
 
 const logic = @import("../../logic.zig");
 const handlers = @import("../handlers.zig");
+const packers = @import("../packers.zig");
 
 const std = @import("std");
