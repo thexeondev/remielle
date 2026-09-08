@@ -10,17 +10,10 @@ const Properties = @import("Properties.zig");
 const packers = @import("../messaging/packers.zig");
 const AvatarSlot = packers.AvatarSlot;
 
-player_accessory: ?PlayerAccessory,
 avatars: []const Avatar,
 
 pub const init: Changes = .{
-    .player_accessory = null,
     .avatars = &.{},
-};
-
-pub const PlayerAccessory = struct {
-    avatar: Properties.PlayerAccessory.Avatar,
-    meta: Properties.PlayerAccessory.Meta,
 };
 
 /// Avatar modification.

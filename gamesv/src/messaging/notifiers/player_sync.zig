@@ -5,20 +5,12 @@ const templates = remielle.assets.templates;
 pub fn playerSync(
     changes: logic.Changes.Subset(.{
         logic.Changes.Avatar,
-        logic.Changes.PlayerAccessory,
     }),
     notify: Notify(pb.PlayerSyncScNotify),
 ) !void {
     var sync: pb.PlayerSyncScNotify = .init;
 
     sync.avatar = try buildAvatarSync(notify.allocator, changes.avatars);
-
-    sync.misc = .{
-        .player_accessory = try buildPlayerAccessory(
-            notify.allocator,
-            changes.player_accessory,
-        ),
-    };
 
     sync.item = try buildItemSync(
         notify.allocator,
@@ -42,21 +34,6 @@ fn buildAvatarSync(allocator: Allocator, changes: []const logic.Changes.Avatar) 
         change.weapon_uid,
         change.equipment_uids,
     ));
-
-    return sync;
-}
-
-fn buildPlayerAccessory(
-    allocator: Allocator,
-    maybe_player_accessory: ?*const logic.Changes.PlayerAccessory,
-) !?pb.PlayerAccessorySync {
-    var sync: pb.PlayerAccessorySync = .{};
-
-    if (maybe_player_accessory) |player_accessory|
-        try sync.player_accessory_list.append(allocator, .{
-            .avatar_id = @backingInt(player_accessory.avatar),
-            .avatar_skin_id = @backingInt(player_accessory.meta.skin),
-        });
 
     return sync;
 }

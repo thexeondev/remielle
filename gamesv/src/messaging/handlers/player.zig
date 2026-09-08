@@ -34,9 +34,7 @@ pub fn modPlayerAccessory(
     properties: Properties.Mutable(.{
         Properties.PlayerAccessory,
     }),
-    changes: Changes.Builder(.{
-        Changes.PlayerAccessory,
-    }),
+    sink: Sink,
     response: Response(pb.SavePlayerAccessoryScRsp),
 ) !void {
     const player_accessory = message.data.player_accessory orelse
@@ -57,9 +55,17 @@ pub fn modPlayerAccessory(
         .skin = @fromBackingInt(@intCast(new_skin.id)),
     };
 
-    changes.insert(Changes.PlayerAccessory{
-        .avatar = new_avatar,
-        .meta = new_meta,
+    var sync_info: pb.PlayerAccessoryInfo = .{
+        .avatar_id = @backingInt(new_avatar),
+        .avatar_skin_id = @backingInt(new_meta.skin),
+    };
+
+    try sink.notify(pb.PlayerSyncScNotify, .{
+        .misc = .{
+            .player_accessory = .{
+                .player_accessory_list = .fromOwnedSlice((&sync_info)[0..1]),
+            },
+        },
     });
 
     properties.player_accessory.meta.set(new_avatar, new_meta);
