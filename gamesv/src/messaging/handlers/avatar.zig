@@ -80,8 +80,8 @@ pub fn avatarSkinDress(
     }),
     changes: Changes.Builder(.{
         Changes.Avatar,
-        Changes.ControlGuiseAvatar,
     }),
+    sink: Sink,
     response: Response(pb.AvatarSkinDressScRsp),
 ) !void {
     const new_skin = templates.avatar_skin_base.map.get(@fromBackingInt(@intCast(message.data.avatar_skin_id))) orelse
@@ -119,12 +119,16 @@ pub fn avatarSkinDress(
         changes.insert(avatars);
 
         if (properties.basic_info.control_guise_avatar.toInt() == new_skin.avatar_id) {
-            changes.insert(Changes.ControlGuiseAvatar{
-                .guise = properties.basic_info.control_guise_avatar,
-                .guise_skin = @fromBackingInt(@intCast(new_skin.id)),
-            });
-
             properties.basic_info.control_guise_avatar_skin = @fromBackingInt(new_skin.id);
+
+            try sink.notify(pb.PlayerSyncScNotify, .{
+                .misc = .{
+                    .player_accessory = .{
+                        .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
+                        .control_guise_avatar_skin_id = new_skin.id,
+                    },
+                },
+            });
         }
     }
 
@@ -139,8 +143,8 @@ pub fn avatarSkinUnDress(
     }),
     changes: Changes.Builder(.{
         Changes.Avatar,
-        Changes.ControlGuiseAvatar,
     }),
+    sink: Sink,
     response: Response(pb.AvatarSkinUnDressScRsp),
 ) !void {
     const maybe_index: ?u32 = avatar_index: {
@@ -171,12 +175,16 @@ pub fn avatarSkinUnDress(
         changes.insert(avatars);
 
         if (properties.basic_info.control_guise_avatar.toInt() == @backingInt(properties.avatar.ids[index])) {
-            changes.insert(Changes.ControlGuiseAvatar{
-                .guise = properties.basic_info.control_guise_avatar,
-                .guise_skin = .none,
-            });
-
             properties.basic_info.control_guise_avatar_skin = .none;
+
+            try sink.notify(pb.PlayerSyncScNotify, .{
+                .misc = .{
+                    .player_accessory = .{
+                        .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
+                        .control_guise_avatar_skin_id = 0,
+                    },
+                },
+            });
         }
     }
 
@@ -623,6 +631,7 @@ const ArrayList = std.ArrayList;
 const Changes = logic.Changes;
 const Properties = logic.Properties;
 
+const Sink = handlers.Sink;
 const Message = handlers.Message;
 const Response = handlers.Response;
 

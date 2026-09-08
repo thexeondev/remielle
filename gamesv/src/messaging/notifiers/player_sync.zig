@@ -3,12 +3,7 @@ const pb = remielle.protobuf.main;
 const templates = remielle.assets.templates;
 
 pub fn playerSync(
-    properties: logic.Properties.Immutable(.{
-        logic.Properties.BasicInfo,
-    }),
     changes: logic.Changes.Subset(.{
-        logic.Changes.ControlAvatar,
-        logic.Changes.ControlGuiseAvatar,
         logic.Changes.Avatar,
         logic.Changes.PlayerAccessory,
     }),
@@ -16,20 +11,11 @@ pub fn playerSync(
 ) !void {
     var sync: pb.PlayerSyncScNotify = .init;
 
-    sync.self_basic_info = try buildSelfBasicInfo(
-        notify.allocator,
-        properties.basic_info,
-        changes.control_avatar,
-        changes.control_guise_avatar,
-    );
-
     sync.avatar = try buildAvatarSync(notify.allocator, changes.avatars);
 
     sync.misc = .{
         .player_accessory = try buildPlayerAccessory(
             notify.allocator,
-            properties.basic_info,
-            changes.control_guise_avatar,
             changes.player_accessory,
         ),
     };
@@ -40,18 +26,6 @@ pub fn playerSync(
     );
 
     notify.one(sync);
-}
-
-fn buildSelfBasicInfo(
-    allocator: Allocator,
-    info: *const Properties.BasicInfo,
-    control_avatar: ?*const logic.Changes.ControlAvatar,
-    control_guise_avatar: ?*const logic.Changes.ControlGuiseAvatar,
-) !?pb.SelfBasicInfo {
-    if (control_avatar == null and control_guise_avatar == null)
-        return null;
-
-    return try packers.packSelfBasicInfo(allocator, info);
 }
 
 fn buildAvatarSync(allocator: Allocator, changes: []const logic.Changes.Avatar) !?pb.AvatarSync {
@@ -74,19 +48,9 @@ fn buildAvatarSync(allocator: Allocator, changes: []const logic.Changes.Avatar) 
 
 fn buildPlayerAccessory(
     allocator: Allocator,
-    info: *const Properties.BasicInfo,
-    maybe_control_guise_avatar: ?*const logic.Changes.ControlGuiseAvatar,
     maybe_player_accessory: ?*const logic.Changes.PlayerAccessory,
 ) !?pb.PlayerAccessorySync {
     var sync: pb.PlayerAccessorySync = .{};
-
-    if (maybe_control_guise_avatar) |control_guise_avatar| {
-        sync.control_guise_avatar_id = control_guise_avatar.guise.toInt();
-        sync.control_guise_avatar_skin_id = control_guise_avatar.guise_skin.toInt();
-    } else {
-        sync.control_guise_avatar_id = info.control_guise_avatar.toInt();
-        sync.control_guise_avatar_skin_id = info.control_guise_avatar_skin.toInt();
-    }
 
     if (maybe_player_accessory) |player_accessory|
         try sync.player_accessory_list.append(allocator, .{

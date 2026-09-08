@@ -11,27 +11,16 @@ const packers = @import("../messaging/packers.zig");
 const AvatarSlot = packers.AvatarSlot;
 
 player_accessory: ?PlayerAccessory,
-control_avatar: ?ControlAvatar,
-control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
 
 pub const init: Changes = .{
     .player_accessory = null,
-    .control_avatar = null,
-    .control_guise_avatar = null,
     .avatars = &.{},
 };
 
 pub const PlayerAccessory = struct {
     avatar: Properties.PlayerAccessory.Avatar,
     meta: Properties.PlayerAccessory.Meta,
-};
-
-pub const ControlAvatar = Properties.HallAvatar;
-
-pub const ControlGuiseAvatar = struct {
-    guise: Properties.HallAvatar.Guise,
-    guise_skin: Properties.HallAvatar.Guise.Skin,
 };
 
 /// Avatar modification.

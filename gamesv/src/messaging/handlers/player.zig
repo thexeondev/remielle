@@ -74,10 +74,7 @@ pub fn modAvatar(
         Properties.Avatar,
         Properties.PlayerAccessory,
     }),
-    changes: Changes.Builder(.{
-        Changes.ControlAvatar,
-        Changes.ControlGuiseAvatar,
-    }),
+    sink: Sink,
     response: Response(pb.ModAvatarScRsp),
 ) !void {
     const new_control_avatar = Properties.HallAvatar.fromInt(message.data.control_avatar_id) orelse
@@ -92,18 +89,6 @@ pub fn modAvatar(
         => response.fail(1),
     };
 
-    if (properties.basic_info.control_avatar != new_control_avatar)
-        changes.insert(new_control_avatar);
-
-    if (properties.basic_info.control_guise_avatar != new_guise)
-        changes.insert(Changes.ControlGuiseAvatar{
-            .guise = new_guise,
-            .guise_skin = new_guise.getSkin(
-                properties.avatar,
-                properties.player_accessory,
-            ),
-        });
-
     properties.basic_info.control_avatar = new_control_avatar;
     properties.basic_info.control_guise_avatar = new_guise;
     properties.basic_info.control_guise_avatar_skin = new_guise.getSkin(
@@ -111,9 +96,23 @@ pub fn modAvatar(
         properties.player_accessory,
     );
 
+    try sink.notify(pb.PlayerSyncScNotify, .{
+        .self_basic_info = try packers.packSelfBasicInfo(
+            response.allocator,
+            properties.basic_info,
+        ),
+        .misc = .{
+            .player_accessory = .{
+                .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
+                .control_guise_avatar_skin_id = properties.basic_info.control_guise_avatar_skin.toInt(),
+            },
+        },
+    });
+
     response.set(.init);
 }
 
+const Sink = handlers.Sink;
 const Message = handlers.Message;
 const Response = handlers.Response;
 
