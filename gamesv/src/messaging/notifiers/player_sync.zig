@@ -10,8 +10,6 @@ pub fn playerSync(
         logic.Changes.ControlAvatar,
         logic.Changes.ControlGuiseAvatar,
         logic.Changes.Avatar,
-        logic.Changes.Weapon,
-        logic.Changes.Equip,
         logic.Changes.PlayerAccessory,
         logic.Changes.QuickTeam,
     }),
@@ -41,8 +39,6 @@ pub fn playerSync(
     sync.item = try buildItemSync(
         notify.allocator,
         changes.avatars,
-        changes.weapons,
-        changes.equipment,
     );
 
     notify.one(sync);
@@ -106,12 +102,8 @@ fn buildPlayerAccessory(
 fn buildItemSync(
     allocator: Allocator,
     avatar_changes: []const logic.Changes.Avatar,
-    weapon_changes: []const logic.Changes.Weapon,
-    equip_changes: []const logic.Changes.Equip,
 ) !?pb.ItemSync {
-    if (avatar_changes.len == 0 and
-        weapon_changes.len == 0 and
-        equip_changes.len == 0) return null;
+    if (avatar_changes.len == 0) return null;
 
     return .{
         .material_list = material_list: {
@@ -125,35 +117,6 @@ fn buildItemSync(
             }
 
             break :material_list list;
-        },
-        .weapon_list = weapon_list: {
-            var list: ArrayList(pb.WeaponInfo) = try .initCapacity(allocator, weapon_changes.len);
-
-            for (weapon_changes) |change|
-                list.appendAssumeCapacity(.{
-                    .uid = change.uid.toInt(),
-                    .id = @backingInt(change.id),
-                    .level = change.level.toInt(),
-                    .star = change.star.toInt(),
-                    .refine_level = change.refine.toInt(),
-                });
-
-            break :weapon_list list;
-        },
-        .equip_list = equip_list: {
-            var list: ArrayList(pb.EquipInfo) = try .initCapacity(allocator, equip_changes.len);
-
-            for (equip_changes) |change|
-                list.appendAssumeCapacity(try packers.packEquipmentInfo(
-                    allocator,
-                    change.uid,
-                    change.id,
-                    change.level,
-                    change.star,
-                    &change.properties,
-                ));
-
-            break :equip_list list;
         },
     };
 }

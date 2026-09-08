@@ -15,8 +15,6 @@ control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
 quick_teams: []const QuickTeam,
-weapons: []const Weapon,
-equipment: []const Equip,
 
 pub const init: Changes = .{
     .player_accessory = null,
@@ -24,8 +22,6 @@ pub const init: Changes = .{
     .control_guise_avatar = null,
     .avatars = &.{},
     .quick_teams = &.{},
-    .weapons = &.{},
-    .equipment = &.{},
 };
 
 pub const PlayerAccessory = struct {
@@ -52,31 +48,6 @@ pub const Avatar = struct {
 pub const QuickTeam = struct {
     slot: Properties.QuickTeam.Slot,
     meta: Properties.QuickTeam.Meta,
-};
-
-pub const Weapon = struct {
-    // The following didn't work out because notifier also has to know UID:
-    // id: union(enum) {
-    //     new: Properties.Weapon.Id,
-    //     existing: Properties.Weapon.Uid,
-    // },
-    //
-    // So the responsibility for generating UID is on the one who's constructing `Changes`.
-    // I start to hate this "architecture" more and more.
-    uid: Properties.Weapon.Uid,
-    id: Properties.Weapon.Id, // absolutely redundant in case it's changing existing one.
-    level: Properties.Weapon.Level,
-    star: Properties.Weapon.Star,
-    refine: Properties.Weapon.Refine,
-};
-
-pub const Equip = struct {
-    // Same problem as with `Weapon`.
-    uid: Properties.Equipment.Uid,
-    id: u32,
-    level: Properties.Equipment.Level,
-    star: Properties.Equipment.Star,
-    properties: Properties.Equipment.Property.List,
 };
 
 pub const subset_marker_name = "logic_changes_subset_marker";
