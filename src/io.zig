@@ -8,7 +8,6 @@ const assert = std.debug.assert;
 const build_options = @import("build_options");
 
 pub const Evented = @import("io/Evented.zig");
-pub const MultiSocket = @import("io/MultiSocket.zig");
 
 test {
     std.testing.refAllDecls(@This());
