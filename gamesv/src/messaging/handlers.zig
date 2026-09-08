@@ -159,7 +159,6 @@ pub fn process(
 
                 if (@call(.auto, @field(ns, decl_name), args)) {
                     // Success, run the pipeline
-                    try logic.mutators.dispatchLogicChanges(frame, &changes);
                     try messaging.notifiers.notifyLogicChanges(arena, frame, &changes);
                 } else |err| switch (@as(HandlerError, err)) {
                     error.IllegalMessage => {
