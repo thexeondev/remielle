@@ -1,8 +1,6 @@
 pub const Error = error{};
 
-const namespaces: []const type = &.{
-    @import("mutators/quick_team.zig"),
-};
+const namespaces: []const type = &.{};
 
 pub fn dispatchLogicChanges(frame: *const Server.Frame, changes: *const logic.Changes) Error!void {
     inline for (namespaces) |ns| inline for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
