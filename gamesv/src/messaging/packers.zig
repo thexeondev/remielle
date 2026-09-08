@@ -122,7 +122,7 @@ pub fn packEquipmentInfo(
 
 pub fn packDungeonPackageInfo(
     arena: Allocator,
-    avatar_lists: []const GameMode.AvatarSlot.List,
+    avatar_lists: []const AvatarSlot.List,
     buddies: []const GameMode.OptionalBuddy,
     avatar: *const Properties.Avatar,
     weapon: *const Properties.Weapon,
@@ -132,17 +132,17 @@ pub fn packDungeonPackageInfo(
     // Always allocates `avatars.len` (which is constant), but that's okay.
     var avatar_list: ArrayList(pb.AvatarInfo) = try .initCapacity(
         arena,
-        GameMode.AvatarSlot.count * avatar_lists.len,
+        AvatarSlot.count * avatar_lists.len,
     );
 
     var weapon_list: ArrayList(pb.WeaponInfo) = try .initCapacity(
         arena,
-        GameMode.AvatarSlot.count * avatar_lists.len,
+        AvatarSlot.count * avatar_lists.len,
     );
 
     var equip_list: ArrayList(pb.EquipInfo) = try .initCapacity(
         arena,
-        Properties.Avatar.equipment_slots * GameMode.AvatarSlot.count * avatar_lists.len,
+        Properties.Avatar.equipment_slots * AvatarSlot.count * avatar_lists.len,
     );
 
     var buddy_list: ArrayList(pb.BuddyInfo) = try .initCapacity(
@@ -476,6 +476,104 @@ pub fn packEnterSceneForHall(
                     break :npc_list npc_list;
                 },
             },
+        },
+    };
+}
+
+// TODO: perhaps `packers` is not the best place for this.
+pub const AvatarSlot = enum(u32) {
+    pub const count = 3;
+    pub const List = [count]AvatarSlot;
+
+    none = 0,
+    _,
+
+    pub inline fn fromId(id: assets.templates.avatar_base.Id) AvatarSlot {
+        return @fromBackingInt(@intCast(@backingInt(id)));
+    }
+
+    pub inline fn toId(slot: AvatarSlot) ?assets.templates.avatar_base.Id {
+        return switch (slot) {
+            .none => null,
+            else => |id| @fromBackingInt(@intCast(@backingInt(id))),
+        };
+    }
+};
+
+pub fn packDungeonInfo(
+    arena: Allocator,
+    quest_id: u32,
+    quest_type: u32,
+    avatar_lists: []const AvatarSlot.List,
+    buddies: []const GameMode.OptionalBuddy,
+    avatar: *const Properties.Avatar,
+    weapon: *const Properties.Weapon,
+    equipment: *const Properties.Equipment,
+    buddy: *const Properties.Buddy,
+) !pb.DungeonInfo {
+    return .{
+        .quest_id = quest_id,
+        .quest_type = quest_type,
+        .dungeon_package_info = try packDungeonPackageInfo(
+            arena,
+            avatar_lists,
+            buddies,
+            avatar,
+            weapon,
+            equipment,
+            buddy,
+        ),
+        .avatar_list = avatar_list: {
+            var avatar_list: ArrayList(pb.AvatarUnitInfo) = try .initCapacity(
+                arena,
+                avatar_lists.len * AvatarSlot.count,
+            );
+
+            for (avatar_lists) |list| for (list) |slot|
+                if (slot.toId()) |id| {
+                    const property_map = try logic.battle.Property.createMap(
+                        arena,
+                        avatar,
+                        weapon,
+                        equipment,
+                        id,
+                    );
+
+                    var avatar_unit: pb.AvatarUnitInfo = .{
+                        .avatar_id = @backingInt(id),
+                        .properties = try .initCapacity(arena, property_map.count()),
+                    };
+
+                    var iterator = property_map.iterator();
+                    while (iterator.next()) |kv|
+                        avatar_unit.properties.appendAssumeCapacity(.{
+                            .key = @backingInt(kv.key_ptr.*),
+                            .value = kv.value_ptr.*,
+                        });
+
+                    avatar_list.appendAssumeCapacity(avatar_unit);
+                };
+
+            break :avatar_list avatar_list;
+        },
+        .buddy_list = buddy_list: {
+            var buddy_list: ArrayList(pb.BuddyUnitInfo) = try .initCapacity(
+                arena,
+                buddies.len + 1,
+            );
+
+            buddy_list.appendAssumeCapacity(.{
+                .buddy_id = assets.templates.buddy_base.assisting_buddy.id,
+                .type = .ASSISTING,
+            });
+
+            for (buddies) |buddy_entry| if (buddy_entry.toId()) |id|
+                buddy_list.appendAssumeCapacity(.{
+                    .buddy_id = @backingInt(id),
+                    .type = .FIGHTING,
+                });
+
+            break :buddy_list buddy_list;
         },
     };
 }

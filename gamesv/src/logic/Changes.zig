@@ -1,5 +1,14 @@
+const Changes = @This();
+
+const std = @import("std");
+
 const remielle = @import("remielle");
 const templates = remielle.assets.templates;
+
+const Server = @import("../Server.zig");
+const Properties = @import("Properties.zig");
+const packers = @import("../messaging/packers.zig");
+const AvatarSlot = packers.AvatarSlot;
 
 game_mode: ?GameMode,
 player_accessory: ?PlayerAccessory,
@@ -23,19 +32,12 @@ pub const init: Changes = .{
 
 /// Game mode switch.
 pub const GameMode = union(enum) {
-    training: Training,
     hadal_zone: HadalZone,
 
     /// Load hall game mode.
     pub const Hall = struct {
         section_id: templates.section_config.Id,
         position: Properties.Hall.Position,
-    };
-
-    /// Load training game mode.
-    pub const Training = struct {
-        quest: templates.training_quest.Id,
-        avatars: AvatarSlot.List,
     };
 
     /// Load hadal zone game mode.
@@ -147,25 +149,6 @@ pub const GameMode = union(enum) {
 
         pub inline fn toId(optional: OptionalBuddy) ?templates.buddy_base.Id {
             return switch (optional) {
-                .none => null,
-                else => |id| @fromBackingInt(@intCast(@backingInt(id))),
-            };
-        }
-    };
-
-    pub const AvatarSlot = enum(u32) {
-        pub const count = 3;
-        pub const List = [count]AvatarSlot;
-
-        none = 0,
-        _,
-
-        pub inline fn fromId(id: templates.avatar_base.Id) AvatarSlot {
-            return @fromBackingInt(@intCast(@backingInt(id)));
-        }
-
-        pub inline fn toId(slot: AvatarSlot) ?templates.avatar_base.Id {
-            return switch (slot) {
                 .none => null,
                 else => |id| @fromBackingInt(@intCast(@backingInt(id))),
             };
@@ -359,9 +342,3 @@ pub fn extract(logic_changes: *const Changes, comptime Sub: type) ?Sub {
 
     return if (any_fulfilled != 0) subset else null;
 }
-
-const Server = @import("../Server.zig");
-const Properties = @import("Properties.zig");
-
-const std = @import("std");
-const Changes = @This();

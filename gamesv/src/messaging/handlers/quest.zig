@@ -2,6 +2,8 @@ const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
 const templates = remielle.assets.templates;
 
+const packers = @import("../packers.zig");
+
 pub fn getQuestData(
     message: Message(pb.GetQuestDataCsReq),
     response: Response(pb.GetQuestDataScRsp),
@@ -32,10 +34,11 @@ pub fn startTrainingQuest(
     message: Message(pb.StartTrainingQuestCsReq),
     properties: Properties.Immutable(.{
         Properties.Avatar,
+        Properties.Weapon,
+        Properties.Equipment,
+        Properties.Buddy,
     }),
-    changes: Changes.Builder(.{
-        Changes.GameMode,
-    }),
+    sink: Sink,
     response: Response(pb.StartTrainingQuestScRsp),
 ) !void {
     const quest: templates.training_quest.Id = @fromBackingInt(@intCast(message.data.quest_id));
@@ -43,11 +46,11 @@ pub fn startTrainingQuest(
         return response.fail(1);
 
     switch (message.data.avatar_id_list.items.len) {
-        1...Changes.GameMode.AvatarSlot.count => {},
+        1...packers.AvatarSlot.count => {},
         else => return response.fail(1),
     }
 
-    var avatars: Changes.GameMode.AvatarSlot.List = undefined;
+    var avatars: packers.AvatarSlot.List = undefined;
 
     for (&avatars, 0..) |*slot, index| {
         if (index >= message.data.avatar_id_list.items.len) {
@@ -67,12 +70,29 @@ pub fn startTrainingQuest(
         slot.* = .fromId(id);
     }
 
-    const mode_switch: Changes.GameMode = .{ .training = .{
-        .quest = quest,
-        .avatars = avatars,
-    } };
+    try sink.notify(pb.EnterSceneScNotify, .{
+        .scene = .{
+            .scene_type = 3, // training is implemented in terms of FightScene
+            .play_type = 290,
+            .scene_id = quest.getBattleEventId(),
+            .fight_scene_data = .{
+                .scene_reward = .init,
+                .scene_perform = .init,
+            },
+        },
+        .dungeon = try packers.packDungeonInfo(
+            response.allocator,
+            @backingInt(quest),
+            0,
+            &.{avatars},
+            &.{},
+            properties.avatar,
+            properties.weapon,
+            properties.equip,
+            properties.buddy,
+        ),
+    });
 
-    changes.insert(mode_switch);
     response.set(.init);
 }
 
@@ -163,6 +183,7 @@ pub fn endBattle(
     response.set(.{ .fight_settle = .init });
 }
 
+const Sink = handlers.Sink;
 const Changes = logic.Changes;
 const Message = handlers.Message;
 const Response = handlers.Response;

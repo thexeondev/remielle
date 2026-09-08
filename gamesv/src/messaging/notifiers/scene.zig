@@ -33,29 +33,6 @@ pub fn switchGameMode(
     const game_mode = changes.game_mode.?;
 
     switch (game_mode.*) {
-        .training => |training| notify.one(.{
-            .scene = .{
-                .scene_type = 3, // training is implemented in terms of FightScene
-                .play_type = 290,
-                .scene_id = training.quest.getBattleEventId(),
-                .fight_scene_data = .{
-                    .scene_reward = .init,
-                    .scene_perform = .init,
-                },
-            },
-            .dungeon = .{
-                .quest_id = @backingInt(training.quest),
-                .dungeon_package_info = try packers.packDungeonPackageInfo(
-                    notify.allocator,
-                    &.{training.avatars},
-                    &.{}, // buddies
-                    properties.avatar,
-                    properties.weapon,
-                    properties.equip,
-                    properties.buddy,
-                ),
-            },
-        }),
         .hadal_zone => |hadal_zone| notify.one(.{
             .scene = .{
                 .scene_type = 9,
@@ -91,73 +68,17 @@ pub fn switchGameMode(
                         0,
                 },
             },
-            .dungeon = dungeon: {
-                break :dungeon .{
-                    .quest_id = hadal_zone.quest_id,
-                    .quest_type = hadal_zone.quest_type,
-                    .dungeon_package_info = try packers.packDungeonPackageInfo(
-                        notify.allocator,
-                        &hadal_zone.rooms.avatar_lists,
-                        &hadal_zone.rooms.buddies,
-                        properties.avatar,
-                        properties.weapon,
-                        properties.equip,
-                        properties.buddy,
-                    ),
-                    .avatar_list = avatar_list: {
-                        var avatar_list: ArrayList(pb.AvatarUnitInfo) = try .initCapacity(
-                            notify.allocator,
-                            logic.Changes.GameMode.HadalZone.Rooms.count * logic.Changes.GameMode.AvatarSlot.count,
-                        );
-
-                        for (hadal_zone.rooms.avatar_lists) |list| for (list) |slot|
-                            if (slot.toId()) |id| {
-                                const property_map = try logic.battle.Property.createMap(
-                                    notify.allocator,
-                                    properties.avatar,
-                                    properties.weapon,
-                                    properties.equip,
-                                    id,
-                                );
-
-                                var avatar_unit: pb.AvatarUnitInfo = .{
-                                    .avatar_id = @backingInt(id),
-                                    .properties = try .initCapacity(notify.allocator, property_map.count()),
-                                };
-
-                                var iterator = property_map.iterator();
-                                while (iterator.next()) |kv|
-                                    avatar_unit.properties.appendAssumeCapacity(.{
-                                        .key = @backingInt(kv.key_ptr.*),
-                                        .value = kv.value_ptr.*,
-                                    });
-
-                                avatar_list.appendAssumeCapacity(avatar_unit);
-                            };
-
-                        break :avatar_list avatar_list;
-                    },
-                    .buddy_list = buddy_list: {
-                        var buddy_list: ArrayList(pb.BuddyUnitInfo) = try .initCapacity(
-                            notify.allocator,
-                            logic.Changes.GameMode.HadalZone.Rooms.count + 1,
-                        );
-
-                        buddy_list.appendAssumeCapacity(.{
-                            .buddy_id = templates.buddy_base.assisting_buddy.id,
-                            .type = .ASSISTING,
-                        });
-
-                        for (hadal_zone.rooms.buddies) |buddy| if (buddy.toId()) |id|
-                            buddy_list.appendAssumeCapacity(.{
-                                .buddy_id = @backingInt(id),
-                                .type = .FIGHTING,
-                            });
-
-                        break :buddy_list buddy_list;
-                    },
-                };
-            },
+            .dungeon = try packers.packDungeonInfo(
+                notify.allocator,
+                hadal_zone.quest_id,
+                hadal_zone.quest_type,
+                &hadal_zone.rooms.avatar_lists,
+                &hadal_zone.rooms.buddies,
+                properties.avatar,
+                properties.weapon,
+                properties.equip,
+                properties.buddy,
+            ),
         }),
     }
 }
