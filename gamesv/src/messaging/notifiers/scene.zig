@@ -328,20 +328,3 @@ pub fn npcInteraction(
         .action_list = action_list,
     });
 }
-
-pub fn hallRefresh(
-    properties: Properties.Immutable(.{
-        Properties.Hall,
-    }),
-    changes: logic.Changes.Subset(.{
-        logic.Changes.MainCityTime,
-    }),
-    notify: Notify(pb.HallRefreshScNotify),
-) !void {
-    notify.one(.{
-        .force_refresh = true,
-        .section_id = @backingInt(properties.hall.section_id),
-        .scene_time_in_minutes = changes.main_city_time.?.time_in_minutes,
-        .day_of_week = @backingInt(changes.main_city_time.?.day_of_week),
-    });
-}

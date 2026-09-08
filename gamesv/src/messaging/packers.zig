@@ -284,6 +284,24 @@ pub fn packZoneRecord(
     };
 }
 
+pub const HallRefreshOptions = struct {
+    force: bool,
+};
+
+/// Does not pack NPCs.
+pub fn packHallRefreshMinimal(
+    hall: *const Properties.Hall,
+    mct: *const Properties.MainCityTime,
+    options: HallRefreshOptions,
+) pb.HallRefreshScNotify {
+    return .{
+        .force_refresh = options.force,
+        .section_id = @backingInt(hall.section_id),
+        .scene_time_in_minutes = mct.time_in_minutes,
+        .day_of_week = @backingInt(mct.day_of_week),
+    };
+}
+
 const Timestamp = std.Io.Timestamp;
 const ArrayList = std.ArrayList;
 const GameMode = logic.Changes.GameMode;

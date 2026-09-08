@@ -142,37 +142,40 @@ pub fn savePosInMainCity(
 pub fn modMainCityTime(
     message: Message(pb.ModMainCityTimeCsReq),
     properties: logic.Properties.Mutable(.{
+        Properties.Hall,
         Properties.MainCityTime,
     }),
-    changes: Changes.Builder(.{
-        Changes.MainCityTime,
-    }),
+    sink: Sink,
     response: Response(pb.ModMainCityTimeScRsp),
 ) !void {
-    const next_time_period = std.enums.fromInt(Properties.MainCityTime.TimePeriod, message.data.time_period) orelse
+    const next_time_period = std.enums.fromInt(
+        Properties.MainCityTime.TimePeriod,
+        message.data.time_period,
+    ) orelse
         return response.fail(1);
 
-    var main_city_time: Changes.MainCityTime = .{
-        .time_in_minutes = next_time_period.toTimeInMinutes(),
-        .day_of_week = properties.main_city_time.day_of_week,
-    };
-
-    properties.main_city_time.time_in_minutes = main_city_time.time_in_minutes;
-    properties.main_city_time.day_of_week = main_city_time.day_of_week;
+    properties.main_city_time.time_in_minutes = next_time_period.toTimeInMinutes();
 
     if (next_time_period.isNextDayOf(.fromTimeInMinutes(properties.main_city_time.time_in_minutes)))
-        main_city_time.day_of_week = main_city_time.day_of_week.nextDay();
+        properties.main_city_time.day_of_week = properties.main_city_time.day_of_week.nextDay();
 
-    changes.insert(main_city_time);
+    try sink.notify(pb.HallRefreshScNotify, packers.packHallRefreshMinimal(
+        properties.hall,
+        properties.main_city_time,
+        .{ .force = true },
+    ));
+
     response.set(.init);
 }
 
+const Sink = handlers.Sink;
 const Message = handlers.Message;
 const Response = handlers.Response;
 
 const Changes = logic.Changes;
 const Properties = logic.Properties;
 
+const packers = @import("../packers.zig");
 const logic = @import("../../logic.zig");
 const handlers = @import("../handlers.zig");
 
