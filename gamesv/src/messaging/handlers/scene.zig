@@ -80,21 +80,28 @@ pub fn enterSection(
 
 pub fn interactWithUnit(
     message: Message(pb.InteractWithUnitCsReq),
-    changes: Changes.Builder(.{
-        Changes.NpcInteraction,
+    properties: Properties.Immutable(.{
+        Properties.Hall,
     }),
+    sink: Sink,
     response: Response(pb.InteractWithUnitScRsp),
 ) !void {
-    const interaction: Changes.NpcInteraction = .{
-        .interact_index = @intCast(std.mem.findScalar(
-            u32,
-            assets.graphs.interacts.ids,
-            @bitCast(message.data.interact_id),
-        ) orelse
-            return response.fail(1)),
-    };
+    const interact_index: u32 = @intCast(std.mem.findScalar(
+        u32,
+        assets.graphs.interacts.ids,
+        @bitCast(message.data.interact_id),
+    ) orelse
+        return response.fail(1));
 
-    changes.insert(interaction);
+    try sink.notify(
+        pb.SectionEventScNotify,
+        try packers.packSectionEventByInteract(
+            response.allocator,
+            properties.hall,
+            interact_index,
+        ),
+    );
+
     response.set(.init);
 }
 

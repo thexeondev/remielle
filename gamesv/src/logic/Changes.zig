@@ -3,7 +3,6 @@ const templates = remielle.assets.templates;
 
 game_mode: ?GameMode,
 player_accessory: ?PlayerAccessory,
-npc_interaction: ?NpcInteraction,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
@@ -14,7 +13,6 @@ equipment: []const Equip,
 pub const init: Changes = .{
     .game_mode = null,
     .player_accessory = null,
-    .npc_interaction = null,
     .control_avatar = null,
     .control_guise_avatar = null,
     .avatars = &.{},
@@ -179,10 +177,6 @@ pub const GameMode = union(enum) {
 pub const PlayerAccessory = struct {
     avatar: Properties.PlayerAccessory.Avatar,
     meta: Properties.PlayerAccessory.Meta,
-};
-
-pub const NpcInteraction = struct {
-    interact_index: u32,
 };
 
 pub const ControlAvatar = Properties.HallAvatar;

@@ -1,5 +1,7 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
+const pb_stable = remielle.protobuf.stable;
+const protobuf = remielle.protobuf;
 const assets = remielle.assets;
 
 pub fn packBuddyInfo(arena: Allocator, id: logic.Properties.Buddy.Id, meta: *const logic.Properties.Buddy.Meta) !pb.BuddyInfo {
@@ -299,6 +301,57 @@ pub fn packHallRefreshMinimal(
         .section_id = @backingInt(hall.section_id),
         .scene_time_in_minutes = mct.time_in_minutes,
         .day_of_week = @backingInt(mct.day_of_week),
+    };
+}
+
+pub fn packSectionEventByInteract(
+    arena: Allocator,
+    hall: *const Properties.Hall,
+    interact_index: u32,
+) !pb.SectionEventScNotify {
+    const interacts = assets.graphs.interacts;
+    const event = &interacts.events[interact_index];
+
+    const actions = interacts.actions[event.actions_begin..event.actions_end];
+    var action_list: ArrayList(pb.ActionInfo) = try .initCapacity(arena, actions.len);
+
+    for (actions) |*action| switch (action.tag) {
+        .create_npc, .change_interact => {},
+
+        .switch_section => {
+            const switch_section = &interacts.switch_section[action.data.switch_section.toIndex()];
+
+            const info: pb_stable.ActionSwitchSection = .{
+                .section_id = switch_section.section_id,
+                .transform_id = interacts.getString(switch_section.transform_id),
+                .camera_x = switch_section.camera_x,
+                .camera_y = switch_section.camera_y,
+            };
+
+            action_list.appendAssumeCapacity(.{
+                .action_type = .ActionType_SWITCH_SECTION,
+                .body = try protobuf.encodeAlloc(.stable, arena, info),
+            });
+        },
+
+        .open_ui => {
+            const open_ui = &interacts.open_ui[action.data.open_ui.toIndex()];
+
+            const info: pb_stable.ActionOpenUi = .{
+                .ui = interacts.getString(open_ui.ui),
+                .store_template_id = open_ui.store_template_id,
+            };
+
+            action_list.appendAssumeCapacity(.{
+                .action_type = .ActionType_OPEN_UI,
+                .body = try protobuf.encodeAlloc(.stable, arena, info),
+            });
+        },
+    };
+
+    return .{
+        .section_id = @backingInt(hall.section_id),
+        .action_list = action_list,
     };
 }
 
