@@ -36,7 +36,7 @@ const CmdId = CmdId: {
 
 pub const HandlerError = error{
     IllegalMessage,
-} || Allocator.Error;
+} || Allocator.Error || messaging.SendError;
 
 pub const ProcessError = error{
     DecodeFail,
@@ -123,6 +123,8 @@ pub fn process(
                             .time = frame.time,
                             .utc_offset = 3, // TODO: configuration field + cli option
                         },
+
+                        Sink => arg.* = .{ .frame = frame },
 
                         else => {
                             switch (@typeInfo(ArgType)) {
@@ -212,6 +214,24 @@ pub fn process(
         } else comptime unreachable,
     }
 }
+
+pub const Sink = struct {
+    frame: *const Server.Frame,
+
+    pub fn notify(
+        sink: Sink,
+        comptime Notify: type,
+        message: Notify,
+    ) messaging.SendError!void {
+        try messaging.send(
+            sink.frame.multi_conversation,
+            sink.frame.clients,
+            sink.frame.target_index,
+            .notify,
+            message,
+        );
+    }
+};
 
 pub fn Message(Msg: type) type {
     return struct {
