@@ -25,7 +25,7 @@ pub fn build(b: *Build) void {
     const serve_all_exe = b.addExecutable(.{
         .name = "serve-all",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("build/serve-all.zig"),
+            .root_source_file = b.path("lib/build/serve-all.zig"),
             .target = target,
             .optimize = optimize,
         }),

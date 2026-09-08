@@ -1,4 +1,9 @@
-pub fn main(init: Init) !void {
+const std = @import("std");
+const Io = std.Io;
+const process = std.process;
+const fatal = std.process.fatal;
+
+pub fn main(init: process.Init) !void {
     const io = init.io;
     const gpa = init.gpa;
 
@@ -41,10 +46,3 @@ fn spawnAndWait(io: Io, path: []const u8) SpawnAndWaitError!process.Child.Term {
 
     return try child.wait(io);
 }
-
-const Io = std.Io;
-const Init = process.Init;
-const fatal = process.fatal;
-
-const process = std.process;
-const std = @import("std");
