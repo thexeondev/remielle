@@ -40,7 +40,7 @@ pub const HandlerError = error{
 
 pub const ProcessError = error{
     DecodeFail,
-} || Allocator.Error || messaging.SendError || messaging.notifiers.Error;
+} || HandlerError;
 
 pub fn process(
     arena: Allocator,
@@ -159,10 +159,7 @@ pub fn process(
                     }
                 }
 
-                if (@call(.auto, @field(ns, decl_name), args)) {
-                    // Success, run the pipeline
-                    try messaging.notifiers.notifyLogicChanges(arena, frame, &changes);
-                } else |err| switch (@as(HandlerError, err)) {
+                @call(.auto, @field(ns, decl_name), args) catch |err| switch (@as(HandlerError, err)) {
                     error.IllegalMessage => {
                         // Send the response but don't run the pipeline
                         if (OutResponse) |Rsp| {
@@ -176,7 +173,7 @@ pub fn process(
                         }
                     },
                     else => |e| return e,
-                }
+                };
 
                 if (OutResponse) |Rsp| {
                     if (out_response.data) |out_message| {

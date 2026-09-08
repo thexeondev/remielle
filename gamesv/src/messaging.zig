@@ -4,7 +4,6 @@ const protobuf = remielle.protobuf;
 const log = std.log.scoped(.@"remielle-gamesv::messaging");
 
 pub const handlers = @import("messaging/handlers.zig");
-pub const notifiers = @import("messaging/notifiers.zig");
 pub const Xorpad = @import("messaging/Xorpad.zig");
 
 pub const Header = struct {
