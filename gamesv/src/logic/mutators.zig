@@ -1,7 +1,6 @@
 pub const Error = error{};
 
 const namespaces: []const type = &.{
-    @import("mutators/player.zig"),
     @import("mutators/quick_team.zig"),
 };
 

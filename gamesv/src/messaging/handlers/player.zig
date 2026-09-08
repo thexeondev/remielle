@@ -31,6 +31,9 @@ pub fn getSelfBasicInfo(
 
 pub fn modPlayerAccessory(
     message: Message(pb.SavePlayerAccessoryCsReq),
+    properties: Properties.Mutable(.{
+        Properties.PlayerAccessory,
+    }),
     changes: Changes.Builder(.{
         Changes.PlayerAccessory,
     }),
@@ -39,23 +42,34 @@ pub fn modPlayerAccessory(
     const player_accessory = message.data.player_accessory orelse
         return response.fail(1);
 
-    const new_skin = templates.avatar_skin_base.map.get(@fromBackingInt(@intCast(player_accessory.avatar_skin_id))) orelse
+    const new_skin = templates.avatar_skin_base.map.get(
+        @fromBackingInt(@intCast(player_accessory.avatar_skin_id)),
+    ) orelse
         return response.fail(1);
 
     if (new_skin.avatar_id != player_accessory.avatar_id)
         return response.fail(1);
 
+    const new_avatar = std.enums.fromInt(Properties.PlayerAccessory.Avatar, new_skin.avatar_id) orelse
+        return response.fail(1);
+
+    const new_meta: Properties.PlayerAccessory.Meta = .{
+        .skin = @fromBackingInt(@intCast(new_skin.id)),
+    };
+
     changes.insert(Changes.PlayerAccessory{
-        .avatar = std.enums.fromInt(Properties.PlayerAccessory.Avatar, new_skin.avatar_id) orelse return response.fail(1),
-        .meta = .{ .skin = @fromBackingInt(@intCast(new_skin.id)) },
+        .avatar = new_avatar,
+        .meta = new_meta,
     });
+
+    properties.player_accessory.meta.set(new_avatar, new_meta);
 
     response.set(.init);
 }
 
 pub fn modAvatar(
     message: Message(pb.ModAvatarCsReq),
-    properties: Properties.Immutable(.{
+    properties: Properties.Mutable(.{
         Properties.BasicInfo,
         Properties.Avatar,
         Properties.PlayerAccessory,
@@ -89,6 +103,13 @@ pub fn modAvatar(
                 properties.player_accessory,
             ),
         });
+
+    properties.basic_info.control_avatar = new_control_avatar;
+    properties.basic_info.control_guise_avatar = new_guise;
+    properties.basic_info.control_guise_avatar_skin = new_guise.getSkin(
+        properties.avatar,
+        properties.player_accessory,
+    );
 
     response.set(.init);
 }

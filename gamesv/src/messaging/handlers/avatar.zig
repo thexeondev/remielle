@@ -118,12 +118,14 @@ pub fn avatarSkinDress(
 
         changes.insert(avatars);
 
-        if (properties.basic_info.control_guise_avatar.toInt() == new_skin.avatar_id)
-            // TODO: perform direct modification of Properties.BasicInfo
+        if (properties.basic_info.control_guise_avatar.toInt() == new_skin.avatar_id) {
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
                 .guise_skin = @fromBackingInt(@intCast(new_skin.id)),
             });
+
+            properties.basic_info.control_guise_avatar_skin = @fromBackingInt(new_skin.id);
+        }
     }
 
     response.set(.init);
@@ -168,12 +170,14 @@ pub fn avatarSkinUnDress(
 
         changes.insert(avatars);
 
-        if (properties.basic_info.control_guise_avatar.toInt() == @backingInt(properties.avatar.ids[index]))
-            // TODO: perform direct modification of Properties.BasicInfo
+        if (properties.basic_info.control_guise_avatar.toInt() == @backingInt(properties.avatar.ids[index])) {
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
                 .guise_skin = .none,
             });
+
+            properties.basic_info.control_guise_avatar_skin = .none;
+        }
     }
 
     response.set(.init);
