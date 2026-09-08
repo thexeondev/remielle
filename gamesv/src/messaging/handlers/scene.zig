@@ -156,6 +156,9 @@ pub fn modMainCityTime(
         .day_of_week = properties.main_city_time.day_of_week,
     };
 
+    properties.main_city_time.time_in_minutes = main_city_time.time_in_minutes;
+    properties.main_city_time.day_of_week = main_city_time.day_of_week;
+
     if (next_time_period.isNextDayOf(.fromTimeInMinutes(properties.main_city_time.time_in_minutes)))
         main_city_time.day_of_week = main_city_time.day_of_week.nextDay();
 
