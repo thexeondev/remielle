@@ -5,56 +5,61 @@ const templates = remielle.assets.templates;
 
 pub fn enterWorld(
     message: Message(pb.EnterWorldCsReq),
+    asset_lookup: *const assets.Lookup,
     properties: Properties.Immutable(.{
         Properties.Hall,
+        Properties.BasicInfo,
+        Properties.MainCityTime,
     }),
-    changes: Changes.Builder(.{
-        Changes.GameMode,
-    }),
+    sink: Sink,
     response: Response(pb.EnterWorldScRsp),
 ) !void {
     _ = message;
 
-    // Moves data around without actually modifying anything.
-    const mode_switch: Changes.GameMode = .{ .hall = .{
-        .section_id = properties.hall.section_id,
-        .position = properties.hall.position,
-    } };
+    try sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
+        response.allocator,
+        asset_lookup,
+        properties.hall,
+        properties.main_city_time,
+        properties.basic_info,
+    ));
 
-    changes.insert(mode_switch);
     response.set(.init);
 }
 
 pub fn leaveCurScene(
     message: Message(pb.LeaveCurSceneCsReq),
+    asset_lookup: *const assets.Lookup,
     properties: Properties.Immutable(.{
         Properties.Hall,
+        Properties.BasicInfo,
+        Properties.MainCityTime,
     }),
-    changes: Changes.Builder(.{
-        Changes.GameMode,
-    }),
+    sink: Sink,
     response: Response(pb.LeaveCurSceneScRsp),
 ) !void {
     _ = message;
 
-    // Moves data around without actually modifying anything.
-    const mode_switch: Changes.GameMode = .{ .hall = .{
-        .section_id = properties.hall.section_id,
-        .position = properties.hall.position,
-    } };
+    try sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
+        response.allocator,
+        asset_lookup,
+        properties.hall,
+        properties.main_city_time,
+        properties.basic_info,
+    ));
 
-    changes.insert(mode_switch);
     response.set(.init);
 }
 
 pub fn enterSection(
     message: Message(pb.EnterSectionCsReq),
+    asset_lookup: *const assets.Lookup,
     properties: Properties.Mutable(.{
         Properties.Hall,
+        Properties.BasicInfo,
+        Properties.MainCityTime,
     }),
-    changes: Changes.Builder(.{
-        Changes.GameMode,
-    }),
+    sink: Sink,
     response: Response(pb.EnterSectionScRsp),
 ) !void {
     const section_id = std.enums.fromInt(
@@ -66,15 +71,17 @@ pub fn enterSection(
         message.data.transform_id,
     ) orelse .init;
 
-    const mode_switch: Changes.GameMode = .{ .hall = .{
-        .section_id = section_id,
-        .position = position,
-    } };
-
     properties.hall.section_id = section_id;
     properties.hall.position = position;
 
-    changes.insert(mode_switch);
+    try sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
+        response.allocator,
+        asset_lookup,
+        properties.hall,
+        properties.main_city_time,
+        properties.basic_info,
+    ));
+
     response.set(.init);
 }
 

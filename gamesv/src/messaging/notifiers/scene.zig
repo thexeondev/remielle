@@ -16,10 +16,7 @@ const logic = @import("../../logic.zig");
 const packers = @import("../packers.zig");
 const Properties = @import("../../logic/Properties.zig");
 
-const default_interact_target_list: []const pb.InteractTarget = &.{.InteractTarget_NPC};
-
 pub fn switchGameMode(
-    asset_lookup: *const assets.Lookup,
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
         logic.Properties.Avatar,
@@ -36,116 +33,6 @@ pub fn switchGameMode(
     const game_mode = changes.game_mode.?;
 
     switch (game_mode.*) {
-        .hall => |*hall| notify.one(.{
-            .scene = .{
-                .scene_type = 1,
-                .hall_scene_data = .{
-                    .section_id = @backingInt(hall.section_id),
-                    .position = switch (hall.position) {
-                        .id => null,
-                        .transform => |*transform| .{
-                            // constCast: read-only access for serialization.
-                            .position = .fromOwnedSlice(@constCast(&transform.position)),
-                            .rotation = .fromOwnedSlice(@constCast(&transform.rotation)),
-                        },
-                    },
-                    .transform_id = switch (hall.position) {
-                        .id => |*id| id.view(),
-                        .transform => "",
-                    },
-                    .scene_time_in_minutes = properties.main_city_time.time_in_minutes,
-                    .day_of_week = @backingInt(properties.main_city_time.day_of_week),
-                    .control_avatar_id = properties.basic_info.control_avatar.toInt(),
-                    .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
-                    .npc_list = npc_list: {
-                        const section_index = std.mem.findScalar(
-                            u32,
-                            main_city.section_ids,
-                            @backingInt(hall.section_id),
-                        ) orelse break :npc_list .empty;
-
-                        var npc_id_list: ArrayList(u32) = .empty;
-                        var npc_list: ArrayList(pb.NpcInfo) = .empty;
-
-                        const event = &main_city.events[section_index];
-
-                        for (main_city.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
-                            .create_npc => {
-                                const create_npc = action.data.create_npc;
-                                const tmpl_index = asset_lookup.main_city_object_map.getIndex(create_npc.tag_id) orelse
-                                    continue;
-
-                                try npc_id_list.append(notify.allocator, create_npc.tag_id);
-
-                                var npc_info: pb.NpcInfo = .{
-                                    .npc_id = create_npc.tag_id,
-                                    .is_active = true,
-                                };
-
-                                if (templates.main_city_object.default_interact_ids[tmpl_index] != 0) {
-                                    const name = templates.main_city_object.interact_names[tmpl_index];
-
-                                    try npc_info.interacts_info.append(notify.allocator, .{
-                                        .key = templates.main_city_object.default_interact_ids[tmpl_index],
-                                        .value = .{
-                                            .tag_id = @intCast(create_npc.tag_id),
-                                            .interact_target_list = .fromOwnedSlice(
-                                                // constCast: this list won't be modified.
-                                                @constCast(default_interact_target_list),
-                                            ),
-                                            .name = templates.main_city_object.getString(name),
-                                            .scale_x = 1,
-                                            .scale_y = 1,
-                                            .scale_z = 1,
-                                            .scale_w = 1,
-                                            .scale_r = 1,
-                                        },
-                                    });
-                                }
-
-                                try npc_list.append(notify.allocator, npc_info);
-                            },
-                            .change_interact => {
-                                const change_interact = &main_city.change_interact[action.data.change_interact.toIndex()];
-                                const npc_index = std.mem.findScalar(
-                                    u32,
-                                    npc_id_list.items,
-                                    change_interact.tag_id,
-                                ) orelse continue;
-
-                                const tmpl_index = asset_lookup.main_city_object_map.getIndex(change_interact.tag_id) orelse
-                                    continue;
-
-                                const name = templates.main_city_object.interact_names[tmpl_index];
-
-                                // Clobber existing interact, if any.
-                                npc_list.items[npc_index].interacts_info.items.len = 0;
-
-                                try npc_list.items[npc_index].interacts_info.append(notify.allocator, .{
-                                    .key = change_interact.interact_id,
-                                    .value = .{
-                                        .tag_id = @intCast(change_interact.tag_id),
-                                        .interact_target_list = .fromOwnedSlice(
-                                            // constCast: this list won't be modified.
-                                            @constCast(default_interact_target_list),
-                                        ),
-                                        .name = templates.main_city_object.getString(name),
-                                        .scale_x = 1,
-                                        .scale_y = 1,
-                                        .scale_z = 1,
-                                        .scale_w = 1,
-                                        .scale_r = 1,
-                                    },
-                                });
-                            },
-                            .switch_section, .open_ui => unreachable,
-                        };
-
-                        break :npc_list npc_list;
-                    },
-                },
-            },
-        }),
         .training => |training| notify.one(.{
             .scene = .{
                 .scene_type = 3, // training is implemented in terms of FightScene

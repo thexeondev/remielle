@@ -23,7 +23,6 @@ pub const init: Changes = .{
 
 /// Game mode switch.
 pub const GameMode = union(enum) {
-    hall: Hall,
     training: Training,
     hadal_zone: HadalZone,
 
