@@ -100,17 +100,17 @@ pub fn startHadalZoneBattle(
     message: Message(pb.StartHadalZoneBattleCsReq),
     properties: Properties.Immutable(.{
         Properties.Avatar,
+        Properties.Weapon,
+        Properties.Equipment,
         Properties.Buddy,
     }),
-    changes: Changes.Builder(.{
-        Changes.GameMode,
-    }),
+    sink: Sink,
     response: Response(pb.StartHadalZoneBattleScRsp),
 ) !void {
-    const zone_id = Changes.GameMode.HadalZone.ZoneId.fromInt(message.data.zone_id) orelse
+    const zone_id = packers.hadal_zone.ZoneId.fromInt(message.data.zone_id) orelse
         return response.fail(1);
 
-    const layer: Changes.GameMode.HadalZone.Layer = .{
+    const layer: packers.hadal_zone.Layer = .{
         .zone_id = zone_id,
         .layer_index = message.data.layer_index,
         .room_index = message.data.room_index,
@@ -134,13 +134,20 @@ pub fn startHadalZoneBattle(
         return response.fail(1);
     };
 
-    var rooms: Changes.GameMode.HadalZone.Rooms = .empty;
+    var avatar_lists: [packers.hadal_zone.room_count]packers.AvatarSlot.List = @splat(@splat(.none));
+    var buddies: [packers.hadal_zone.room_count]packers.OptionalBuddy = @splat(.none);
 
     for (
-        &rooms.avatar_lists,
-        &rooms.buddies,
-        [_][]const u32{ message.data.first_room_avatar_id_list.items, message.data.second_room_avatar_id_list.items },
-        [_]u32{ message.data.first_room_buddy_id, message.data.second_room_buddy_id },
+        &avatar_lists,
+        &buddies,
+        [_][]const u32{
+            message.data.first_room_avatar_id_list.items,
+            message.data.second_room_avatar_id_list.items,
+        },
+        [_]u32{
+            message.data.first_room_buddy_id,
+            message.data.second_room_buddy_id,
+        },
     ) |*avatar_slots, *optional_buddy, avatar_id_list, raw_buddy_id| {
         for (avatar_slots[0..avatar_id_list.len], avatar_id_list) |*avatar_slot, raw_avatar_id| {
             const avatar_id = std.enums.fromInt(templates.avatar_base.Id, raw_avatar_id) orelse
@@ -163,15 +170,27 @@ pub fn startHadalZoneBattle(
         }
     }
 
-    const mode_switch: Changes.GameMode = .{ .hadal_zone = .{
-        .rooms = rooms,
-        .layer = layer,
-        .layer_item_id = message.data.layer_item_id,
-        .quest_id = quest_id,
-        .quest_type = quest_type,
-    } };
+    try sink.notify(pb.EnterSceneScNotify, .{
+        .scene = try packers.packSceneDataForHadalZone(
+            response.allocator,
+            &avatar_lists,
+            &buddies,
+            layer,
+            message.data.layer_item_id,
+        ),
+        .dungeon = try packers.packDungeonInfo(
+            response.allocator,
+            quest_id,
+            quest_type,
+            &avatar_lists,
+            &buddies,
+            properties.avatar,
+            properties.weapon,
+            properties.equip,
+            properties.buddy,
+        ),
+    });
 
-    changes.insert(mode_switch);
     response.set(.init);
 }
 

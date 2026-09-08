@@ -123,7 +123,7 @@ pub fn packEquipmentInfo(
 pub fn packDungeonPackageInfo(
     arena: Allocator,
     avatar_lists: []const AvatarSlot.List,
-    buddies: []const GameMode.OptionalBuddy,
+    buddies: []const OptionalBuddy,
     avatar: *const Properties.Avatar,
     weapon: *const Properties.Weapon,
     equipment: *const Properties.Equipment,
@@ -500,12 +500,148 @@ pub const AvatarSlot = enum(u32) {
     }
 };
 
+// TODO: perhaps `packers` is not the best place for this (x2).
+pub const OptionalBuddy = enum(u32) {
+    none = 0,
+    _,
+
+    pub inline fn fromId(id: assets.templates.buddy_base.Id) OptionalBuddy {
+        return @fromBackingInt(@intCast(@backingInt(id)));
+    }
+
+    pub inline fn toId(optional: OptionalBuddy) ?assets.templates.buddy_base.Id {
+        return switch (optional) {
+            .none => null,
+            else => |id| @fromBackingInt(@intCast(@backingInt(id))),
+        };
+    }
+};
+
+// TODO: perhaps `packers` is not the best place for this (x3).
+pub const hadal_zone = struct {
+    pub const room_count = 2;
+
+    pub const Layer = struct {
+        zone_id: ZoneId,
+        room_index: u32,
+        layer_index: u32,
+
+        pub fn getId(layer: *const Layer) u32 {
+            return switch (Group.fromZoneId(layer.zone_id)) {
+                .scheduled => switch (layer.room_index) {
+                    0 => ZoneId.scheduled.toInt() * 100 + layer.layer_index,
+                    else => ZoneId.impact.toInt() * 100 + layer.layer_index * 10 + layer.room_index,
+                },
+                .boss_challenge => ZoneId.boss_challenge.toInt() * 100 + layer.layer_index,
+                .stable => @backingInt(layer.zone_id) * 100 + layer.layer_index,
+                .free_training => 6900404,
+            };
+        }
+    };
+
+    pub const ZoneId = enum(u32) {
+        scheduled = 62001,
+        alive_count = 61002,
+        impact = 62010,
+        boss_challenge = 69001,
+        free_training = 89001,
+        _,
+
+        pub fn fromInt(int: u32) ?ZoneId {
+            if (Group.fromZoneIdInt(int) == null)
+                return null;
+
+            return @fromBackingInt(@intCast(int));
+        }
+
+        pub inline fn toInt(id: ZoneId) u32 {
+            return @backingInt(id);
+        }
+    };
+
+    const Group = enum(u32) {
+        stable = 61,
+        scheduled = 62,
+        boss_challenge = 69,
+        free_training = 89,
+
+        pub fn fromZoneId(id: ZoneId) Group {
+            return fromZoneIdInt(@backingInt(id)).?;
+        }
+
+        pub fn fromZoneIdInt(int: u32) ?Group {
+            var group_num = int;
+            while ((group_num / 100) > 0) group_num /= 10;
+
+            return std.enums.fromInt(Group, group_num);
+        }
+    };
+};
+
+pub fn packSceneDataForHadalZone(
+    arena: Allocator,
+    avatar_lists: *const [hadal_zone.room_count]AvatarSlot.List,
+    buddies: *const [hadal_zone.room_count]OptionalBuddy,
+    layer: hadal_zone.Layer,
+    layer_item_id: u32,
+) !pb.SceneData {
+    const play_type: u32 = switch (layer.zone_id) {
+        .alive_count => 222, // HADAL_ZONE_ALIVECOUNT
+        else => |zone_id| switch (hadal_zone.Group.fromZoneId(zone_id)) {
+            .boss_challenge, .free_training => 224, // HADAL_ZONE_BOSSCHALLENGE
+            .stable, .scheduled => switch (layer.room_index) {
+                0 => 209, // HADAL_ZONE
+                else => 303, // HADAL_ZONE_IMPACT_BATTLE
+            },
+        },
+    };
+
+    return .{
+        .scene_type = 9,
+        .play_type = play_type,
+        .scene_id = layer.getId(),
+        .enemy_property_scale = switch (play_type) {
+            224 => 33,
+            303 => 61,
+            else => 19,
+        },
+        .hadal_zone_scene_data = .{
+            .zone_id = @backingInt(layer.zone_id),
+            .room_index = layer.room_index,
+            .layer_index = layer.layer_index,
+            .layer_item_id = layer_item_id,
+            .first_room_avatar_id_list = avatar_id_list: {
+                var list: ArrayList(u32) = try .initCapacity(arena, 3);
+                for (avatar_lists[0]) |slot| if (slot.toId()) |id|
+                    list.appendAssumeCapacity(@backingInt(id));
+
+                break :avatar_id_list list;
+            },
+            .second_room_avatar_id_list = avatar_id_list: {
+                var list: ArrayList(u32) = try .initCapacity(arena, 3);
+                for (avatar_lists[1]) |slot| if (slot.toId()) |id|
+                    list.appendAssumeCapacity(@backingInt(id));
+
+                break :avatar_id_list list;
+            },
+            .first_room_buddy_id = if (buddies[0].toId()) |id|
+                @backingInt(id)
+            else
+                0,
+            .second_room_buddy_id = if (buddies[1].toId()) |id|
+                @backingInt(id)
+            else
+                0,
+        },
+    };
+}
+
 pub fn packDungeonInfo(
     arena: Allocator,
     quest_id: u32,
     quest_type: u32,
     avatar_lists: []const AvatarSlot.List,
-    buddies: []const GameMode.OptionalBuddy,
+    buddies: []const OptionalBuddy,
     avatar: *const Properties.Avatar,
     weapon: *const Properties.Weapon,
     equipment: *const Properties.Equipment,
@@ -580,7 +716,6 @@ pub fn packDungeonInfo(
 
 const Timestamp = std.Io.Timestamp;
 const ArrayList = std.ArrayList;
-const GameMode = logic.Changes.GameMode;
 const Avatar = Properties.Avatar;
 const Equipment = Properties.Equipment;
 const QuickTeam = Properties.QuickTeam;

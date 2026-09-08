@@ -3,7 +3,6 @@ const assets = remielle.assets;
 
 const namespaces: []const type = &.{
     @import("notifiers/player_sync.zig"),
-    @import("notifiers/scene.zig"),
 };
 
 pub const NotifierError = Allocator.Error;
