@@ -15,6 +15,7 @@ pub fn enterWorld(
 ) !void {
     _ = message;
 
+    // Moves data around without actually modifying anything.
     const mode_switch: Changes.GameMode = .{ .hall = .{
         .section_id = properties.hall.section_id,
         .position = properties.hall.position,
@@ -36,6 +37,7 @@ pub fn leaveCurScene(
 ) !void {
     _ = message;
 
+    // Moves data around without actually modifying anything.
     const mode_switch: Changes.GameMode = .{ .hall = .{
         .section_id = properties.hall.section_id,
         .position = properties.hall.position,
@@ -47,6 +49,9 @@ pub fn leaveCurScene(
 
 pub fn enterSection(
     message: Message(pb.EnterSectionCsReq),
+    properties: Properties.Mutable(.{
+        Properties.Hall,
+    }),
     changes: Changes.Builder(.{
         Changes.GameMode,
     }),
@@ -65,6 +70,9 @@ pub fn enterSection(
         .section_id = section_id,
         .position = position,
     } };
+
+    properties.hall.section_id = section_id;
+    properties.hall.position = position;
 
     changes.insert(mode_switch);
     response.set(.init);
