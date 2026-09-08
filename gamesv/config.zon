@@ -1,11 +1,7 @@
 .{
-    // UDP bind address for the main socket.
-    // Can be overridden by the `--game-bind-address` option.
-    .game_bind_address = "127.0.0.1:20501",
-
-    // UDP bind address for the control socket.
-    // Can be overridden by the `--ctl-bind-address` option.
-    .ctl_bind_address = "127.0.0.1:15810",
+    // UDP bind address.
+    // Can be overridden by the `--bind-address` option.
+    .bind_address = "127.0.0.1:20501",
 
     // The first player UID.
     // All created account UIDs will be relative to this.

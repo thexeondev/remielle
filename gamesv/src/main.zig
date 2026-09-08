@@ -18,8 +18,7 @@ const Server = @import("Server.zig");
 const log = std.log.scoped(.@"remielle-gamesv");
 
 pub const Args = struct {
-    @"--game-bind-address": []const u8 = @import("config").game_bind_address,
-    @"--ctl-bind-address": []const u8 = @import("config").ctl_bind_address,
+    @"--bind-address": []const u8 = @import("config").bind_address,
     @"--require-secure-random": bool = true,
 };
 
@@ -40,13 +39,11 @@ pub fn usage(io: Io) noreturn {
         \\
         \\Options:
         \\  --help, -h                Print this help and exit
-        \\  --game-bind-address       UDP address for game clients; default is {q}
-        \\  --ctl-bind-address        UDP address for ctl clients; default is {q}
+        \\  --bind-address       UDP address for game clients; default is {q}
         \\  --require-secure-random   Whether to abort on entropy unavailability; default is {any}
         \\
     , .{
-        defaults.@"--game-bind-address",
-        defaults.@"--ctl-bind-address",
+        defaults.@"--bind-address",
         defaults.@"--require-secure-random",
     })) catch {};
     process.exit(0);
@@ -93,15 +90,8 @@ pub fn main(init: process.Init.Minimal) !void {
     const args_slice = try init.args.toSlice(arena.allocator());
     const args = remielle.args.parse(Args, log, args_slice) orelse usage(io);
 
-    var addresses: [Server.Socket.count]net.IpAddress = undefined;
-
-    addresses[Server.Socket.game.toIndex()] =
-        net.IpAddress.parseLiteral(args.@"--game-bind-address") catch |err|
-            fatal("bad game bind address specified: {t}", .{err});
-
-    addresses[Server.Socket.control.toIndex()] =
-        net.IpAddress.parseLiteral(args.@"--ctl-bind-address") catch |err|
-            fatal("bad ctl bind address specified: {t}", .{err});
+    const address = net.IpAddress.parseLiteral(args.@"--bind-address") catch |err|
+        fatal("bad game bind address specified: {t}", .{err});
 
     remielle.splash.print();
 
@@ -122,9 +112,10 @@ pub fn main(init: process.Init.Minimal) !void {
     };
     defer asset_lookup.deinit(gpa);
 
-    const bind_args = .{ io, gpa, csprng, &asset_lookup, &addresses, .unlimited };
-
-    var app_future = try io.concurrent(app.bind, bind_args);
+    var app_future = try io.concurrent(
+        app.bind,
+        .{ io, gpa, csprng, &asset_lookup, &address, .unlimited },
+    );
     defer app_future.cancel(io) catch {};
 
     switch (io_mode) {

@@ -2,32 +2,16 @@ const remielle = @import("remielle");
 const mem = remielle.mem;
 const assets = remielle.assets;
 const protobuf = remielle.protobuf;
-const MultiSocket = remielle.io.MultiSocket;
 
 const log = std.log.scoped(.@"remielle-gamesv");
-
-pub const Socket = enum(usize) {
-    game,
-    control,
-
-    pub const count = 2;
-
-    pub inline fn toIndex(socket: Socket) usize {
-        return @backingInt(socket);
-    }
-
-    pub inline fn fromIndex(index: usize) Socket {
-        return @fromBackingInt(@intCast(index));
-    }
-};
 
 /// Used for persistent allocations that are recycled by using internal mechanisms.
 /// Has the same lifetime as the `Server` itself.
 resource_arena: heap.ArenaAllocator,
 /// Used for allocations that have lifetime of a single handler pipeline pass.
 resettable_arena: heap.ArenaAllocator,
-/// Set of connectionless sockets, as defined by `Socket`.
-sockets: *MultiSocket,
+/// Connectionless.
+socket: Socket,
 /// Initialized at startup.
 asset_lookup: *const assets.Lookup,
 persistent: *Persistent,
@@ -108,7 +92,7 @@ pub const Frame = struct {
 pub fn init(
     gpa: Allocator,
     csprng: Random,
-    sockets: *MultiSocket,
+    socket: Socket,
     asset_lookup: *const assets.Lookup,
     persistent: *Persistent,
     session_limit: Limit,
@@ -116,7 +100,7 @@ pub fn init(
     return .{
         .resource_arena = .init(gpa),
         .resettable_arena = .init(gpa),
-        .sockets = sockets,
+        .socket = socket,
         .asset_lookup = asset_lookup,
         .multi_conversation = .init,
         .conv_counter = .init,
@@ -394,11 +378,9 @@ pub fn drainOutgoingQueue(
     io: Io,
     current_time: Io.Timestamp,
 ) Cancelable!void {
-    const socket = server.sockets.get(Socket.game.toIndex());
-
     while (server.multi_conversation.nextUndrained()) |index| try server.drainConversation(
         io,
-        socket,
+        server.socket,
         current_time,
         index,
     );
@@ -446,8 +428,7 @@ pub fn kick(
         404,
     );
 
-    const socket = server.sockets.get(Socket.game.toIndex());
-    socket.send(io, server.clients.getPtr(.addr, index), &ctl) catch |err| switch (err) {
+    server.socket.send(io, server.clients.getPtr(.addr, index), &ctl) catch |err| switch (err) {
         error.Canceled => unreachable, // blocked
         else => {},
     };
@@ -480,6 +461,7 @@ fn drainConversation(
 const Io = std.Io;
 const Random = std.Random;
 const Limit = std.Io.Limit;
+const Socket = std.Io.net.Socket;
 const Timestamp = std.Io.Timestamp;
 const Allocator = std.mem.Allocator;
 const Cancelable = std.Io.Cancelable;

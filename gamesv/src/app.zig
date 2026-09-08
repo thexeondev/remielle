@@ -2,7 +2,6 @@ const remielle = @import("remielle");
 const rsa = remielle.rsa;
 const assets = remielle.assets;
 const protobuf = remielle.protobuf;
-const MultiSocket = remielle.io.MultiSocket;
 
 const log = std.log.scoped(.@"remielle-gamesv");
 
@@ -13,7 +12,7 @@ pub fn bind(
     gpa: Allocator,
     csprng: Random,
     asset_lookup: *const assets.Lookup,
-    addresses: *const [Server.Socket.count]net.IpAddress,
+    address: *const net.IpAddress,
     concurrent_session_limit: Io.Limit,
 ) Io.Cancelable!void {
     var persistent = Persistent.init(io, gpa, .cwd()) catch |err| switch (err) {
@@ -23,31 +22,25 @@ pub fn bind(
 
     defer persistent.deinit(gpa);
 
-    var receive_buffers: [Server.Socket.count][mtu]u8 align(@alignOf(u64)) = undefined;
-    var sockets_buffer: MultiSocket.Buffer(Server.Socket.count) = undefined;
-    var sockets: MultiSocket = undefined;
+    var receive_buffer: [mtu]u8 = undefined;
 
-    sockets.init(sockets_buffer.toSockets(), &.{ &receive_buffers[0], &receive_buffers[1] });
-    defer sockets.deinit(io);
+    const socket = address.bind(io, .{
+        .mode = .dgram,
+        .protocol = .udp,
+    }) catch |err| switch (err) {
+        error.AddressInUse => fatal(
+            "the address {f} is already in use; another instance of this server might be already running",
+            .{address},
+        ),
+        else => |e| fatal("bind: {t}", .{e}),
+    };
 
-    for (addresses, std.enums.values(Server.Socket)) |address, socket| {
-        const index = sockets.bind(io, address) catch |err| switch (err) {
-            error.AddressInUse => fatal(
-                "the address {f} is already in use; another instance of this server might be already running",
-                .{address},
-            ),
-            else => |e| fatal("bind: {t}", .{e}),
-        };
-
-        std.debug.assert(index == socket.toIndex());
-
-        log.info("waiting for {t} clients at udp://{f}", .{ socket, address });
-    }
+    log.info("waiting for clients at udp://{f}", .{address});
 
     var server: Server = .init(
         gpa,
         csprng,
-        &sockets,
+        socket,
         asset_lookup,
         &persistent,
         concurrent_session_limit,
@@ -55,57 +48,30 @@ pub fn bind(
 
     defer server.deinit();
 
-    recv_loop: while (sockets.receive(io)) |completion| {
+    recv_loop: while (true) {
+        const message = socket.receive(io, &receive_buffer) catch |err| switch (err) {
+            error.Canceled => break,
+            error.MessageOversize => continue,
+            else => |e| {
+                log.err("UDP packet receive failed: {t}", .{e});
+                continue;
+            },
+        };
+
         const current_time: Io.Timestamp = .now(io, .real);
 
-        switch (Server.Socket.fromIndex(completion.index)) {
-            .game => {
-                const message = completion.result catch |err| switch (err) {
-                    error.MessageOversize => continue,
-                    else => |e| {
-                        log.err("UDP packet receive failed: {t}", .{e});
-                        continue;
-                    },
-                };
-
-                onGameMessageReceived(
-                    io,
-                    gpa,
-                    csprng,
-                    &server,
-                    sockets.get(completion.index),
-                    current_time,
-                    &message,
-                ) catch |err| switch (err) {
-                    error.Canceled => break :recv_loop,
-                    else => {},
-                };
-            },
-            .control => {
-                const message = completion.result catch |err| switch (err) {
-                    error.MessageOversize => continue,
-                    else => |e| {
-                        log.err("ctl receive failed: {t}", .{e});
-                        continue;
-                    },
-                };
-
-                const data = receive_buffers[completion.index][0..message.data.len];
-
-                control.process(io, current_time, &server, &message.from, data) catch |err| switch (err) {
-                    error.Canceled => break :recv_loop,
-                    else => {},
-                };
-
-                server.drainOutgoingQueue(io, current_time) catch |err| switch (err) {
-                    error.Canceled => break :recv_loop,
-                };
-            },
-        }
-    } else |err| switch (err) {
-        error.Canceled => {}, // shutdown
-        error.Timeout => unreachable,
-        error.ConcurrencyUnavailable => fatal("couldn't start receiving: concurrency is unavailable", .{}),
+        onGameMessageReceived(
+            io,
+            gpa,
+            csprng,
+            &server,
+            socket,
+            current_time,
+            &message,
+        ) catch |err| switch (err) {
+            error.Canceled => break :recv_loop,
+            else => {},
+        };
     }
 
     log.info("shutting down...", .{});
@@ -281,7 +247,6 @@ const net = std.Io.net;
 const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
 const Server = @import("Server.zig");
-const control = @import("control.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");
 
