@@ -43,33 +43,37 @@ pub fn packSelfBasicInfo(arena: Allocator, info: *const Properties.BasicInfo) !p
 
 pub fn packAvatarInfo(
     arena: Allocator,
-    id: Avatar.Id,
-    meta: *const Avatar.Meta,
-    weapon_uid: Avatar.OptionalUID,
-    equipment_uids: [Avatar.equipment_slots]Avatar.OptionalUID,
+    prop_avatar: *const Properties.Avatar,
+    index: usize,
 ) !pb.AvatarInfo {
     var avatar_skills: [Avatar.Skill.count]pb.AvatarSkillLevel = undefined;
+
+    const meta = &prop_avatar.meta[index];
 
     for (&avatar_skills, meta.skill_levels, 0..) |*avatar_skill, level, skill_type|
         avatar_skill.* = .{ .skill_type = @intCast(skill_type), .level = level.toInt() };
 
-    var dressed_equip_list: ArrayList(pb.DressedEquip) = try .initCapacity(arena, Avatar.equipment_slots);
+    var dressed_equip_list: ArrayList(pb.DressedEquip) =
+        try .initCapacity(arena, Avatar.equipment_slots);
 
-    for (equipment_uids, 1..) |maybe_uid, slot| if (maybe_uid.unwrap()) |uid|
-        dressed_equip_list.appendAssumeCapacity(.{
+    for (&prop_avatar.equipment_uids[index], 1..) |maybe_uid, slot| {
+        if (maybe_uid.unwrap()) |uid| dressed_equip_list.appendAssumeCapacity(.{
             .index = @intCast(slot),
             .equip_uid = uid,
         });
+    }
 
     return .{
-        .id = @backingInt(id),
+        .id = @backingInt(prop_avatar.ids[index]),
         .level = meta.level.toInt(),
         .rank = meta.rank.toInt(),
         .unlocked_talent_num = meta.talents.toInt(),
-        .mindscape_tab_state = .fromOwnedSlice(try arena.dupe(bool, &meta.mindscape_tab_state.toBools())),
+        .mindscape_tab_state = .fromOwnedSlice(
+            try arena.dupe(bool, &meta.mindscape_tab_state.toBools()),
+        ),
         .skill_type_level = .fromOwnedSlice(try arena.dupe(pb.AvatarSkillLevel, &avatar_skills)),
         .passive_skill_level = meta.skill_levels[Avatar.Skill.core_skill.toInt()].toInt() - 1,
-        .cur_weapon_uid = weapon_uid.unwrap() orelse 0,
+        .cur_weapon_uid = prop_avatar.weapon_uids[index].unwrap() orelse 0,
         .dressed_equip_list = dressed_equip_list,
         .is_favorite = meta.flags.favorite,
         .avatar_skin_id = meta.skin.toInt(),
@@ -155,10 +159,8 @@ pub fn packDungeonPackageInfo(
 
         avatar_list.appendAssumeCapacity(try packAvatarInfo(
             arena,
-            avatar_id,
-            &avatar.meta[index],
-            avatar.weapon_uids[index],
-            avatar.equipment_uids[index],
+            avatar,
+            index,
         ));
 
         if (avatar.weapon_uids[index].unwrap()) |weapon_uid_int| {

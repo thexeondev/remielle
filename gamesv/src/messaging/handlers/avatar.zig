@@ -12,21 +12,16 @@ pub fn getAvatarData(
     _ = message;
 
     const count = properties.avatar.count();
+    var infos: ArrayList(pb.AvatarInfo) = try .initCapacity(response.allocator, count);
 
-    const metas = properties.avatar.meta[0..count];
-    const weapon_uids = properties.avatar.weapon_uids[0..count];
-    const equipment_uids = properties.avatar.equipment_uids[0..count];
-
-    var infos: ArrayList(pb.AvatarInfo) = try .initCapacity(response.allocator, metas.len);
-
-    for (metas, weapon_uids, equipment_uids, 0..) |*meta, weapon_uid, equipment, index|
+    var index: u32 = 0;
+    while (index < count) : (index += 1) {
         infos.appendAssumeCapacity(try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            meta,
-            weapon_uid,
-            equipment,
+            properties.avatar,
+            index,
         ));
+    }
 
     response.set(.{ .avatar_list = infos });
 }
@@ -56,10 +51,8 @@ pub fn avatarFavorite(
 
         var info: pb.AvatarInfo = try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            meta,
-            properties.avatar.weapon_uids[index],
-            properties.avatar.equipment_uids[index],
+            properties.avatar,
+            index,
         );
 
         try sink.notify(pb.PlayerSyncScNotify, .{
@@ -103,10 +96,8 @@ pub fn avatarSkinDress(
 
         var info: pb.AvatarInfo = try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            meta,
-            properties.avatar.weapon_uids[index],
-            properties.avatar.equipment_uids[index],
+            properties.avatar,
+            index,
         );
 
         var notify: pb.PlayerSyncScNotify = .{
@@ -156,10 +147,8 @@ pub fn avatarSkinUnDress(
 
         var info: pb.AvatarInfo = try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            meta,
-            properties.avatar.weapon_uids[index],
-            properties.avatar.equipment_uids[index],
+            properties.avatar,
+            index,
         );
 
         var notify: pb.PlayerSyncScNotify = .{
@@ -232,10 +221,8 @@ pub fn weaponDress(
 
         avatars.appendAssumeCapacity(try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[prev_owner_index],
-            &properties.avatar.meta[prev_owner_index],
-            properties.avatar.weapon_uids[prev_owner_index],
-            properties.avatar.equipment_uids[prev_owner_index],
+            properties.avatar,
+            prev_owner_index,
         ));
     }
 
@@ -243,10 +230,8 @@ pub fn weaponDress(
 
     avatars.appendAssumeCapacity(try packers.packAvatarInfo(
         response.allocator,
-        properties.avatar.ids[index],
-        &properties.avatar.meta[index],
-        properties.avatar.weapon_uids[index],
-        properties.avatar.equipment_uids[index],
+        properties.avatar,
+        index,
     ));
 
     try sink.notify(pb.PlayerSyncScNotify, .{
@@ -278,10 +263,8 @@ pub fn weaponUnDress(
 
     var info: pb.AvatarInfo = try packers.packAvatarInfo(
         response.allocator,
-        properties.avatar.ids[index],
-        &properties.avatar.meta[index],
-        .none, // undress
-        properties.avatar.equipment_uids[index],
+        properties.avatar,
+        index,
     );
 
     try sink.notify(pb.PlayerSyncScNotify, .{
@@ -334,16 +317,15 @@ pub fn equipmentDress(
         const slot_idx = prev_owner_index % slots;
 
         var prev_owner_equipments_uids = properties.avatar.equipment_uids[avatar_idx];
-        prev_owner_equipments_uids[slot_idx] = @fromBackingInt(@intCast(old_equip_id.unwrap() orelse 0));
+        prev_owner_equipments_uids[slot_idx] =
+            @fromBackingInt(@intCast(old_equip_id.unwrap() orelse 0));
 
         properties.avatar.equipment_uids[prev_owner_index] = prev_owner_equipments_uids;
 
         avatars.appendAssumeCapacity(try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[prev_owner_index],
-            &properties.avatar.meta[prev_owner_index],
-            properties.avatar.weapon_uids[prev_owner_index],
-            properties.avatar.equipment_uids[prev_owner_index],
+            properties.avatar,
+            prev_owner_index,
         ));
     }
 
@@ -351,10 +333,8 @@ pub fn equipmentDress(
 
     avatars.appendAssumeCapacity(try packers.packAvatarInfo(
         response.allocator,
-        properties.avatar.ids[index],
-        &properties.avatar.meta[index],
-        properties.avatar.weapon_uids[index],
-        properties.avatar.equipment_uids[index],
+        properties.avatar,
+        index,
     ));
 
     try sink.notify(pb.PlayerSyncScNotify, .{
@@ -401,10 +381,8 @@ pub fn equipmentUnDress(
 
     var info: pb.AvatarInfo = try packers.packAvatarInfo(
         response.allocator,
-        properties.avatar.ids[index],
-        &properties.avatar.meta[index],
-        properties.avatar.weapon_uids[index],
-        equipment_uids,
+        properties.avatar,
+        index,
     );
 
     try sink.notify(pb.PlayerSyncScNotify, .{
@@ -461,10 +439,8 @@ pub fn avatarUnlockAwake(
 
     var avatar_info: pb.AvatarInfo = try packers.packAvatarInfo(
         response.allocator,
-        properties.avatar.ids[index],
-        &properties.avatar.meta[index],
-        properties.avatar.weapon_uids[index],
-        properties.avatar.equipment_uids[index],
+        properties.avatar,
+        index,
     );
 
     var material_info: pb.MaterialInfo = .{
@@ -508,10 +484,8 @@ pub fn avatarSetAwake(
 
         var avatar_info: pb.AvatarInfo = try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            &properties.avatar.meta[index],
-            properties.avatar.weapon_uids[index],
-            properties.avatar.equipment_uids[index],
+            properties.avatar,
+            index,
         );
 
         try sink.notify(pb.PlayerSyncScNotify, .{
@@ -555,10 +529,8 @@ pub fn mindscapeChangeTabState(
 
         var avatar_info: pb.AvatarInfo = try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            &properties.avatar.meta[index],
-            properties.avatar.weapon_uids[index],
-            properties.avatar.equipment_uids[index],
+            properties.avatar,
+            index,
         );
 
         try sink.notify(pb.PlayerSyncScNotify, .{
@@ -603,10 +575,8 @@ pub fn avatarShowWeaponToggle(
 
         var avatar_info: pb.AvatarInfo = try packers.packAvatarInfo(
             response.allocator,
-            properties.avatar.ids[index],
-            &properties.avatar.meta[index],
-            properties.avatar.weapon_uids[index],
-            properties.avatar.equipment_uids[index],
+            properties.avatar,
+            index,
         );
 
         try sink.notify(pb.PlayerSyncScNotify, .{
