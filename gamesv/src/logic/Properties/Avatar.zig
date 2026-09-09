@@ -6,7 +6,7 @@ const templates = remielle.assets.templates;
 
 const Properties = @import("../Properties.zig");
 
-const size = templates.avatar_base.entries.len;
+pub const size = templates.avatar_base.entries.len;
 
 pub const equipment_slots: usize = 6;
 

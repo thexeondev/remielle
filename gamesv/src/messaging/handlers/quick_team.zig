@@ -1,26 +1,30 @@
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
 
-pub fn quickTeamEdit(
-    message: Message(pb.QuickTeamEditCsReq),
-    properties: Properties.Mutable(.{
-        Properties.QuickTeam,
-    }),
-    sink: Sink,
-    response: Response(pb.QuickTeamEditScRsp),
-) !void {
-    const quick_team_data = message.data.quick_team orelse return response.fail(1);
+const logic = @import("../../logic.zig");
+const Properties = logic.Properties;
+
+const handlers = @import("../handlers.zig");
+const Scope = handlers.Scope;
+
+const packers = @import("../packers.zig");
+
+pub fn QuickTeamEditCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.QuickTeamEditCsReq);
+    const quick_team_data = request.quick_team orelse
+        return try scope.sink.respond(pb.QuickTeamEditScRsp, .{ .retcode = 1 });
 
     for (quick_team_data.quick_team_list.items) |quick_team| {
         const slot = Properties.QuickTeam.Slot.fromInt(quick_team.slot) orelse
-            return response.fail(1);
+            return try scope.sink.respond(pb.QuickTeamEditScRsp, .{ .retcode = 1 });
 
         if (quick_team.avatar_list.items.len > 3 or
-            quick_team.buddy_list.items.len > 1) return response.fail(1);
+            quick_team.buddy_list.items.len > 1)
+            return try scope.sink.respond(pb.QuickTeamEditScRsp, .{ .retcode = 1 });
 
         var meta: Properties.QuickTeam.Meta = .{
             .name = Properties.QuickTeam.Name.fromSlice(quick_team.name) catch
-                return response.fail(1),
+                return try scope.sink.respond(pb.QuickTeamEditScRsp, .{ .retcode = 1 }),
 
             .avatar_ids = @splat(.none),
             .buddy_id = .none,
@@ -32,56 +36,38 @@ pub fn quickTeamEdit(
         if (quick_team.buddy_list.items.len == 1)
             meta.buddy_id = @fromBackingInt(@intCast(quick_team.buddy_list.items[0].buddy_id));
 
-        properties.quick_team.meta[slot.toIndex()] = meta;
+        scope.properties.quick_team.meta[slot.toIndex()] = meta;
     }
 
-    try sink.notify(pb.PlayerSyncScNotify, .{
+    try scope.sink.notify(pb.PlayerSyncScNotify, .{
         .misc = .{ .quick_team = .{
             .quick_team_list = try packers.packQuickTeamList(
-                response.allocator,
-                &properties.quick_team.meta,
+                scope.sink.allocator,
+                &scope.properties.quick_team.meta,
             ),
         } },
     });
 
-    response.set(.init);
+    try scope.sink.respond(pb.QuickTeamEditScRsp, .init);
 }
 
-pub fn quickTeamModName(
-    message: Message(pb.QuickTeamModNameCsReq),
-    properties: Properties.Mutable(.{
-        Properties.QuickTeam,
-    }),
-    sink: Sink,
-    response: Response(pb.QuickTeamModNameScRsp),
-) !void {
-    const slot = Properties.QuickTeam.Slot.fromInt(message.data.slot) orelse
-        return response.fail(1);
+pub fn QuickTeamModNameCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.QuickTeamModNameCsReq);
 
-    properties.quick_team.meta[slot.toIndex()].name.set(message.data.name) catch
-        return response.fail(1);
+    const slot = Properties.QuickTeam.Slot.fromInt(request.slot) orelse
+        return try scope.sink.respond(pb.QuickTeamModNameScRsp, .{ .retcode = 1 });
 
-    try sink.notify(pb.PlayerSyncScNotify, .{
+    scope.properties.quick_team.meta[slot.toIndex()].name.set(request.name) catch
+        return try scope.sink.respond(pb.QuickTeamModNameScRsp, .{ .retcode = 1 });
+
+    try scope.sink.notify(pb.PlayerSyncScNotify, .{
         .misc = .{ .quick_team = .{
             .quick_team_list = try packers.packQuickTeamList(
-                response.allocator,
-                &properties.quick_team.meta,
+                scope.sink.allocator,
+                &scope.properties.quick_team.meta,
             ),
         } },
     });
 
-    response.set(.init);
+    try scope.sink.respond(pb.QuickTeamModNameScRsp, .init);
 }
-
-const Sink = handlers.Sink;
-const Message = handlers.Message;
-const Response = handlers.Response;
-
-const Changes = logic.Changes;
-const Properties = logic.Properties;
-
-const logic = @import("../../logic.zig");
-const handlers = @import("../handlers.zig");
-const packers = @import("../packers.zig");
-
-const std = @import("std");

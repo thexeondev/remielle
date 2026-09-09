@@ -1,76 +1,70 @@
+const std = @import("std");
+
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
 const templates = remielle.assets.templates;
 
 const packers = @import("../packers.zig");
+const logic = @import("../../logic.zig");
+const handlers = @import("../handlers.zig");
+const Scope = handlers.Scope;
 
-pub fn getQuestData(
-    message: Message(pb.GetQuestDataCsReq),
-    response: Response(pb.GetQuestDataScRsp),
-) !void {
-    response.set(.{
-        .quest_type = message.data.quest_type,
+pub fn GetQuestDataCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.GetQuestDataCsReq);
+
+    try scope.sink.respond(pb.GetQuestDataScRsp, .{
+        .quest_type = request.quest_type,
         .quest_data = .init,
     });
 }
 
-pub fn getHollowData(
-    message: Message(pb.GetHollowDataCsReq),
-    response: Response(pb.GetHollowDataScRsp),
-) !void {
-    _ = message;
-    response.set(.{ .hollow_data = .init });
+pub fn GetHollowDataCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.GetHollowDataScRsp, .{
+        .hollow_data = .init,
+    });
 }
 
-pub fn getArchiveData(
-    message: Message(pb.GetArchiveDataCsReq),
-    response: Response(pb.GetArchiveDataScRsp),
-) !void {
-    _ = message;
-    response.set(.{ .archive_data = .init });
+pub fn GetArchiveDataCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.GetArchiveDataScRsp, .{
+        .archive_data = .init,
+    });
 }
 
-pub fn startTrainingQuest(
-    message: Message(pb.StartTrainingQuestCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Avatar,
-        Properties.Weapon,
-        Properties.Equipment,
-        Properties.Buddy,
-    }),
-    sink: Sink,
-    response: Response(pb.StartTrainingQuestScRsp),
-) !void {
-    const quest: templates.training_quest.Id = @fromBackingInt(@intCast(message.data.quest_id));
+pub fn StartTrainingQuestCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.StartTrainingQuestCsReq);
+
+    const quest: templates.training_quest.Id = @fromBackingInt(@intCast(request.quest_id));
     if (quest != .free_training) // Not implemented yet
-        return response.fail(1);
+        return try scope.sink.respond(pb.StartTrainingQuestScRsp, .{ .retcode = 1 });
 
-    switch (message.data.avatar_id_list.items.len) {
+    switch (request.avatar_id_list.items.len) {
         1...packers.AvatarSlot.count => {},
-        else => return response.fail(1),
+        else => return try scope.sink.respond(pb.StartTrainingQuestScRsp, .{ .retcode = 1 }),
     }
 
     var avatars: packers.AvatarSlot.List = undefined;
 
     for (&avatars, 0..) |*slot, index| {
-        if (index >= message.data.avatar_id_list.items.len) {
+        if (index >= request.avatar_id_list.items.len) {
             slot.* = .none;
             continue;
         }
 
         const id = std.enums.fromInt(
             templates.avatar_base.Id,
-            message.data.avatar_id_list.items[index],
+            request.avatar_id_list.items[index],
         ) orelse
-            return response.fail(1); // invalid avatar id
+            // invalid avatar id
+            return try scope.sink.respond(pb.StartTrainingQuestScRsp, .{ .retcode = 1 });
 
-        if (!properties.avatar.indexes.contains(id))
-            return response.fail(1); // avatar not unlocked
+        if (!scope.properties.avatar.indexes.contains(id))
+            // avatar not unlocked
+            return try scope.sink.respond(pb.StartTrainingQuestScRsp, .{ .retcode = 1 });
 
         slot.* = .fromId(id);
     }
 
-    try sink.notify(pb.EnterSceneScNotify, .{
+    try scope.sink.notify(pb.EnterSceneScNotify, .{
         .scene = .{
             .scene_type = 3, // training is implemented in terms of FightScene
             .play_type = 290,
@@ -81,39 +75,31 @@ pub fn startTrainingQuest(
             },
         },
         .dungeon = try packers.packDungeonInfo(
-            response.allocator,
+            scope.sink.allocator,
             @backingInt(quest),
             0,
             &.{avatars},
             &.{},
-            properties.avatar,
-            properties.weapon,
-            properties.equip,
-            properties.buddy,
+            &scope.properties.avatar,
+            &scope.properties.weapon,
+            &scope.properties.equip,
+            &scope.properties.buddy,
         ),
     });
 
-    response.set(.init);
+    try scope.sink.respond(pb.StartTrainingQuestScRsp, .init);
 }
 
-pub fn startHadalZoneBattle(
-    message: Message(pb.StartHadalZoneBattleCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Avatar,
-        Properties.Weapon,
-        Properties.Equipment,
-        Properties.Buddy,
-    }),
-    sink: Sink,
-    response: Response(pb.StartHadalZoneBattleScRsp),
-) !void {
-    const zone_id = packers.hadal_zone.ZoneId.fromInt(message.data.zone_id) orelse
-        return response.fail(1);
+pub fn StartHadalZoneBattleCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.StartHadalZoneBattleCsReq);
+
+    const zone_id = packers.hadal_zone.ZoneId.fromInt(request.zone_id) orelse
+        return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
 
     const layer: packers.hadal_zone.Layer = .{
         .zone_id = zone_id,
-        .layer_index = message.data.layer_index,
-        .room_index = message.data.room_index,
+        .layer_index = request.layer_index,
+        .room_index = request.room_index,
     };
 
     const layer_id = layer.getId();
@@ -123,7 +109,7 @@ pub fn startHadalZoneBattle(
             if (entry.layer_id == layer_id)
                 break :quest_id entry.quest_id;
 
-        return response.fail(1);
+        return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
     };
 
     const quest_type = quest_type: {
@@ -131,7 +117,7 @@ pub fn startHadalZoneBattle(
             if (entry.quest_id == quest_id)
                 break :quest_type entry.quest_type;
 
-        return response.fail(1);
+        return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
     };
 
     var avatar_lists: [packers.hadal_zone.room_count]packers.AvatarSlot.List = @splat(@splat(.none));
@@ -141,74 +127,63 @@ pub fn startHadalZoneBattle(
         &avatar_lists,
         &buddies,
         [_][]const u32{
-            message.data.first_room_avatar_id_list.items,
-            message.data.second_room_avatar_id_list.items,
+            request.first_room_avatar_id_list.items,
+            request.second_room_avatar_id_list.items,
         },
         [_]u32{
-            message.data.first_room_buddy_id,
-            message.data.second_room_buddy_id,
+            request.first_room_buddy_id,
+            request.second_room_buddy_id,
         },
     ) |*avatar_slots, *optional_buddy, avatar_id_list, raw_buddy_id| {
         for (avatar_slots[0..avatar_id_list.len], avatar_id_list) |*avatar_slot, raw_avatar_id| {
             const avatar_id = std.enums.fromInt(templates.avatar_base.Id, raw_avatar_id) orelse
-                return response.fail(1); // invalid avatar id
+                // invalid avatar id
+                return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
 
-            if (!properties.avatar.indexes.contains(avatar_id))
-                return response.fail(1); // avatar not unlocked
+            if (!scope.properties.avatar.indexes.contains(avatar_id))
+                // avatar not unlocked
+                return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
 
             avatar_slot.* = .fromId(avatar_id);
         }
 
         if (raw_buddy_id != 0) {
             const buddy_id = std.enums.fromInt(templates.buddy_base.Id, raw_buddy_id) orelse
-                return response.fail(1); // invalid buddy id
+                // invalid buddy id
+                return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
 
-            if (!properties.buddy.indexes.contains(buddy_id))
-                return response.fail(1);
+            if (!scope.properties.buddy.indexes.contains(buddy_id))
+                // buddy not unlocked
+                return try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .{ .retcode = 1 });
 
             optional_buddy.* = .fromId(buddy_id);
         }
     }
 
-    try sink.notify(pb.EnterSceneScNotify, .{
+    try scope.sink.notify(pb.EnterSceneScNotify, .{
         .scene = try packers.packSceneDataForHadalZone(
-            response.allocator,
+            scope.sink.allocator,
             &avatar_lists,
             &buddies,
             layer,
-            message.data.layer_item_id,
+            request.layer_item_id,
         ),
         .dungeon = try packers.packDungeonInfo(
-            response.allocator,
+            scope.sink.allocator,
             quest_id,
             quest_type,
             &avatar_lists,
             &buddies,
-            properties.avatar,
-            properties.weapon,
-            properties.equip,
-            properties.buddy,
+            &scope.properties.avatar,
+            &scope.properties.weapon,
+            &scope.properties.equip,
+            &scope.properties.buddy,
         ),
     });
 
-    response.set(.init);
+    try scope.sink.respond(pb.StartHadalZoneBattleScRsp, .init);
 }
 
-pub fn endBattle(
-    message: Message(pb.EndBattleCsReq),
-    response: Response(pb.EndBattleScRsp),
-) !void {
-    _ = message;
-    response.set(.{ .fight_settle = .init });
+pub fn EndBattleCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.EndBattleScRsp, .{ .fight_settle = .init });
 }
-
-const Sink = handlers.Sink;
-const Changes = logic.Changes;
-const Message = handlers.Message;
-const Response = handlers.Response;
-const Properties = logic.Properties;
-
-const logic = @import("../../logic.zig");
-const handlers = @import("../handlers.zig");
-
-const std = @import("std");

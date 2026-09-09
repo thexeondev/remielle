@@ -1,196 +1,139 @@
+const std = @import("std");
+
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
 const assets = remielle.assets;
 const templates = remielle.assets.templates;
 
-pub fn enterWorld(
-    message: Message(pb.EnterWorldCsReq),
-    asset_lookup: *const assets.Lookup,
-    properties: Properties.Immutable(.{
-        Properties.Hall,
-        Properties.BasicInfo,
-        Properties.MainCityTime,
-    }),
-    sink: Sink,
-    response: Response(pb.EnterWorldScRsp),
-) !void {
-    _ = message;
+const logic = @import("../../logic.zig");
+const Properties = logic.Properties;
 
-    try sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
-        response.allocator,
-        asset_lookup,
-        properties.hall,
-        properties.main_city_time,
-        properties.basic_info,
+const handlers = @import("../handlers.zig");
+const Scope = handlers.Scope;
+
+const packers = @import("../packers.zig");
+
+pub fn EnterWorldCsReq(scope: *Scope) !void {
+    try scope.sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
+        scope.sink.allocator,
+        scope.asset_lookup,
+        &scope.properties.hall,
+        &scope.properties.main_city_time,
+        &scope.properties.basic_info,
     ));
 
-    response.set(.init);
+    try scope.sink.respond(pb.EnterWorldScRsp, .init);
 }
 
-pub fn leaveCurScene(
-    message: Message(pb.LeaveCurSceneCsReq),
-    asset_lookup: *const assets.Lookup,
-    properties: Properties.Immutable(.{
-        Properties.Hall,
-        Properties.BasicInfo,
-        Properties.MainCityTime,
-    }),
-    sink: Sink,
-    response: Response(pb.LeaveCurSceneScRsp),
-) !void {
-    _ = message;
-
-    try sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
-        response.allocator,
-        asset_lookup,
-        properties.hall,
-        properties.main_city_time,
-        properties.basic_info,
+pub fn LeaveCurSceneCsReq(scope: *Scope) !void {
+    try scope.sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
+        scope.sink.allocator,
+        scope.asset_lookup,
+        &scope.properties.hall,
+        &scope.properties.main_city_time,
+        &scope.properties.basic_info,
     ));
 
-    response.set(.init);
+    try scope.sink.respond(pb.LeaveCurSceneScRsp, .init);
 }
 
-pub fn enterSection(
-    message: Message(pb.EnterSectionCsReq),
-    asset_lookup: *const assets.Lookup,
-    properties: Properties.Mutable(.{
-        Properties.Hall,
-        Properties.BasicInfo,
-        Properties.MainCityTime,
-    }),
-    sink: Sink,
-    response: Response(pb.EnterSectionScRsp),
-) !void {
+pub fn EnterSectionCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.EnterSectionCsReq);
+
     const section_id = std.enums.fromInt(
         templates.section_config.Id,
-        message.data.section_id,
-    ) orelse return response.fail(1);
+        request.section_id,
+    ) orelse return try scope.sink.respond(pb.EnterSectionScRsp, .{ .retcode = 1 });
 
     const position: Properties.Hall.Position = Properties.Hall.Position.fromId(
-        message.data.transform_id,
+        request.transform_id,
     ) orelse .init;
 
-    properties.hall.section_id = section_id;
-    properties.hall.position = position;
+    scope.properties.hall.section_id = section_id;
+    scope.properties.hall.position = position;
 
-    try sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
-        response.allocator,
-        asset_lookup,
-        properties.hall,
-        properties.main_city_time,
-        properties.basic_info,
+    try scope.sink.notify(pb.EnterSceneScNotify, try packers.packEnterSceneForHall(
+        scope.sink.allocator,
+        scope.asset_lookup,
+        &scope.properties.hall,
+        &scope.properties.main_city_time,
+        &scope.properties.basic_info,
     ));
 
-    response.set(.init);
+    try scope.sink.respond(pb.EnterSectionScRsp, .init);
 }
 
-pub fn interactWithUnit(
-    message: Message(pb.InteractWithUnitCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Hall,
-    }),
-    sink: Sink,
-    response: Response(pb.InteractWithUnitScRsp),
-) !void {
+pub fn InteractWithUnitCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.InteractWithUnitCsReq);
+
     const interact_index: u32 = @intCast(std.mem.findScalar(
         u32,
         assets.graphs.interacts.ids,
-        @bitCast(message.data.interact_id),
+        @bitCast(request.interact_id),
     ) orelse
-        return response.fail(1));
+        return try scope.sink.respond(pb.InteractWithUnitScRsp, .{ .retcode = 1 }));
 
-    try sink.notify(
+    try scope.sink.notify(
         pb.SectionEventScNotify,
         try packers.packSectionEventByInteract(
-            response.allocator,
-            properties.hall,
+            scope.sink.allocator,
+            &scope.properties.hall,
             interact_index,
         ),
     );
 
-    response.set(.init);
+    try scope.sink.respond(pb.InteractWithUnitScRsp, .init);
 }
 
-pub fn enterSectionComplete(
-    message: Message(pb.EnterSectionCompleteCsReq),
-    response: Response(pb.EnterSectionCompleteScRsp),
-) !void {
-    _ = message;
-    response.set(.init);
+pub fn EnterSectionCompleteCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.EnterSectionCompleteScRsp, .init);
 }
 
-pub fn sectionRefresh(
-    message: Message(pb.SectionRefreshCsReq),
-    response: Response(pb.SectionRefreshScRsp),
-) !void {
-    _ = message;
-    response.set(.init);
+pub fn SectionRefreshCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.SectionRefreshScRsp, .init);
 }
 
-pub fn savePosInMainCity(
-    message: Message(pb.SavePosInMainCityCsReq),
-    properties: Properties.Mutable(.{
-        Properties.Hall,
-    }),
-    response: Response(pb.SavePosInMainCityScRsp),
-) !void {
-    if (!message.data.real_save) return response.set(.init);
+pub fn SavePosInMainCityCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.SavePosInMainCityCsReq);
+    if (!request.real_save)
+        return try scope.sink.respond(pb.SavePosInMainCityScRsp, .init);
 
-    const section_id = std.enums.fromInt(templates.section_config.Id, message.data.section_id) orelse
-        return response.fail(1);
+    const section_id = std.enums.fromInt(templates.section_config.Id, request.section_id) orelse
+        return try scope.sink.respond(pb.SavePosInMainCityScRsp, .{ .retcode = 1 });
 
     // The client might send a request when a section switch is already pending,
     // it'll have previous section_id in it. Simply ignore such requests for now,
     // later, maybe there will be a need to store positions for each section.
-    if (message.data.position) |transform| if (properties.hall.section_id == section_id) {
-        properties.hall.position = Properties.Hall.Position.fromVectors(
+    if (request.position) |transform| if (scope.properties.hall.section_id == section_id) {
+        scope.properties.hall.position = Properties.Hall.Position.fromVectors(
             transform.position.items,
             transform.rotation.items,
-        ) orelse return response.fail(1);
+        ) orelse return try scope.sink.respond(pb.SavePosInMainCityScRsp, .{ .retcode = 1 });
     };
 
-    response.set(.init);
+    return try scope.sink.respond(pb.SavePosInMainCityScRsp, .init);
 }
 
-pub fn modMainCityTime(
-    message: Message(pb.ModMainCityTimeCsReq),
-    properties: logic.Properties.Mutable(.{
-        Properties.Hall,
-        Properties.MainCityTime,
-    }),
-    sink: Sink,
-    response: Response(pb.ModMainCityTimeScRsp),
-) !void {
+pub fn ModMainCityTimeCsReq(scope: *Scope) !void {
+    const request = try scope.source.take(pb.ModMainCityTimeCsReq);
+
     const next_time_period = std.enums.fromInt(
         Properties.MainCityTime.TimePeriod,
-        message.data.time_period,
+        request.time_period,
     ) orelse
-        return response.fail(1);
+        return try scope.sink.respond(pb.ModMainCityTimeScRsp, .init);
 
-    properties.main_city_time.time_in_minutes = next_time_period.toTimeInMinutes();
+    scope.properties.main_city_time.time_in_minutes = next_time_period.toTimeInMinutes();
 
-    if (next_time_period.isNextDayOf(.fromTimeInMinutes(properties.main_city_time.time_in_minutes)))
-        properties.main_city_time.day_of_week = properties.main_city_time.day_of_week.nextDay();
+    if (next_time_period.isNextDayOf(.fromTimeInMinutes(scope.properties.main_city_time.time_in_minutes)))
+        scope.properties.main_city_time.day_of_week =
+            scope.properties.main_city_time.day_of_week.nextDay();
 
-    try sink.notify(pb.HallRefreshScNotify, packers.packHallRefreshMinimal(
-        properties.hall,
-        properties.main_city_time,
+    try scope.sink.notify(pb.HallRefreshScNotify, packers.packHallRefreshMinimal(
+        &scope.properties.hall,
+        &scope.properties.main_city_time,
         .{ .force = true },
     ));
 
-    response.set(.init);
+    try scope.sink.respond(pb.ModMainCityTimeScRsp, .init);
 }
-
-const Sink = handlers.Sink;
-const Message = handlers.Message;
-const Response = handlers.Response;
-
-const Changes = logic.Changes;
-const Properties = logic.Properties;
-
-const packers = @import("../packers.zig");
-const logic = @import("../../logic.zig");
-const handlers = @import("../handlers.zig");
-
-const std = @import("std");

@@ -1,109 +1,82 @@
+const std = @import("std");
+const ArrayList = std.ArrayList;
+
+const packers = @import("../../messaging/packers.zig");
+const logic = @import("../../logic.zig");
+const handlers = @import("../handlers.zig");
+
+const Scope = handlers.Scope;
+const Properties = logic.Properties;
+
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
 const templates = remielle.assets.templates;
 
-pub fn getWeaponData(
-    message: Message(pb.GetWeaponDataCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Weapon,
-    }),
-    response: Response(pb.GetWeaponDataScRsp),
-) !void {
-    _ = message;
-
+pub fn GetWeaponDataCsReq(scope: *Scope) !void {
     var weapon_list: ArrayList(pb.WeaponInfo) = try .initCapacity(
-        response.allocator,
-        properties.weapon.count,
+        scope.sink.allocator,
+        scope.properties.weapon.count,
     );
 
     var i: u16 = 0;
-
-    while (i < properties.weapon.count) : (i += 1) {
+    while (i < scope.properties.weapon.count) : (i += 1) {
         weapon_list.appendAssumeCapacity(.{
-            .uid = properties.weapon.uids[i].toInt(),
-            .id = @backingInt(properties.weapon.ids[i]),
-            .level = properties.weapon.levels[i].toInt(),
-            .star = properties.weapon.stars[i].toInt(),
-            .refine_level = properties.weapon.refines[i].toInt(),
+            .uid = scope.properties.weapon.uids[i].toInt(),
+            .id = @backingInt(scope.properties.weapon.ids[i]),
+            .level = scope.properties.weapon.levels[i].toInt(),
+            .star = scope.properties.weapon.stars[i].toInt(),
+            .refine_level = scope.properties.weapon.refines[i].toInt(),
         });
     }
 
-    response.set(.{ .weapon_list = weapon_list });
+    try scope.sink.respond(pb.GetWeaponDataScRsp, .{ .weapon_list = weapon_list });
 }
 
-pub fn getEquipData(
-    message: Message(pb.GetEquipDataCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Equipment,
-    }),
-    response: Response(pb.GetEquipDataScRsp),
-) !void {
-    _ = message;
-
-    var equip_list: ArrayList(pb.EquipInfo) = try .initCapacity(response.allocator, properties.equip.count);
+pub fn GetEquipDataCsReq(scope: *Scope) !void {
+    var equip_list: ArrayList(pb.EquipInfo) = try .initCapacity(
+        scope.sink.allocator,
+        scope.properties.equip.count,
+    );
 
     var i: u16 = 0;
-
-    while (i < properties.equip.count) : (i += 1) {
+    while (i < scope.properties.equip.count) : (i += 1) {
         equip_list.appendAssumeCapacity(try packers.packEquipmentInfo(
-            response.allocator,
-            properties.equip.uids[i],
-            properties.equip.ids[i],
-            properties.equip.levels[i],
-            properties.equip.stars[i],
-            &properties.equip.properties[i],
+            scope.sink.allocator,
+            scope.properties.equip.uids[i],
+            scope.properties.equip.ids[i],
+            scope.properties.equip.levels[i],
+            scope.properties.equip.stars[i],
+            &scope.properties.equip.properties[i],
         ));
     }
 
-    response.set(.{ .equip_list = equip_list });
+    try scope.sink.respond(pb.GetEquipDataScRsp, .{ .equip_list = equip_list });
 }
 
-pub fn getItemData(
-    message: Message(pb.GetItemDataCsReq),
-    properties: Properties.Immutable(.{
-        Properties.Avatar,
-    }),
-    response: Response(pb.GetItemDataScRsp),
-) !void {
-    _ = message;
-
+pub fn GetItemDataCsReq(scope: *Scope) !void {
     var materials: std.ArrayList(pb.MaterialInfo) = try .initCapacity(
-        response.allocator,
+        scope.sink.allocator,
+        // TODO: upper bound must include awake materials
         templates.avatar_skin_base.entries.len,
     );
 
     for (templates.avatar_skin_base.entries) |entry|
         materials.appendAssumeCapacity(.{ .id = entry.id, .count = 1 });
 
-    const avatar_count = properties.avatar.count();
-    const awake_material_counts = properties.avatar.awake_material_counts[0..avatar_count];
-    for (awake_material_counts, 0..) |awake_material_count, index| if (awake_material_count != .none) {
-        try materials.append(response.allocator, .{
-            .id = 20_000 + @divFloor(@backingInt(properties.avatar.ids[index]), 10),
-            .count = awake_material_count.toInt(),
-        });
-    };
+    const avatar_count = scope.properties.avatar.count();
+    const awake_material_counts = scope.properties.avatar.awake_material_counts[0..avatar_count];
+    for (awake_material_counts, 0..) |awake_material_count, index| {
+        if (awake_material_count != .none) {
+            try materials.append(scope.sink.allocator, .{
+                .id = 20_000 + @divFloor(@backingInt(scope.properties.avatar.ids[index]), 10),
+                .count = awake_material_count.toInt(),
+            });
+        }
+    }
 
-    response.set(.{
-        .material_list = materials,
-    });
+    try scope.sink.respond(pb.GetItemDataScRsp, .{ .material_list = materials });
 }
 
-pub fn getWishlistData(
-    message: Message(pb.GetWishlistDataCsReq),
-    response: Response(pb.GetWishlistDataScRsp),
-) !void {
-    _ = message;
-    response.set(.init);
+pub fn GetWishlistDataCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.GetWishlistDataScRsp, .init);
 }
-
-const ArrayList = std.ArrayList;
-const Message = handlers.Message;
-const Response = handlers.Response;
-const Properties = logic.Properties;
-
-const packers = @import("../../messaging/packers.zig");
-const logic = @import("../../logic.zig");
-const handlers = @import("../handlers.zig");
-
-const std = @import("std");

@@ -1,8 +1,20 @@
+const std = @import("std");
+const Io = std.Io;
+const assert = std.debug.assert;
+const Allocator = std.mem.Allocator;
+
 const remielle = @import("remielle");
 const assets = remielle.assets;
-const templates = assets.templates;
+const templates = remielle.assets.templates;
 const protobuf = remielle.protobuf;
 const pb = protobuf.main;
+
+const Server = @import("../Server.zig");
+const ClientVariables = Server.ClientVariables;
+
+const kcp = @import("../kcp.zig");
+const logic = @import("../logic.zig");
+const messaging = @import("../messaging.zig");
 
 const log = std.log.scoped(.@"remielle-gamesv::messaging");
 
@@ -19,34 +31,47 @@ const namespaces: []const type = &.{
     @import("handlers/quick_team.zig"),
 };
 
-const CmdId = CmdId: {
-    var names: []const []const u8 = &.{};
-    var values: []const u16 = &.{};
-
-    for (namespaces) |ns| for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
-        const Fn = @TypeOf(@field(ns, decl_name));
-        const Msg = MessageOf(Fn);
-
-        values = values ++ .{protobuf.cmdId(Msg.Data) orelse continue};
-        names = names ++ .{Msg.Data.pb_desc_name};
-    };
-
-    break :CmdId @Enum(u16, .exhaustive, names, @ptrCast(values));
-};
-
 pub const HandlerError = error{
     IllegalMessage,
+    DecodeFail,
 } || Allocator.Error || messaging.SendError;
 
-pub const ProcessError = error{
-    DecodeFail,
-} || HandlerError;
+const HandlerFn = fn (scope: *Scope) Scope.Error!void;
+
+const handlers: [10_000]?*const HandlerFn = handlers: {
+    var array: [10_000]?*const HandlerFn = @splat(null);
+
+    @setEvalBranchQuota(namespaces.len);
+    for (namespaces) |namespace| {
+        const decl_names = @typeInfo(namespace).@"struct".decl_names;
+
+        @setEvalBranchQuota(decl_names.len);
+        for (decl_names) |decl_name| {
+            if (!@hasDecl(protobuf.main_desc, decl_name))
+                continue;
+
+            const message_desc = @field(protobuf.main_desc, decl_name);
+            const message_cmd_id = message_desc.cmd_id;
+
+            const handlerFn: *const HandlerFn = &@field(namespace, decl_name);
+            assert(array[message_cmd_id] == null); // Duplicated handler.
+            array[message_cmd_id] = handlerFn;
+        }
+    }
+
+    break :handlers array;
+};
+
+fn getHandler(cmd_id: u16) ?*const HandlerFn {
+    if (cmd_id >= handlers.len) return null;
+    return handlers[cmd_id];
+}
 
 pub fn process(
     arena: Allocator,
     frame: *const Server.Frame,
     reader: *Io.Reader,
-) ProcessError!void {
+) HandlerError!void {
     @setEvalBranchQuota(1_000_000);
 
     const msg_header_bytes = reader.takeArray(messaging.Header.size) catch
@@ -63,143 +88,84 @@ pub fn process(
 
     var xored_reader = frame.clients.getPtr(.xorpad, frame.target_index).wrapReader(reader, msg_header.body_len);
 
-    const cmd_id = std.enums.fromInt(CmdId, msg_header.cmd_id) orelse {
+    const handlerFn = getHandler(msg_header.cmd_id) orelse {
         log.warn(
             "unhandled message with cmd_id {d} from {f}",
             .{ msg_header.cmd_id, frame.clients.get(.addr, frame.target_index) },
         );
 
-        if (head.packet_id == 0) return;
+        if (head.packet_id != 0) {
+            try messaging.sendDummy(
+                frame.multi_conversation,
+                frame.clients,
+                frame.target_index,
+                .ack(head.packet_id),
+            );
+        }
 
-        try messaging.sendDummy(
-            frame.multi_conversation,
-            frame.clients,
-            frame.target_index,
-            .ack(head.packet_id),
-        );
         return;
     };
 
-    switch (cmd_id) {
-        inline else => |id| lookup: inline for (namespaces) |ns| {
-            inline for (@typeInfo(ns).@"struct".decl_names) |decl_name| {
-                const Fn = @TypeOf(@field(ns, decl_name));
+    var scope: Scope = .{
+        .asset_lookup = frame.asset_lookup,
+        .properties = frame.properties,
+        .calendar = frame.calendar,
+        .clock = .{
+            .time = frame.time,
+            .utc_offset = 3, // TODO: configuration field + cli option
+        },
+        .source = .{
+            .allocator = arena,
+            .reader = &xored_reader.interface,
+        },
+        .sink = .{
+            .allocator = arena,
+            .ack_packet_id = head.packet_id,
+            .frame = frame,
+        },
+    };
 
-                const InMessage = MessageOf(Fn);
-                if (@backingInt(id) != protobuf.cmdId(InMessage.Data)) continue;
+    try handlerFn(&scope);
 
-                const data = protobuf.decode(
-                    .main,
-                    InMessage.Data,
-                    arena,
-                    &xored_reader.interface,
-                ) catch |err| switch (err) {
-                    error.OutOfMemory => |e| return e,
-                    else => return error.DecodeFail,
-                };
-
-                const message: InMessage = .{ .data = &data };
-
-                const Args = std.meta.ArgsTuple(Fn);
-                var args: Args = undefined;
-
-                const OutResponse = ResponseOf(Fn);
-                var out_response: (OutResponse orelse void) = undefined;
-
-                if (OutResponse != null) out_response = .{
-                    .allocator = arena,
-                    .data = null,
-                };
-
-                inline for (&args, @typeInfo(Args).@"struct".field_types) |*arg, ArgType| {
-                    switch (ArgType) {
-                        InMessage => arg.* = message,
-                        *const assets.Lookup => arg.* = frame.asset_lookup,
-                        *const logic.Calendar => arg.* = frame.calendar,
-
-                        logic.RealTimeClock => arg.* = .{
-                            .time = frame.time,
-                            .utc_offset = 3, // TODO: configuration field + cli option
-                        },
-
-                        Sink => arg.* = .{ .frame = frame },
-
-                        else => {
-                            switch (@typeInfo(ArgType)) {
-                                .pointer => |pointer| switch (pointer.child) {
-                                    @TypeOf(out_response) => {
-                                        arg.* = &out_response;
-                                        continue;
-                                    },
-                                    else => {},
-                                },
-                                else => {
-                                    if (@hasField(ArgType, logic.Properties.immutable_subset_marker_name)) {
-                                        arg.* = frame.properties.extract(ArgType);
-                                        continue;
-                                    }
-                                },
-                            }
-
-                            @compileError(decl_name ++ ": invalid argument type: " ++ @typeName(ArgType));
-                        },
-                    }
-                }
-
-                @call(.auto, @field(ns, decl_name), args) catch |err| switch (@as(HandlerError, err)) {
-                    error.IllegalMessage => {
-                        // Send the response but don't run the pipeline
-                        if (OutResponse) |Rsp| {
-                            if (@hasField(Rsp.Data, "retcode")) {
-                                if (out_response.data) |rsp|
-                                    log.debug(
-                                        InMessage.log_prefix ++ "handler failed with retcode {d}",
-                                        .{rsp.retcode},
-                                    );
-                            }
-                        }
-                    },
-                    else => |e| return e,
-                };
-
-                if (OutResponse) |Rsp| {
-                    if (out_response.data) |out_message| {
-                        if (protobuf.cmdId(Rsp.Data) != null) {
-                            try messaging.send(
-                                frame.multi_conversation,
-                                frame.clients,
-                                frame.target_index,
-                                .ack(head.packet_id),
-                                out_message,
-                            );
-                        } else {
-                            try messaging.sendDummy(
-                                frame.multi_conversation,
-                                frame.clients,
-                                frame.target_index,
-                                .ack(head.packet_id),
-                            );
-
-                            log.debug(
-                                InMessage.log_prefix ++ "response is not described; sent dummy to {f}",
-                                .{frame.clients.get(.addr, frame.target_index)},
-                            );
-                        }
-                    }
-                }
-
-                log.debug(
-                    "processed message of type " ++ InMessage.Data.pb_desc_name ++ " from {f}",
-                    .{frame.clients.get(.addr, frame.target_index)},
-                );
-
-                break :lookup;
-            }
-        } else comptime unreachable,
-    }
+    log.debug(
+        "processed message with id {d} from {f}",
+        .{ msg_header.cmd_id, frame.clients.get(.addr, frame.target_index) },
+    );
 }
 
+pub const Scope = struct {
+    asset_lookup: *const assets.Lookup,
+    properties: *logic.Properties,
+    calendar: *const logic.Calendar,
+    clock: logic.RealTimeClock,
+    source: Source,
+    sink: Sink,
+
+    pub const Error = HandlerError;
+};
+
+pub const Source = struct {
+    allocator: Allocator,
+    reader: *Io.Reader,
+
+    pub const Error = Allocator.Error || error{DecodeFail};
+
+    pub fn take(source: *const Source, comptime Message: type) Source.Error!Message {
+        return protobuf.decode(
+            .main,
+            Message,
+            source.allocator,
+            source.reader,
+        ) catch |err| switch (err) {
+            error.OutOfMemory => |e| return e,
+            else => return error.DecodeFail,
+        };
+    }
+};
+
 pub const Sink = struct {
+    allocator: Allocator,
+    ack_packet_id: u32,
     frame: *const Server.Frame,
 
     pub fn notify(
@@ -215,85 +181,27 @@ pub const Sink = struct {
             message,
         );
     }
+
+    pub fn respond(
+        sink: Sink,
+        comptime Response: type,
+        message: Response,
+    ) messaging.SendError!void {
+        if (protobuf.cmdId(Response) != null) {
+            try messaging.send(
+                sink.frame.multi_conversation,
+                sink.frame.clients,
+                sink.frame.target_index,
+                .ack(sink.ack_packet_id),
+                message,
+            );
+        } else {
+            try messaging.sendDummy(
+                sink.frame.multi_conversation,
+                sink.frame.clients,
+                sink.frame.target_index,
+                .ack(sink.ack_packet_id),
+            );
+        }
+    }
 };
-
-pub fn Message(Msg: type) type {
-    return struct {
-        pub const Data = Msg;
-
-        pub const log_prefix = "[" ++ Data.pb_desc_name ++ "] ";
-
-        data: *const Data,
-    };
-}
-
-pub fn Response(Msg: type) type {
-    return *struct {
-        pub const Data = Msg;
-
-        allocator: Allocator,
-        data: ?Data,
-
-        pub inline fn set(response: *@This(), data: Data) void {
-            std.debug.assert(response.data == null);
-            response.data = data;
-        }
-
-        /// Shorthand for returning a failure.
-        pub fn fail(response: *@This(), retcode: i32) error{IllegalMessage} {
-            // TODO: `Retcode` enum
-            response.set(.{ .retcode = retcode });
-            return error.IllegalMessage;
-        }
-    };
-}
-
-fn MessageOf(comptime Fn: type) type {
-    inline for (@typeInfo(Fn).@"fn".param_types) |param_maybe| {
-        const Param = param_maybe.?;
-
-        switch (@typeInfo(Param)) {
-            .@"struct" => {},
-            else => continue,
-        }
-
-        if (!@hasField(Param, "data")) continue;
-
-        switch (@typeInfo(@FieldType(Param, "data"))) {
-            .pointer => |pointer| if (Param == Message(pointer.child))
-                return Param,
-            else => continue,
-        }
-    } else comptime unreachable; // Handler has no `Message` argument.
-}
-
-fn ResponseOf(comptime Fn: type) ?type {
-    inline for (@typeInfo(Fn).@"fn".param_types) |param_maybe| {
-        const ParamIndirect = param_maybe.?;
-        const Param = switch (@typeInfo(ParamIndirect)) {
-            .pointer => |pointer| pointer.child,
-            else => continue,
-        };
-
-        if (!@hasField(Param, "data")) continue;
-
-        switch (@typeInfo(@FieldType(Param, "data"))) {
-            .optional => |optional| if (ParamIndirect == Response(optional.child))
-                return Param,
-            else => continue,
-        }
-    } else return null;
-}
-
-const Io = std.Io;
-const Allocator = std.mem.Allocator;
-const ClientVariables = Server.ClientVariables;
-
-const Server = @import("../Server.zig");
-
-const kcp = @import("../kcp.zig");
-const logic = @import("../logic.zig");
-const messaging = @import("../messaging.zig");
-
-const rmio = @import("rmio");
-const std = @import("std");

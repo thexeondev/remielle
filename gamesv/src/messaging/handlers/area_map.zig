@@ -1,17 +1,16 @@
+const std = @import("std");
+const ArrayList = std.ArrayList;
+
 const remielle = @import("remielle");
 const pb = remielle.protobuf.main;
 const templates = remielle.assets.templates;
 
-pub fn getAreaMapData(
-    message: Message(pb.GetAreaMapDataCsReq),
-    response: Response(pb.GetAreaMapDataScRsp),
-) !void {
-    _ = message;
+const handlers = @import("../handlers.zig");
+const Scope = handlers.Scope;
 
-    var groups: ArrayList(pb.AreaGroupInfo) = try .initCapacity(
-        response.allocator,
-        templates.urban_area_map_group.entries.len,
-    );
+pub fn GetAreaMapDataCsReq(scope: *Scope) !void {
+    var groups_buffer: [templates.urban_area_map_group.entries.len]pb.AreaGroupInfo = undefined;
+    var groups: ArrayList(pb.AreaGroupInfo) = .initBuffer(&groups_buffer);
 
     for (templates.urban_area_map_group.entries) |entry| if (entry.is_map_visible)
         groups.appendAssumeCapacity(.{
@@ -20,10 +19,8 @@ pub fn getAreaMapData(
             .is_unlocked = true,
         });
 
-    var streets: ArrayList(pb.AreaStreetInfo) = try .initCapacity(
-        response.allocator,
-        templates.urban_area_map.entries.len,
-    );
+    var streets_buffer: [templates.urban_area_map.entries.len]pb.AreaStreetInfo = undefined;
+    var streets: ArrayList(pb.AreaStreetInfo) = .initBuffer(&streets_buffer);
 
     for (templates.urban_area_map.entries) |entry|
         streets.appendAssumeCapacity(.{
@@ -35,23 +32,12 @@ pub fn getAreaMapData(
             .is_3d_area_show = true,
         });
 
-    response.set(.{ .data = .{
+    try scope.sink.respond(pb.GetAreaMapDataScRsp, .{ .data = .{
         .group = groups,
         .street = streets,
     } });
 }
 
-pub fn getNewAreaPortalList(
-    message: Message(pb.GetNewAreaPortalListCsReq),
-    response: Response(pb.GetNewAreaPortalListScRsp),
-) !void {
-    _ = message;
-    response.set(.init);
+pub fn GetNewAreaPortalListCsReq(scope: *Scope) !void {
+    try scope.sink.respond(pb.GetNewAreaPortalListScRsp, .init);
 }
-
-const ArrayList = std.ArrayList;
-const Message = handlers.Message;
-const Response = handlers.Response;
-
-const handlers = @import("../handlers.zig");
-const std = @import("std");
