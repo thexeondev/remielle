@@ -26,32 +26,26 @@ hall: Hall,
 main_city_time: MainCityTime,
 quick_team: QuickTeam,
 
-pub const List = mem.RemielleArrayList(
-    mem.suggestBucketSize(64, Properties),
-    Properties,
-    u32,
-);
+pub const init: Properties = .{
+    .basic_info = .init,
+    .player_accessory = .init,
+    .avatar = .init,
+    .buddy = .init,
+    .weapon = .init,
+    .equip = .init,
+    .hall = .init,
+    .main_city_time = .init,
+    .quick_team = .init,
+};
 
-pub fn setDefaultsAt(list: *List, at: Player) void {
-    const index = at.toInt();
-
-    list.getPtr(.basic_info, index).* = .init;
-    list.getPtr(.player_accessory, index).* = .init;
-    list.getPtr(.avatar, index).* = .init;
-    list.getPtr(.buddy, index).* = .init;
-    list.getPtr(.weapon, index).* = .init;
-    list.getPtr(.equip, index).* = .init;
-    list.getPtr(.hall, index).* = .init;
-    list.getPtr(.main_city_time, index).* = .init;
-    list.getPtr(.quick_team, index).* = .init;
-
-    unlockAllAvatars(list, at);
-    unlockAllBuddies(list, at);
-    unlockAllWeapons(list, at);
+pub fn setDefaults(props: *Properties) void {
+    props.unlockAllAvatars();
+    props.unlockAllBuddies();
+    props.unlockAllWeapons();
 }
 
-fn unlockAllAvatars(props: *Properties.List, at: Player) void {
-    const avatar = props.getPtr(.avatar, at.toInt());
+fn unlockAllAvatars(properties: *Properties) void {
+    const avatar = &properties.avatar;
 
     for (templates.avatar_base.entries) |template| if (template.camp != 0) if (template.id < 2_000) {
         const i = avatar.indexes.count();
@@ -92,8 +86,8 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
     }
 }
 
-fn unlockAllBuddies(props: *Properties.List, at: Player) void {
-    const buddy = props.getPtr(.buddy, at.toInt());
+fn unlockAllBuddies(properties: *Properties) void {
+    const buddy = &properties.buddy;
 
     for (templates.buddy_base.entries) |template| if (template.id < 55000) {
         const i = buddy.indexes.count();
@@ -114,8 +108,8 @@ fn unlockAllBuddies(props: *Properties.List, at: Player) void {
     };
 }
 
-fn unlockAllWeapons(props: *Properties.List, at: Player) void {
-    const weapon = props.getPtr(.weapon, at.toInt());
+fn unlockAllWeapons(properties: *Properties) void {
+    const weapon = &properties.weapon;
 
     for (templates.weapon.entries) |template| {
         defer weapon.count += 1;
@@ -178,11 +172,8 @@ fn Subset(
     return @Struct(.auto, null, &field_names, &field_types, &@splat(.{}));
 }
 
-pub fn extractFor(properties: *Properties.List, comptime Sub: type, index: u32) Sub {
+pub fn extract(properties: *Properties, comptime Sub: type) Sub {
     var subset: Sub = undefined;
-
-    const bucket = properties.buckets.items[index / Properties.List.bucket_capacity];
-    const i = index % Properties.List.bucket_capacity;
 
     inline for (
         @typeInfo(Sub).@"struct".field_types,
@@ -190,7 +181,7 @@ pub fn extractFor(properties: *Properties.List, comptime Sub: type, index: u32) 
     ) |FieldType, field_name| {
         if (FieldType == void) continue;
 
-        @field(subset, field_name) = &@field(bucket, field_name)[i];
+        @field(subset, field_name) = &@field(properties, field_name);
     }
 
     return subset;
@@ -344,10 +335,8 @@ pub const HallAvatar = enum(u32) {
     };
 };
 
-pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) Allocator.Error!pb.PlayerSave {
-    const index = @backingInt(player);
-
-    const basic_info = props.getPtr(.basic_info, index);
+pub fn toPlayerSave(properties: *Properties, arena: Allocator) Allocator.Error!pb.PlayerSave {
+    const basic_info = &properties.basic_info;
     const basic_save: pb.BasicSave = .{
         .level = basic_info.level.toInt(),
         .avatar_id = basic_info.avatar.toInt(),
@@ -356,17 +345,18 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .control_guise_avatar_skin_id = basic_info.control_guise_avatar_skin.toInt(),
     };
 
-    const player_accessory = props.getPtr(.player_accessory, index);
+    const player_accessory = &properties.player_accessory;
 
     var player_accessory_save: pb.PlayerAccessorySave = .init;
     try player_accessory_save.avatars.ensureTotalCapacity(arena, PlayerAccessory.slots);
 
-    inline for (std.enums.values(PlayerAccessory.Avatar)) |avatar| player_accessory_save.avatars.appendAssumeCapacity(.{
-        .id = @backingInt(avatar),
-        .skin_id = @backingInt(player_accessory.meta.get(avatar).skin),
-    });
+    inline for (std.enums.values(PlayerAccessory.Avatar)) |avatar|
+        player_accessory_save.avatars.appendAssumeCapacity(.{
+            .id = @backingInt(avatar),
+            .skin_id = @backingInt(player_accessory.meta.get(avatar).skin),
+        });
 
-    const avatar = props.getPtr(.avatar, index);
+    const avatar = &properties.avatar;
     const avatar_count = avatar.indexes.count();
 
     var avatar_save: pb.AvatarSave = .init;
@@ -404,7 +394,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
-    const buddy = props.getPtr(.buddy, index);
+    const buddy = &properties.buddy;
     const buddy_count = buddy.indexes.count();
 
     var buddy_save: pb.BuddySave = .init;
@@ -427,7 +417,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
-    const weapon = props.getPtr(.weapon, index);
+    const weapon = &properties.weapon;
     var weapon_save: pb.WeaponSave = .init;
     try weapon_save.items.ensureTotalCapacity(arena, weapon.count);
 
@@ -447,7 +437,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
-    const equip: *Equipment = props.getPtr(.equip, index);
+    const equip: *Equipment = &properties.equip;
     var equip_save: pb.EquipSave = .init;
     try equip_save.items.ensureTotalCapacity(arena, equip.count);
 
@@ -457,13 +447,13 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         equip.levels[0..equip.count],
         equip.stars[0..equip.count],
         equip.properties[0..equip.count],
-    ) |uid, id, level, star, *properties| {
+    ) |uid, id, level, star, *property_list| {
         var equip_properties: std.ArrayList(pb.EquipProperty) = try .initCapacity(
             arena,
             Equipment.Property.count,
         );
 
-        for (properties) |*prop| equip_properties.appendAssumeCapacity(.{
+        for (property_list) |*prop| equip_properties.appendAssumeCapacity(.{
             .key = @backingInt(prop.key),
             .base_value = prop.base_value,
             .add_value = prop.add_value,
@@ -478,7 +468,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
-    const hall = props.getPtr(.hall, index);
+    const hall = &properties.hall;
     const hall_save: pb.HallSave = .{
         .section_id = @backingInt(hall.section_id),
         .position_id = switch (hall.position) {
@@ -494,13 +484,13 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         },
     };
 
-    const main_city_time = props.getPtr(.main_city_time, index);
+    const main_city_time = &properties.main_city_time;
     const main_city_time_save: pb.MainCityTimeSave = .{
         .time_in_minutes = main_city_time.time_in_minutes,
         .day_of_week = @backingInt(main_city_time.day_of_week),
     };
 
-    const quick_team = props.getPtr(.quick_team, index);
+    const quick_team = &properties.quick_team;
     var quick_team_save: pb.QuickTeamSave = .{
         .teams = try .initCapacity(arena, QuickTeam.slots),
     };
@@ -532,12 +522,10 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
 }
 
 pub fn fromPlayerSave(
-    props: *Properties.List,
-    player: Player,
+    properties: *Properties,
     save: *const pb.PlayerSave,
 ) !void {
-    const index = @backingInt(player);
-    props.getPtr(.basic_info, index).* = if (save.basic) |basic| .{
+    properties.basic_info = if (save.basic) |basic| .{
         .level = @fromBackingInt(@intCast(basic.level)),
         .avatar = @fromBackingInt(@intCast(basic.avatar_id)),
         .control_avatar = @fromBackingInt(@intCast(basic.control_avatar_id)),
@@ -545,7 +533,7 @@ pub fn fromPlayerSave(
         .control_guise_avatar_skin = @fromBackingInt(@intCast(basic.control_guise_avatar_skin_id)),
     } else .init;
 
-    const player_accessory = props.getPtr(.player_accessory, index);
+    const player_accessory = &properties.player_accessory;
     player_accessory.* = .init;
 
     if (save.player_accessory) |player_accessory_save|
@@ -553,7 +541,7 @@ pub fn fromPlayerSave(
             player_accessory.meta.set(@fromBackingInt(@intCast(avatar.id)), .{ .skin = @fromBackingInt(@intCast(avatar.skin_id)) });
 
     if (save.avatar) |avatar_save| {
-        const avatar = props.getPtr(.avatar, index);
+        const avatar = &properties.avatar;
         avatar.* = .init;
 
         for (avatar_save.items.items, 0..) |*item, i| {
@@ -594,12 +582,12 @@ pub fn fromPlayerSave(
             avatar.awake_material_counts[i] = @fromBackingInt(@intCast(item.awake_material_count));
         }
     } else {
-        props.getPtr(.avatar, index).* = .init;
-        unlockAllAvatars(props, player);
+        properties.avatar = .init;
+        properties.unlockAllAvatars();
     }
 
     if (save.buddy) |buddy_save| {
-        const buddy = props.getPtr(.buddy, index);
+        const buddy = &properties.buddy;
         buddy.* = .init;
 
         for (buddy_save.items.items, 0..) |*item, i| {
@@ -625,12 +613,12 @@ pub fn fromPlayerSave(
             }
         }
     } else {
-        props.getPtr(.buddy, index).* = .init;
-        unlockAllBuddies(props, player);
+        properties.buddy = .init;
+        properties.unlockAllBuddies();
     }
 
     if (save.weapon) |weapon_save| {
-        const weapon = props.getPtr(.weapon, index);
+        const weapon = &properties.weapon;
         weapon.* = .init;
 
         weapon.count = @intCast(weapon_save.items.items.len);
@@ -643,12 +631,12 @@ pub fn fromPlayerSave(
             weapon.refines[i] = @fromBackingInt(@intCast(item.refine));
         }
     } else {
-        props.getPtr(.weapon, index).* = .init;
-        unlockAllWeapons(props, player);
+        properties.weapon = .init;
+        properties.unlockAllWeapons();
     }
 
     if (save.equip) |equip_save| {
-        const equip = props.getPtr(.equip, index);
+        const equip = &properties.equip;
         equip.* = .init;
 
         equip.count = @intCast(equip_save.items.items.len);
@@ -670,10 +658,10 @@ pub fn fromPlayerSave(
                 };
         }
     } else {
-        props.getPtr(.equip, index).* = .init;
+        properties.equip = .init;
     }
 
-    props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
+    properties.hall = if (save.hall) |hall_save| .{
         .section_id = @fromBackingInt(@intCast(hall_save.section_id)),
         .position = (if (hall_save.position_transform) |transform|
             Hall.Position.fromVectors(
@@ -684,13 +672,13 @@ pub fn fromPlayerSave(
             Hall.Position.fromId(hall_save.position_id)) orelse .init,
     } else .init;
 
-    props.getPtr(.main_city_time, index).* = if (save.main_city_time) |main_city_time_save| .{
+    properties.main_city_time = if (save.main_city_time) |main_city_time_save| .{
         .time_in_minutes = @truncate(main_city_time_save.time_in_minutes),
         .day_of_week = @fromBackingInt(@intCast(main_city_time_save.day_of_week)),
     } else .init;
 
     if (save.quick_team) |quick_team_save| {
-        const quick_team = props.getPtr(.quick_team, index);
+        const quick_team = &properties.quick_team;
 
         for (quick_team_save.teams.items, 0..) |team, i| {
             quick_team.meta[i] = .{
@@ -706,6 +694,6 @@ pub fn fromPlayerSave(
             );
         }
     } else {
-        props.getPtr(.quick_team, index).* = .init;
+        properties.quick_team = .init;
     }
 }

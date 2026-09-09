@@ -20,7 +20,7 @@ multi_conversation: kcp.MultiConversation,
 /// Per-client, network-related variables that are not part of the `kcp` layer.
 clients: Clients,
 /// Per-client logic properties.
-properties: logic.Properties.List,
+properties: ArrayList(logic.Properties),
 /// Counts `kcp.Control.Kind.connect` requests to assign an ID for each client.
 conv_counter: kcp.ConvId.Counter,
 /// Active conversation IDs.
@@ -79,8 +79,8 @@ pub const Frame = struct {
     asset_lookup: *const assets.Lookup,
     /// Same as `Server.persistent.calendar`
     calendar: *const logic.Calendar,
-    /// Same as `Server.properties`
-    properties: *logic.Properties.List,
+    /// Properties of player at `target_index`.
+    properties: *logic.Properties,
     /// Same as `Server.multi_conversation`
     multi_conversation: *kcp.MultiConversation,
 
@@ -253,7 +253,7 @@ pub fn receiveKcpPacket(
         .time = time,
         .asset_lookup = server.asset_lookup,
         .clients = &server.clients,
-        .properties = &server.properties,
+        .properties = &server.properties.items[client],
         .calendar = &server.persistent.calendar,
         .multi_conversation = &server.multi_conversation,
     };
@@ -281,9 +281,13 @@ fn addClient(
     addr: net.IpAddress,
     key: messaging.Xorpad.Key,
 ) !u32 {
+    // TODO: static allocation
     const index = try server.clients.addOne();
-    const properties_index = try server.properties.addOne();
 
+    // TODO: static allocation
+    _ = try server.properties.addOne(server.resource_arena.allocator());
+
+    const properties_index = server.properties.items.len - 1;
     std.debug.assert(index == properties_index);
 
     server.clients.getPtr(.packet_counter, index).* = .init;
@@ -305,7 +309,7 @@ pub fn release(server: *Server, client: u32) void {
     server.uid_map.swapRemoveAt(client);
     server.multi_conversation.swapRemove(client);
     server.clients.swapRemove(client);
-    server.properties.swapRemove(client);
+    _ = server.properties.swapRemove(client);
 
     server.increaseLimit();
 }
@@ -321,9 +325,8 @@ pub fn savePlayer(
     const uid = server.uid_map.keys()[index];
 
     const player_save = logic.Properties.toPlayerSave(
-        &server.properties,
+        &server.properties.items[index],
         arena,
-        @fromBackingInt(@intCast(index)),
     ) catch |err| switch (err) {
         error.OutOfMemory => {
             // TODO: get rid of protobuf for saves to avoid this error.
@@ -351,11 +354,7 @@ pub fn loadPlayerProperties(
         error.Canceled => |e| return e,
         else => |e| {
             log.warn("failed to load properties from save for player with uid {d}: {t}", .{ uid, e });
-
-            logic.Properties.setDefaultsAt(
-                &server.properties,
-                @fromBackingInt(@intCast(index)),
-            );
+            server.properties.items[index].setDefaults();
         },
     };
 }
@@ -365,12 +364,7 @@ fn loadPlayerPropertiesFromSave(server: *Server, io: Io, uid: u32, index: u32) !
     defer _ = server.resettable_arena.reset(.retain_capacity);
 
     const player_save = try server.persistent.loadPlayer(io, arena, uid);
-
-    try logic.Properties.fromPlayerSave(
-        &server.properties,
-        @fromBackingInt(@intCast(index)),
-        &player_save,
-    );
+    try server.properties.items[index].fromPlayerSave(&player_save);
 }
 
 pub fn drainOutgoingQueue(
@@ -461,6 +455,7 @@ fn drainConversation(
 const Io = std.Io;
 const Random = std.Random;
 const Limit = std.Io.Limit;
+const ArrayList = std.ArrayList;
 const Socket = std.Io.net.Socket;
 const Timestamp = std.Io.Timestamp;
 const Allocator = std.mem.Allocator;

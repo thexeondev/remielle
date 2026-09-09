@@ -135,12 +135,7 @@ pub fn process(
                                 },
                                 else => {
                                     if (@hasField(ArgType, logic.Properties.immutable_subset_marker_name)) {
-                                        arg.* = logic.Properties.extractFor(
-                                            frame.properties,
-                                            ArgType,
-                                            frame.target_index,
-                                        );
-
+                                        arg.* = frame.properties.extract(ArgType);
                                         continue;
                                     }
                                 },

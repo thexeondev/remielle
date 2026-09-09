@@ -217,11 +217,7 @@ fn onGameMessageReceived(
                 const old_cancel_protection = io.swapCancelProtection(.blocked);
                 defer _ = io.swapCancelProtection(old_cancel_protection);
 
-                logic.Properties.setDefaultsAt(
-                    &server.properties,
-                    @fromBackingInt(@intCast(player_index)),
-                );
-
+                server.properties.items[player_index].setDefaults();
                 server.savePlayer(io, player_index);
             } else {
                 try server.loadPlayerProperties(io, get_or_create.player_uid, player_index);
