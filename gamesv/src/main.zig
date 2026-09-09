@@ -93,7 +93,7 @@ pub fn main(init: process.Init.Minimal) !void {
     const address = net.IpAddress.parseLiteral(args.@"--bind-address") catch |err|
         fatal("bad game bind address specified: {t}", .{err});
 
-    remielle.splash.print();
+    remielle.splash.print(io);
 
     var csprng_seed: [DefaultCsprng.secret_seed_length]u8 = undefined;
     io.randomSecure(&csprng_seed) catch |err| switch (err) {

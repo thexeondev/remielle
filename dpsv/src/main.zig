@@ -157,7 +157,7 @@ fn runServerTask(
     data: *const Data,
     server: *http.Server,
 ) Io.Cancelable!void {
-    remielle.splash.print();
+    remielle.splash.print(io);
 
     log.info("waiting for requests at {f}", .{address});
     defer log.info("shutting down...", .{});

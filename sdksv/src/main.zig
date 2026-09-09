@@ -218,7 +218,7 @@ pub fn main(init: process.Init.Minimal) !void {
 }
 
 fn runServerTask(io: Io, sdk: *const Sdk, address: IpAddress) Io.Cancelable!void {
-    remielle.splash.print();
+    remielle.splash.print(io);
 
     log.info("waiting for requests at {f}", .{address});
     defer log.info("shutting down...", .{});
