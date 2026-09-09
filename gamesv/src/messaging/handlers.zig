@@ -38,8 +38,10 @@ pub const HandlerError = error{
 
 const HandlerFn = fn (scope: *Scope) Scope.Error!void;
 
-const handlers: [10_000]?*const HandlerFn = handlers: {
-    var array: [10_000]?*const HandlerFn = @splat(null);
+const client_server_cmd_max = 10_000;
+
+const handlers: [client_server_cmd_max]?*const HandlerFn = handlers: {
+    var array: [client_server_cmd_max]?*const HandlerFn = @splat(null);
 
     @setEvalBranchQuota(namespaces.len);
     for (namespaces) |namespace| {
@@ -72,8 +74,6 @@ pub fn process(
     frame: *const Server.Frame,
     reader: *Io.Reader,
 ) HandlerError!void {
-    @setEvalBranchQuota(1_000_000);
-
     const msg_header_bytes = reader.takeArray(messaging.Header.size) catch
         return error.DecodeFail;
 
