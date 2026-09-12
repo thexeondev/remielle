@@ -13,19 +13,19 @@ pub const HadalZone = extern struct {
         .entrance_zones = entrance_zones: {
             var ez: [Entrance.count]OptionalZone = @splat(.none);
             ez[Entrance.free_training.toIndex()] = @enumFromInt(890011);
-            ez[Entrance.hadal_zone_scheduled_1.toIndex()] = @enumFromInt(620571);
+            ez[Entrance.hadal_zone_scheduled_1.toIndex()] = @enumFromInt(620601);
             ez[Entrance.hadal_zone_stable.toIndex()] = @enumFromInt(61001);
             ez[Entrance.hadal_zone_defensive.toIndex()] = @enumFromInt(61002);
             ez[Entrance.hadal_zone_ambush.toIndex()] = @enumFromInt(61003);
-            ez[Entrance.boss_challenge_trial_1.toIndex()] = @enumFromInt(6904511);
-            ez[Entrance.boss_challenge_trial_2.toIndex()] = @enumFromInt(6904611);
-            ez[Entrance.boss_challenge_trial_3.toIndex()] = @enumFromInt(6904711);
-            ez[Entrance.hadal_zone_scheduled_2.toIndex()] = @enumFromInt(620581);
-            ez[Entrance.hadal_zone_scheduled_3.toIndex()] = @enumFromInt(620591);
-            ez[Entrance.boss_challenge_adversity_1.toIndex()] = @enumFromInt(690422);
-            ez[Entrance.boss_challenge_adversity_2.toIndex()] = @enumFromInt(6904521);
-            ez[Entrance.boss_challenge_adversity_3.toIndex()] = @enumFromInt(6904621);
-            ez[Entrance.boss_challenge_adversity_4.toIndex()] = @enumFromInt(6904721);
+            ez[Entrance.boss_challenge_trial_1.toIndex()] = @enumFromInt(6904811);
+            ez[Entrance.boss_challenge_trial_2.toIndex()] = @enumFromInt(6904911);
+            ez[Entrance.boss_challenge_trial_3.toIndex()] = @enumFromInt(6905011);
+            ez[Entrance.hadal_zone_scheduled_2.toIndex()] = @enumFromInt(620611);
+            ez[Entrance.hadal_zone_scheduled_3.toIndex()] = @enumFromInt(620621);
+            ez[Entrance.boss_challenge_adversity_1.toIndex()] = @enumFromInt(690502);
+            ez[Entrance.boss_challenge_adversity_2.toIndex()] = @enumFromInt(6904821);
+            ez[Entrance.boss_challenge_adversity_3.toIndex()] = @enumFromInt(6904921);
+            ez[Entrance.boss_challenge_adversity_4.toIndex()] = @enumFromInt(6905021);
 
             break :entrance_zones ez;
         },

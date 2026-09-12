@@ -4881,7 +4881,7 @@
     },
     .{
         .zone_id = 690491,
-        .name = "OfficialName_Monster_IsoldetheDefiler",
+        .name = "OfficialName_Monster_TyphonDestroyer",
         .layer_id = 69049103,
         .layer_index = 3,
         .group_id = 1001,
@@ -4931,7 +4931,7 @@
     },
     .{
         .zone_id = 690502,
-        .name = "OfficialName_Monster_Vessel_HC",
+        .name = "OfficialName_Monster_Girtablu_HC",
         .layer_id = 69050201,
         .layer_index = 1,
         .group_id = 1002,
@@ -5721,7 +5721,7 @@
     },
     .{
         .zone_id = 6904911,
-        .name = "OfficialName_Monster_IsoldetheDefiler",
+        .name = "OfficialName_Monster_TyphonDestroyer",
         .layer_id = 69049103,
         .layer_index = 3,
         .group_id = 1001,
@@ -5771,7 +5771,7 @@
     },
     .{
         .zone_id = 6905021,
-        .name = "OfficialName_Monster_Vessel_HC",
+        .name = "OfficialName_Monster_Girtablu_HC",
         .layer_id = 69050201,
         .layer_index = 1,
         .group_id = 1002,

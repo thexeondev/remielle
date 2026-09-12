@@ -29,5 +29,5 @@
     .{ .area_id = 111102, .group_name = "BigScene_Scamall" },
     .{ .area_id = 111103, .group_name = "MainCityName_Vyrium" },
     .{ .area_id = 111104, .group_name = "BigScene_Vyrium" },
-    .{ .area_id = 112001, .group_name = "BigScene_QuietudeIsle" },
+    .{ .area_id = 111105, .group_name = "BigScene_QuietudeIsle" },
 }

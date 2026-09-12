@@ -525,6 +525,13 @@
         .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconStun.png",
     },
     .{
+        .id = 12254079,
+        .training_type = 2,
+        .battle_event_id = 0,
+        .special_training_name = "TrainingRoomTxt_SpecialTraining_Name_79",
+        .special_training_icon = "UI/Sprite/A1DynamicLoad/TrainingCourse/UnPacker/TrainingSkill/IconAttack.png",
+    },
+    .{
         .id = 12255001,
         .training_type = 3,
         .battle_event_id = 70200005,
