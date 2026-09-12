@@ -446,8 +446,8 @@
     .{
         .item_id = 13022,
         .weapon_name = "Weapon_A_Common_22",
-        .base_property = .{ .property = 12101, .value = 40 },
-        .rand_property = .{ .property = 0, .value = 0 },
+        .base_property = .{ .property = 13101, .value = 24 },
+        .rand_property = .{ .property = 13102, .value = 1600 },
         .star_limit = 4,
         .exp_recycle = 6000,
         .refine_initial = 1,
