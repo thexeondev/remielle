@@ -47,7 +47,12 @@ pub fn setDefaults(props: *Properties) void {
 fn unlockAllAvatars(properties: *Properties) void {
     const avatar = &properties.avatar;
 
-    for (templates.avatar_base.entries) |template| if (template.camp != 0) if (template.id < 2_000) {
+    for (templates.avatar_base.entries) |template| {
+        if (template.camp == 0 or
+            template.id >= 2_000 or
+            template.id % 10 != 1)
+            continue;
+
         const i = avatar.indexes.count();
         avatar.indexes.put(template.getId(), @intCast(i));
         avatar.ids[i] = template.getId();
@@ -70,7 +75,7 @@ fn unlockAllAvatars(properties: *Properties) void {
         avatar.weapon_uids[i] = .none;
         avatar.equipment_uids[i] = @splat(.none);
         avatar.awake_material_counts[i] = .none;
-    };
+    }
 
     for (templates.avatar_special_awaken.entries) |template| {
         const maybe_index: ?u32 = avatar_index: {

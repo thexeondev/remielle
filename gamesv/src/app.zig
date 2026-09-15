@@ -213,6 +213,8 @@ fn onGameMessageReceived(
                 => return,
             };
 
+            server.properties.items[player_index] = .init;
+
             if (get_or_create.created) {
                 const old_cancel_protection = io.swapCancelProtection(.blocked);
                 defer _ = io.swapCancelProtection(old_cancel_protection);
