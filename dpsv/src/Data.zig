@@ -103,7 +103,7 @@ fn buildGatewayMap(arena: Allocator) Allocator.Error!GatewayMap {
                 .region_name = server_name,
                 .client_secret_key = server.client_secret_key,
                 .gateway = server.gateway,
-                .region_ext = .{ .func_switch = .{ .isKcp = 1 } },
+                .region_ext = .{ .func_switch = .{ .isKcp = 0 } },
                 .cdn_conf_ext = version.cdn_conf,
             });
 
