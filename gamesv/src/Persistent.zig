@@ -1,3 +1,5 @@
+// TODO: this is retarded, rewrite it.
+
 const remielle = @import("remielle");
 const protobuf = remielle.protobuf;
 const PlayerSave = protobuf.stable.PlayerSave;
@@ -52,9 +54,12 @@ pub const GetOrCreatePlayerUid = struct {
 pub fn getOrCreatePlayerUid(
     persistent: *Persistent,
     io: Io,
-    account_uid: AccountUid,
+    account_uid_string: []const u8,
     gpa: Allocator,
-) (Io.Cancelable || Allocator.Error || error{WriteFileFailed})!GetOrCreatePlayerUid {
+) (Io.Cancelable || Allocator.Error || error{ WriteFileFailed, InvalidUid })!GetOrCreatePlayerUid {
+    const account_uid = AccountUid.fromString(account_uid_string) orelse
+        return error.InvalidUid;
+
     if (persistent.getPlayerUid(account_uid)) |player_uid|
         return .{ .player_uid = player_uid, .created = false };
 

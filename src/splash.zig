@@ -1,7 +1,7 @@
 const std = @import("std");
 const Io = std.Io;
 
-pub fn print(io: Io) void {
+pub fn print(io: Io) Io.Cancelable!void {
     Io.File.stderr().writeStreamingAll(io,
         \\    ____                 _      ____   
         \\   / __ \___  ____ ___  (_)__  / / /__ 
@@ -9,5 +9,8 @@ pub fn print(io: Io) void {
         \\ / _, _/  __/ / / / / / /  __/ / /  __/
         \\/_/ |_|\___/_/ /_/ /_/_/\___/_/_/\___/ 
         \\
-    ) catch {};
+    ) catch |err| switch (err) {
+        error.Canceled => |e| return e,
+        else => {},
+    };
 }

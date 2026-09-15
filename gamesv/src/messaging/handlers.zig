@@ -9,10 +9,6 @@ const templates = remielle.assets.templates;
 const protobuf = remielle.protobuf;
 const pb = protobuf.main;
 
-const Server = @import("../Server.zig");
-const ClientVariables = Server.ClientVariables;
-
-const kcp = @import("../kcp.zig");
 const logic = @import("../logic.zig");
 const messaging = @import("../messaging.zig");
 
@@ -71,66 +67,50 @@ fn getHandler(cmd_id: u16) ?*const HandlerFn {
 
 pub fn process(
     arena: Allocator,
-    frame: *const Server.Frame,
-    reader: *Io.Reader,
+    time: Io.Timestamp,
+    sink: *const messaging.Sink,
+    properties: *logic.Properties,
+    asset_lookup: *const assets.Lookup,
+    calendar: *const logic.Calendar,
+    command: *const remielle.protocol.Command,
 ) HandlerError!void {
-    const msg_header_bytes = reader.takeArray(messaging.Header.size) catch
+    var head_reader: Io.Reader = .fixed(command.head);
+    const head = protobuf.decode(.stable, protobuf.stable.PacketHead, .failing, &head_reader) catch
         return error.DecodeFail;
 
-    const msg_header = messaging.Header.decode(msg_header_bytes) catch
-        return error.DecodeFail;
-
-    const head_bytes = reader.take(msg_header.head_len) catch
-        return error.DecodeFail;
-
-    const head = messaging.decodePacketHead(head_bytes) orelse
-        return error.DecodeFail;
-
-    var xored_reader = frame.clients.getPtr(.xorpad, frame.target_index).wrapReader(reader, msg_header.body_len);
-
-    const handlerFn = getHandler(msg_header.cmd_id) orelse {
-        log.warn(
-            "unhandled message with cmd_id {d} from {f}",
-            .{ msg_header.cmd_id, frame.clients.get(.addr, frame.target_index) },
-        );
+    const handlerFn = getHandler(command.id) orelse {
+        log.warn("unhandled message with cmd_id {d}", .{command.id});
 
         if (head.packet_id != 0) {
-            try messaging.sendDummy(
-                frame.multi_conversation,
-                frame.clients,
-                frame.target_index,
-                .ack(head.packet_id),
-            );
+            try messaging.sendDummy(sink, .ack(head.packet_id));
         }
 
         return;
     };
 
+    var body_reader: Io.Reader = .fixed(command.body);
     var scope: Scope = .{
-        .asset_lookup = frame.asset_lookup,
-        .properties = frame.properties,
-        .calendar = frame.calendar,
+        .asset_lookup = asset_lookup,
+        .properties = properties,
+        .calendar = calendar,
         .clock = .{
-            .time = frame.time,
+            .time = time,
             .utc_offset = 3, // TODO: configuration field + cli option
         },
         .source = .{
             .allocator = arena,
-            .reader = &xored_reader.interface,
+            .reader = &body_reader,
         },
         .sink = .{
             .allocator = arena,
+            .inner = sink,
             .ack_packet_id = head.packet_id,
-            .frame = frame,
         },
     };
 
     try handlerFn(&scope);
 
-    log.debug(
-        "processed message with id {d} from {f}",
-        .{ msg_header.cmd_id, frame.clients.get(.addr, frame.target_index) },
-    );
+    log.debug("processed message with id {d}", .{command.id});
 }
 
 pub const Scope = struct {
@@ -164,9 +144,9 @@ pub const Source = struct {
 };
 
 pub const Sink = struct {
-    allocator: Allocator,
+    inner: *const messaging.Sink,
     ack_packet_id: u32,
-    frame: *const Server.Frame,
+    allocator: Allocator,
 
     pub fn notify(
         sink: Sink,
@@ -174,32 +154,26 @@ pub const Sink = struct {
         message: Notify,
     ) messaging.SendError!void {
         try messaging.send(
-            sink.frame.multi_conversation,
-            sink.frame.clients,
-            sink.frame.target_index,
+            sink.inner,
             .notify,
             message,
         );
     }
 
     pub fn respond(
-        sink: Sink,
+        sink: *Sink,
         comptime Response: type,
         message: Response,
     ) messaging.SendError!void {
         if (protobuf.cmdId(Response) != null) {
             try messaging.send(
-                sink.frame.multi_conversation,
-                sink.frame.clients,
-                sink.frame.target_index,
+                sink.inner,
                 .ack(sink.ack_packet_id),
                 message,
             );
         } else {
             try messaging.sendDummy(
-                sink.frame.multi_conversation,
-                sink.frame.clients,
-                sink.frame.target_index,
+                sink.inner,
                 .ack(sink.ack_packet_id),
             );
         }

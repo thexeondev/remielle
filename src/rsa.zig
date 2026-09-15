@@ -108,3 +108,29 @@ pub fn encryptAndSign(out: *EncryptAndSignBuffer, content_block: []const u8) voi
     _ = base64.Encoder.encode(&out.ciphertext, &ciphertext);
     _ = base64.Encoder.encode(&out.sign, &sign);
 }
+
+pub const DecryptStringError = error{
+    /// `string` is not a valid base64.
+    Base64DecodeFailed,
+    /// Length doesn't match `block_size`.
+    SizeMismatch,
+    /// RSA decryption failed.
+    RsaDecryptFailed,
+};
+
+/// Decrypts a base64-encoded string containing exactly one block.
+/// Invalidates `string` by performing base64 decoding and decryption in-place.
+/// Returns a slice into `string`.
+pub fn decryptString(
+    string: []u8,
+) DecryptStringError![]const u8 {
+    const size = base64.Decoder.calcSizeForSlice(string) catch
+        return error.Base64DecodeFailed;
+
+    if (size != block_size) return error.SizeMismatch;
+
+    // Decoding is performed in-place. This is the output slice.
+    const block = string[0..block_size];
+    base64.Decoder.decode(block, string) catch return error.Base64DecodeFailed;
+    return server_private_key.decrypt(block, block) orelse error.RsaDecryptFailed;
+}
