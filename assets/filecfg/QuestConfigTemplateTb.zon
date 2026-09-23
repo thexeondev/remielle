@@ -48665,6 +48665,11 @@
         .quest_type = 9,
     },
     .{
+        .quest_id = 102610218,
+        .quest_name = "QuestName_102610218",
+        .quest_type = 9,
+    },
+    .{
         .quest_id = 107010011,
         .quest_name = "QuestName_107010011",
         .quest_type = 7,
@@ -67041,7 +67046,7 @@
     },
     .{
         .quest_id = 601110213,
-        .quest_name = "",
+        .quest_name = "QuestName_601110213",
         .quest_type = 5,
     },
     .{
