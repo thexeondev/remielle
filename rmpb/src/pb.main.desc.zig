@@ -5034,7 +5034,7 @@ pub const EFMJMCCEMDN = struct {
 
 pub const AvatarUnitInfo = struct {
     pub const avatar_id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const propeties_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const CMLNFKGKCHO_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const EKDEFMAFJME_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const FDMGFDNEMIB_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
@@ -6908,7 +6908,7 @@ pub const HKHDBGNFGEB = struct {
 };
 
 pub const DFNMGHKACPI = struct {
-    pub const propeties_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
     pub const COMLEPKLPBL_field_desc: FieldDesc = .{ .number = 9, .xor = 9161 };
 };
 
@@ -8973,7 +8973,7 @@ pub const PEBGBMPMMEJ = struct {
     pub const EJJPEKDKFBN_field_desc: FieldDesc = .{ .number = 8, .xor = 3040 };
     pub const exp_field_desc: FieldDesc = .{ .number = 9, .xor = 8176 };
     pub const level_field_desc: FieldDesc = .{ .number = 10, .xor = 657 };
-    pub const propeties_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const MDPJCKCBLAD_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
     pub const unlocked_talent_num_field_desc: FieldDesc = .{ .number = 13, .xor = 10394 };
     pub const equip_list_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
@@ -9180,7 +9180,7 @@ pub const DGJPMGOBDOP = struct {
 };
 
 pub const BALCMOFHLKK = struct {
-    pub const propeties_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
 
 pub const CBEJAMMFHOD = struct {
@@ -13131,7 +13131,7 @@ pub const KMPLHANEPDA = struct {
 };
 
 pub const JOCGFGPNDFO = struct {
-    pub const propeties_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const LDEDFLNDEBM_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
 
@@ -14944,7 +14944,7 @@ pub const FNBHIEOFBMB = struct {
 
 pub const BuddyUnitInfo = struct {
     pub const buddy_id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const propeties_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const type_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
 
@@ -18191,7 +18191,7 @@ pub const CEBNNDPFCEK = struct {
 
 pub const MCLCMFOKGGF = struct {
     pub const LGAGMBHKAAF_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const propeties_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const BCEEGANFJFN_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
 
@@ -23499,7 +23499,7 @@ pub const DIPPBMLNPEC = struct {
 pub const ECEPDMNCGFN = struct {
     pub const DHLIAOOKLKH_field_desc: FieldDesc = .{ .number = 1, .xor = 9342 };
     pub const name_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
-    pub const propeties_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const EIBDNFONPFM_field_desc: FieldDesc = .{ .number = 6, .xor = 12746 };
     pub const CEKECBJNKOD_field_desc: FieldDesc = .{ .number = 7, .xor = 13389 };
     pub const id_field_desc: FieldDesc = .{ .number = 9, .xor = 3065 };
@@ -23829,7 +23829,7 @@ pub const EMPBDHNMJLG = struct {
 };
 
 pub const IGNJKEDIDNL = struct {
-    pub const propeties_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const MKECENFMNMF_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const LDEDFLNDEBM_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const LDEHLODGMFB_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
@@ -27721,7 +27721,7 @@ pub const MABNFINDPOC = struct {
 
 pub const GGPLGAGNLAA = struct {
     pub const cmd_id: u16 = 4250;
-    pub const propeties_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
 
 pub const LJLMOBHBDPG = struct {
@@ -28568,7 +28568,7 @@ pub const LIOIDNJBLPJ = struct {
     pub const UNK_LIOIDNJBLPJ_48_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
     pub const rank_field_desc: FieldDesc = .{ .number = 12, .xor = 2163 };
     pub const exp_field_desc: FieldDesc = .{ .number = 13, .xor = 1589 };
-    pub const propeties_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
+    pub const properties_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
 };
 
 pub const WeaponDressCsReq = struct {
