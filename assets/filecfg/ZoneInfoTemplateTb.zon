@@ -4851,7 +4851,7 @@
     },
     .{
         .zone_id = 690482,
-        .name = "OfficialName_Monster_GirReborn_HC_P2",
+        .name = "OfficialName_Monster_GirReborn_HC",
         .layer_id = 69048201,
         .layer_index = 1,
         .group_id = 1002,
@@ -5691,7 +5691,7 @@
     },
     .{
         .zone_id = 6904821,
-        .name = "OfficialName_Monster_GirReborn_HC_P2",
+        .name = "OfficialName_Monster_GirReborn_HC",
         .layer_id = 69048201,
         .layer_index = 1,
         .group_id = 1002,
