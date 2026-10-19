@@ -310,6 +310,16 @@
         .unlock_condition = "",
     },
     .{
+        .id = 3510060,
+        .name = "Avatar_Female_Size02_Pheony",
+        .unlock_condition = "",
+    },
+    .{
+        .id = 3510061,
+        .name = "Avatar_Male_Size03_Severian",
+        .unlock_condition = "",
+    },
+    .{
         .id = 3550000,
         .name = "LiveWallpaper_Activity001",
         .unlock_condition = "",

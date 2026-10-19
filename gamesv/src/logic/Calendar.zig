@@ -12,11 +12,11 @@ pub const HadalZone = extern struct {
     pub const init: HadalZone = .{
         .entrance_zones = entrance_zones: {
             var ez: [Entrance.count]OptionalZone = @splat(.none);
-            ez[Entrance.hadal_zone_scheduled.toInt()] = @enumFromInt(620561);
+            ez[Entrance.hadal_zone_scheduled.toInt()] = @enumFromInt(62060);
             ez[Entrance.hadal_zone_stable.toInt()] = @enumFromInt(61001);
             ez[Entrance.hadal_zone_defensive.toInt()] = @enumFromInt(61002);
-            ez[Entrance.boss_challenge_normal.toInt()] = @enumFromInt(690471);
-            ez[Entrance.boss_challenge_hard.toInt()] = @enumFromInt(690472);
+            ez[Entrance.boss_challenge_normal.toInt()] = @enumFromInt(690481);
+            ez[Entrance.boss_challenge_hard.toInt()] = @enumFromInt(690482);
 
             break :entrance_zones ez;
         },
