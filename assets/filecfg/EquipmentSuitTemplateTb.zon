@@ -239,4 +239,20 @@
         .secondary_suit_ability = 124,
         .primary_suit_propertys = .{.{ .property = 13102, .value = 1600 }},
     },
+    .{
+        .id = 34300,
+        .primary_condition = 2,
+        .primary_suit_ability = 0,
+        .secondary_condition = 4,
+        .secondary_suit_ability = 124,
+        .primary_suit_propertys = .{.{ .property = 13102, .value = 1600 }},
+    },
+    .{
+        .id = 34400,
+        .primary_condition = 2,
+        .primary_suit_ability = 0,
+        .secondary_condition = 4,
+        .secondary_suit_ability = 124,
+        .primary_suit_propertys = .{.{ .property = 30502, .value = 2000 }},
+    },
 }
