@@ -26,19 +26,19 @@
             .servers = .{"remielle"},
             .cdn_conf = .{
                 .design_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_19850203_17df73d542/client/",
-                    .data_revision = "19850203",
-                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6397,\"fileMD5\":\"2638432149597915016\"}]",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_19851435_436c3d0185/client/",
+                    .data_revision = "19851435",
+                    .md5_files = "[{\"fileName\":\"data_version\",\"fileSize\":6397,\"fileMD5\":\"8063350771304512194\"}]",
                 },
                 .game_res = .{
                     .audio_revision = "19806165",
-                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_19850203_17df73d542/client/",
+                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_19851435_436c3d0185/client/",
                     .branch = "beta_live",
-                    .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":3183836,\"fileMD5\":\"4923360880290406936\"},{\"fileName\":\"audio_version\",\"fileSize\":76544,\"fileMD5\":\"6927625297821895103\"},{\"fileName\":\"base_revision\",\"fileSize\":19,\"fileMD5\":\"14804647516638880935\"}]",
-                    .res_revision = "19850203",
+                    .md5_files = "[{\"fileName\":\"res_version\",\"fileSize\":3183836,\"fileMD5\":\"7646177136405396431\"},{\"fileName\":\"audio_version\",\"fileSize\":76544,\"fileMD5\":\"6927625297821895103\"},{\"fileName\":\"base_revision\",\"fileSize\":19,\"fileMD5\":\"14804647516638880935\"}]",
+                    .res_revision = "19851435",
                 },
                 .silence_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_19850203_17df73d542/client_silence/",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_19851435_436c3d0185/client_silence/",
                     .md5_files = "[{\"fileName\":\"silence_version\",\"fileSize\":617,\"fileMD5\":\"9627830433107175820\"}]",
                     .silence_revision = "19832088",
                 },
