@@ -20391,7 +20391,7 @@ pub const HallRefreshScNotify = struct {
     pub const npc_list_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
     pub const GKKELGAFBCH_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
     pub const ANKAPALHGPF_field_desc: FieldDesc = .{ .number = 38, .xor = 0 };
-    pub const ANPHHMPNFNJ_field_desc: FieldDesc = .{ .number = 76, .xor = 3488 };
+    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 76, .xor = 3488 };
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 142, .xor = 15360 };
     pub const CJGMFGLPGEI_field_desc: FieldDesc = .{ .number = 287, .xor = 0 };
     pub const OMKJNMIEIHE_field_desc: FieldDesc = .{ .number = 323, .xor = 0 };
@@ -20405,7 +20405,7 @@ pub const HallRefreshScNotify = struct {
     pub const KDDAKIBLODD_field_desc: FieldDesc = .{ .number = 1116, .xor = 0 };
     pub const OMABFHLOFJD_field_desc: FieldDesc = .{ .number = 1278, .xor = 0 };
     pub const JEGAPFCPPIJ_field_desc: FieldDesc = .{ .number = 1371, .xor = 0 };
-    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 1484, .xor = 7585 };
+    pub const IGJCDNNFJEK_field_desc: FieldDesc = .{ .number = 1484, .xor = 7585 };
     pub const HJCAIJJJMKJ_field_desc: FieldDesc = .{ .number = 1553, .xor = 0 };
     pub const DMGDOEGHMAI_field_desc: FieldDesc = .{ .number = 1556, .xor = 0 };
     pub const PDAOLNIICCG_field_desc: FieldDesc = .{ .number = 1589, .xor = 0 };
@@ -27657,7 +27657,7 @@ pub const PGAEKFDOMOF = struct {
 
 pub const HallSceneData = struct {
     pub const GKKELGAFBCH_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const ANPHHMPNFNJ_field_desc: FieldDesc = .{ .number = 2, .xor = 7926 };
+    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 2, .xor = 7926 };
     pub const FOGHDEALHAB_field_desc: FieldDesc = .{ .number = 3, .xor = 15374 };
     pub const position_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const npc_list_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
@@ -27668,7 +27668,7 @@ pub const HallSceneData = struct {
     pub const KBCDHHMNIKA_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
     pub const time_period_field_desc: FieldDesc = .{ .number = 11, .xor = 3865 };
     pub const DEDDHBMAGAK_field_desc: FieldDesc = .{ .number = 12, .xor = 15373 };
-    pub const scene_time_in_minutes_field_desc: FieldDesc = .{ .number = 13, .xor = 11908 };
+    pub const IGJCDNNFJEK_field_desc: FieldDesc = .{ .number = 13, .xor = 11908 };
     pub const EMOOEFOEOMJ_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
     pub const ECGGJGFMINK_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
     pub const HJCAIJJJMKJ_field_desc: FieldDesc = .{ .number = 38, .xor = 0 };
