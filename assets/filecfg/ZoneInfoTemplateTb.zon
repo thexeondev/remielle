@@ -5031,7 +5031,7 @@
     },
     .{
         .zone_id = 690531,
-        .name = "OfficialName_Monster_ComplexCorrupted",
+        .name = "OfficialName_Monster_TyphonDestroyer",
         .layer_id = 69053102,
         .layer_index = 2,
         .group_id = 1001,
@@ -5871,7 +5871,7 @@
     },
     .{
         .zone_id = 6905311,
-        .name = "OfficialName_Monster_ComplexCorrupted",
+        .name = "OfficialName_Monster_TyphonDestroyer",
         .layer_id = 69053102,
         .layer_index = 2,
         .group_id = 1001,

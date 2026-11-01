@@ -612,6 +612,15 @@
         .audio_event_replace_param = "pheony",
     },
     .{
+        .id = 1651,
+        .camp = 18,
+        .gender = 2,
+        .name = "Avatar_Female_Size03_Kafka",
+        .code_name = "Avatar_Female_Size03_Kafka_En",
+        .full_name = "Avatar_Female_Size03_Kafka_FullName",
+        .audio_event_replace_param = "kafka",
+    },
+    .{
         .id = 1661,
         .camp = 18,
         .gender = 2,

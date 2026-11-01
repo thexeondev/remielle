@@ -300,6 +300,36 @@
         .upgrade_item_ids = .{20126},
     },
     .{
+        .id = 133100,
+        .avatar_id = 1331,
+        .upgrade_item_ids = .{20133},
+    },
+    .{
+        .id = 133101,
+        .avatar_id = 1331,
+        .upgrade_item_ids = .{20133},
+    },
+    .{
+        .id = 133102,
+        .avatar_id = 1331,
+        .upgrade_item_ids = .{20133},
+    },
+    .{
+        .id = 133103,
+        .avatar_id = 1331,
+        .upgrade_item_ids = .{20133},
+    },
+    .{
+        .id = 133104,
+        .avatar_id = 1331,
+        .upgrade_item_ids = .{20133},
+    },
+    .{
+        .id = 133105,
+        .avatar_id = 1331,
+        .upgrade_item_ids = .{20133},
+    },
+    .{
         .id = 138100,
         .avatar_id = 1381,
         .upgrade_item_ids = .{20138},
@@ -328,5 +358,35 @@
         .id = 138105,
         .avatar_id = 1381,
         .upgrade_item_ids = .{20138},
+    },
+    .{
+        .id = 139100,
+        .avatar_id = 1391,
+        .upgrade_item_ids = .{20139},
+    },
+    .{
+        .id = 139101,
+        .avatar_id = 1391,
+        .upgrade_item_ids = .{20139},
+    },
+    .{
+        .id = 139102,
+        .avatar_id = 1391,
+        .upgrade_item_ids = .{20139},
+    },
+    .{
+        .id = 139103,
+        .avatar_id = 1391,
+        .upgrade_item_ids = .{20139},
+    },
+    .{
+        .id = 139104,
+        .avatar_id = 1391,
+        .upgrade_item_ids = .{20139},
+    },
+    .{
+        .id = 139105,
+        .avatar_id = 1391,
+        .upgrade_item_ids = .{20139},
     },
 }
