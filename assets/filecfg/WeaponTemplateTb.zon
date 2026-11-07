@@ -1248,6 +1248,18 @@
         .refine_costs = .{.{ .item_id = 10, .number = 2000 }},
     },
     .{
+        .item_id = 14165,
+        .weapon_name = "Weapon_S_1651",
+        .base_property = .{ .property = 12101, .value = 48 },
+        .rand_property = .{ .property = 30502, .value = 2400 },
+        .star_limit = 4,
+        .exp_recycle = 30000,
+        .refine_initial = 1,
+        .refine_limit = 5,
+        .avatar_id = 1651,
+        .refine_costs = .{.{ .item_id = 10, .number = 2000 }},
+    },
+    .{
         .item_id = 14166,
         .weapon_name = "Weapon_S_1661",
         .base_property = .{ .property = 12101, .value = 48 },
