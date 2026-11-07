@@ -576,6 +576,15 @@
         .audio_event_replace_param = "lindverne",
     },
     .{
+        .id = 1606,
+        .camp = 12,
+        .gender = 2,
+        .name = "Avatar_Female_Size03_Sunbringer",
+        .code_name = "Avatar_Female_Size03_Sunbringer_En",
+        .full_name = "Avatar_Female_Size03_Sunbringer_FullName",
+        .audio_event_replace_param = "sunbringer",
+    },
+    .{
         .id = 1611,
         .camp = 16,
         .gender = 2,

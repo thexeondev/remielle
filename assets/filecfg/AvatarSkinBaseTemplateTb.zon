@@ -87,6 +87,7 @@
     .{ .id = 3116010, .avatar_id = 1601 },
     .{ .id = 3116020, .avatar_id = 1602 },
     .{ .id = 3116030, .avatar_id = 1603 },
+    .{ .id = 3116060, .avatar_id = 1606 },
     .{ .id = 3116110, .avatar_id = 1611 },
     .{ .id = 3116210, .avatar_id = 1621 },
     .{ .id = 3116310, .avatar_id = 1631 },
