@@ -258,8 +258,8 @@ pub fn switchGameMode(
 }
 
 pub fn npcInteraction(
-    properties: Properties.Immutable(.{
-        Properties.Hall,
+    properties: logic.Properties.Immutable(.{
+        logic.Properties.Hall,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.NpcInteraction,
@@ -312,8 +312,8 @@ pub fn npcInteraction(
 }
 
 pub fn hallRefresh(
-    properties: Properties.Immutable(.{
-        Properties.Hall,
+    properties: logic.Properties.Immutable(.{
+        logic.Properties.Hall,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.MainCityTime,
@@ -328,6 +328,91 @@ pub fn hallRefresh(
     });
 }
 
+pub fn dungeonQuestFinished(
+    properties: logic.Properties.Immutable(.{
+        logic.Properties.Avatar,
+        logic.Properties.Weapon,
+        logic.Properties.DungeonQuest,
+    }),
+    changes: logic.Changes.Subset(.{
+        logic.Changes.DungeonQuestFinished,
+    }),
+    notify: Notify(pb.DungeonQuestFinishedScNotify),
+) !void {
+    notify.one(.{
+        .quest_id = properties.dungeon_quest.quest_id,
+        .rank = if (changes.dungeon_quest_finished.?.result > 0) 4 else 0,
+        .result = changes.dungeon_quest_finished.?.result,
+        .avatar_contribution_list = avatar_contribution_list: {
+            var avatar_contribution_list: ArrayList(pb.AvatarContributionInfo) = try .initCapacity(
+                notify.allocator,
+                logic.Properties.DungeonQuest.max_room_count * logic.Properties.DungeonQuest.max_avatars_per_room_count,
+            );
+
+            for (properties.dungeon_quest.avatar_ids) |avatar_id| if (avatar_id > 0) {
+                var contribution: u32 = 700; // default: non-signature mindscape0 no-weapon (no potentials)
+                // schema:
+                // 7 / 9 - non-signature / signature
+                // 0-6 - avatar mindscape
+                // 0-5 - 0 no weapon / 1-5 weapon refinement
+                // (0-6) - avatar potential if any exist
+
+                const index = properties.avatar.indexes.get(@enumFromInt(avatar_id)).?;
+                if (properties.avatar.weapon_uids[index].unwrap()) |weapon_uid_int| {
+                    const weapon_uid = logic.Properties.Weapon.Uid.fromInt(weapon_uid_int).?;
+                    const weapon_index = std.mem.findScalar(
+                        logic.Properties.Weapon.Uid,
+                        &properties.weapon.uids,
+                        weapon_uid,
+                    ).?;
+
+                    const weapon_id = @intFromEnum(properties.weapon.ids[weapon_index]);
+                    for (templates.weapon.entries) |weapon_tpl_entry| if (weapon_tpl_entry.item_id == weapon_id) {
+                        if (weapon_tpl_entry.avatar_id == avatar_id) {
+                            contribution += 200; // swapping 7xx to 9xx
+                        }
+                    };
+                    contribution += properties.weapon.refines[weapon_index].toInt(); // swapping xx0 to xxW
+                }
+
+                const avatar_meta = properties.avatar.meta[index];
+                contribution += (avatar_meta.talents.toInt() * 10); // swapping x0x to xMx
+
+                const current_awakening_id = avatar_meta.awakening.toInt();
+                var has_potentials: bool = false;
+                var potential_idx: u32 = 0;
+
+                for (templates.avatar_special_awaken.entries) |template| if (template.avatar_id == avatar_id) {
+                    has_potentials = true;
+                    if (current_awakening_id == 0) {
+                        break;
+                    }
+                    if (template.id <= current_awakening_id) {
+                        potential_idx += 1;
+                    }
+                    if (template.id == current_awakening_id) {
+                        break;
+                    }
+                };
+
+                if (has_potentials) {
+                    contribution = contribution * 10; // swapping xxx to xxx0
+                    contribution += potential_idx; // swapping xxx0 to xxxP
+                }
+
+                const avatar_contribution_info: pb.AvatarContributionInfo = .{
+                    .avatar_id = avatar_id,
+                    .contribution = contribution,
+                };
+
+                avatar_contribution_list.appendAssumeCapacity(avatar_contribution_info);
+            };
+
+            break :avatar_contribution_list avatar_contribution_list;
+        },
+    });
+}
+
 const templates = Assets.templates;
 
 const Notify = notifiers.Notify;
@@ -339,7 +424,6 @@ const logic = @import("../../logic.zig");
 const Assets = @import("../../Assets.zig");
 const packers = @import("../packers.zig");
 const notifiers = @import("../notifiers.zig");
-const Properties = @import("../../logic/Properties.zig");
 
 const pb = rmpb.main;
 const pb_stable = rmpb.stable;

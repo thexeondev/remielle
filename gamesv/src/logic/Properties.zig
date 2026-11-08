@@ -15,6 +15,7 @@ equip: Equipment,
 hall: Hall,
 main_city_time: MainCityTime,
 quick_team: QuickTeam,
+dungeon_quest: DungeonQuest,
 
 pub const List = rmmem.RemielleArrayList(
     rmmem.suggestBucketSize(64, Properties),
@@ -34,6 +35,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     list.getPtr(.hall, index).* = .init;
     list.getPtr(.main_city_time, index).* = .init;
     list.getPtr(.quick_team, index).* = .init;
+    list.getPtr(.dungeon_quest, index).* = .init;
 
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);
@@ -328,6 +330,29 @@ pub const HallAvatar = enum(u32) {
             return @intFromEnum(guise);
         }
     };
+};
+
+pub const DungeonQuest = struct {
+    pub const max_room_count = 2;
+    pub const max_avatars_per_room_count = 3;
+    pub const max_avatars_count = max_room_count * max_avatars_per_room_count;
+
+    quest_id: u32,
+    avatar_ids: [max_avatars_count]u32,
+
+    pub const init: DungeonQuest = .{
+        .quest_id = 0,
+        .avatar_ids = undefined,
+    };
+
+    pub fn putAvatarId(
+        dungeon_quest: *DungeonQuest,
+        room_idx: usize,
+        avatar_idx: usize,
+        avatar_id: u32,
+    ) void {
+        dungeon_quest.avatar_ids[room_idx * max_avatars_per_room_count + avatar_idx] = avatar_id;
+    }
 };
 
 pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) Allocator.Error!pb.PlayerSave {

@@ -1626,7 +1626,7 @@ pub const NHEOPBKELFM = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "NHEOPBKELFM";
     group_id: i32 = 0,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     NCHHLHDKDMC: i32 = 0,
     EHNGHFPILKM: i32 = 0,
     JBNDKGAFDKG: i32 = 0,
@@ -1677,7 +1677,7 @@ pub const FALAHDILLGL = struct {
 pub const KPEHAFGDGKL = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "KPEHAFGDGKL";
-    LKADNGIAOMG: ?JNOEIPDCFOO = null,
+    result: ?JNOEIPDCFOO = null,
     JHLMIEDBCAK: []const u8 = "",
     tag: u32 = 0,
 };
@@ -2106,7 +2106,7 @@ pub const NBKDKAPJCLN = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "NBKDKAPJCLN";
     DCMDLNIFOPB: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     GLIJPAMMOME: u32 = 0,
     FHDHPHGLALO: u32 = 0,
     EICFAJGCCBF: u32 = 0,
@@ -3301,16 +3301,16 @@ pub const JDGGGHBFNKJ = struct {
     IJFFIFAFJLM: std.ArrayList(MIIHHHJPAHE) = .empty,
 };
 
-pub const KIJELFJLCHD = struct {
+pub const DungeonQuestFinishedScNotify = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "KIJELFJLCHD";
+    pub const pb_desc_name = "DungeonQuestFinishedScNotify";
     HCCIPPEOMND: std.ArrayList(MapEntry(u32, ECNEEEIOBFL)) = .empty,
     BLHOFDGPJBO: bool = false,
     OIIHBMDPJGO: u32 = 0,
-    JOABMOEGEFD: std.ArrayList(EEAFOGBNDGK) = .empty,
+    avatar_contribution_list: std.ArrayList(AvatarContributionInfo) = .empty,
     LJGACLHMONA: std.ArrayList(MapEntry(u32, u64)) = .empty,
     BCBNOAJBJLF: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     FLMONJPMKPI: std.ArrayList(AEHCHBIGGBM) = .empty,
     ALIPNGCBACN: []const u8 = "",
     quest_id: u32 = 0,
@@ -3944,7 +3944,7 @@ pub const NKLGFPCDPOD = struct {
     KIMCEDBDPIL: u32 = 0,
     HGOMLCNMOIP: std.ArrayList(u32) = .empty,
     ONIJCAGLMKK: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     JHADIAOFFDG: u32 = 0,
     LECPIFDMPBJ: u32 = 0,
     GALDJFKNLEF: std.ArrayList(u32) = .empty,
@@ -4519,7 +4519,7 @@ pub const BONIIIOGDHE = struct {
 pub const KODOHIDLHKE = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "KODOHIDLHKE";
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
 };
 
 pub const EMCCNMGBNCO = struct {
@@ -5815,7 +5815,7 @@ pub const FOICKLOHAHJ = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "FOICKLOHAHJ";
     ILBCBMPNPKL: std.ArrayList(i32) = .empty,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     NDGDKHHEFHL: i32 = 0,
     NGDBHBKFMGI: i32 = 0,
 };
@@ -5938,7 +5938,7 @@ pub const PMJFIFADEFH = struct {
 pub const NGFLELCLAFN = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "NGFLELCLAFN";
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     rank: u32 = 0,
     ADBLHFHNKPD: u32 = 0,
     NGDBHBKFMGI: u32 = 0,
@@ -6457,7 +6457,7 @@ pub const HBLLDKGKIPP = struct {
     MNPGNACBJDP: std.ArrayList(NNCAEBMHMNF) = .empty,
     EEBNPIJBAJH: std.ArrayList(PJMEMBJHLDB) = .empty,
     NJHDBJENOBC: std.ArrayList(u32) = .empty,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     PLJCGPPBKHC: u32 = 0,
 };
 
@@ -8996,7 +8996,7 @@ pub const BDANNNCKBAD = struct {
     NDGDKHHEFHL: u32 = 0,
     COHPJGHCGJB: std.ArrayList(MLOOLOOKEKK) = .empty,
     GFHKNLFGFDP: i64 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     NGDBHBKFMGI: u32 = 0,
     CMKOMODDBCM: u32 = 0,
     BFPLIPGCNOF: u32 = 0,
@@ -10255,7 +10255,7 @@ pub const AOPNAGJEFDM = struct {
     NGDBHBKFMGI: u32 = 0,
     status: u32 = 0,
     CADJKGEICKL: std.ArrayList(u32) = .empty,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     FBGANNCACAK: u32 = 0,
     CKPIDNDKLOB: std.ArrayList(HFOLPAFIEHI) = .empty,
     NKFJLBAJBML: std.ArrayList(u32) = .empty,
@@ -10449,7 +10449,7 @@ pub const AIEOOJMNFGM = struct {
     AGBDMHCJNNP: i32 = 0,
     CCCJEDLEKAH: i32 = 0,
     GFHKNLFGFDP: []const u8 = "",
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     NGDBHBKFMGI: i32 = 0,
 };
 
@@ -13714,7 +13714,7 @@ pub const KBGKKDGPJJJ = struct {
 pub const LOPNCIBEBGL = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "LOPNCIBEBGL";
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     NDGDKHHEFHL: u32 = 0,
 };
 
@@ -15165,7 +15165,7 @@ pub const EEBGBOJHNLI = struct {
 pub const FightResult = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "FightResult";
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     star: i32 = 0,
     FBKMHKBAKLM: i32 = 0,
     OIPDEJGLKGC: std.ArrayList(MapEntry(u32, ADKFOLFLOBK)) = .empty,
@@ -15909,7 +15909,7 @@ pub const FHIAMKPDNAD = struct {
     DMANAJDALJO: i64 = 0,
     ILKIHOEMMLK: i32 = 0,
     FHDHPHGLALO: i64 = 0,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     IAFMELELKJD: i32 = 0,
     JKKDEFMHOOO: i32 = 0,
     avatar_list: std.ArrayList(PAIBIAOMCOE) = .empty,
@@ -15953,7 +15953,7 @@ pub const CMNEDAKIDGG = struct {
     UNK_CMNEDAKIDGG_32: std.ArrayList(u32) = .empty,
     NDGDKHHEFHL: u32 = 0,
     FHDHPHGLALO: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
 };
 
 pub const PHBOFEMNLGF = struct {
@@ -16854,7 +16854,7 @@ pub const KFPAPFPCFEF = struct {
     ACPPEEBMNII: std.ArrayList(MapEntry(i32, i32)) = .empty,
     OLNFKIDMIBN: std.ArrayList(DJOLLNEAMAH) = .empty,
     NGDBHBKFMGI: i32 = 0,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
 };
 
 pub const HDNJNNNFEEC = struct {
@@ -17939,7 +17939,7 @@ pub const DMALHHBMLCO = struct {
     BNBGHIPNNBA: std.ArrayList(u32) = .empty,
     CMFDMPEFCMH: std.ArrayList(GJFAPKFJCFI) = .empty,
     EFCMJGDGMOM: u32 = 0,
-    LKADNGIAOMG: ?DMBNCBELMAM = null,
+    result: ?DMBNCBELMAM = null,
     JKKDEFMHOOO: u32 = 0,
 };
 
@@ -18928,7 +18928,7 @@ pub const EGBHLGNJBGI = struct {
     GGLONDMMMOD: []const u8 = "",
     GGBJMCLLABH: bool = false,
     KIMMBIHBKKN: ?GMMIOIKHJKJ = null,
-    LKADNGIAOMG: ?EndHollowMiniGameType = null,
+    result: ?EndHollowMiniGameType = null,
 };
 
 pub const CBHKHDDOGFG = struct {
@@ -19530,7 +19530,7 @@ pub const KGJPJOHHJBC = struct {
     LHBAOFFHJCK: u32 = 0,
     KMHJJOGOHDB: u32 = 0,
     NGDBHBKFMGI: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     FIINNKEAGJH: u32 = 0,
     EFCMJGDGMOM: u32 = 0,
     MJKKIADCIOD: u32 = 0,
@@ -19843,11 +19843,11 @@ pub const OJOJDBMPKJH = struct {
     LBMBKNLFJBI: u32 = 0,
 };
 
-pub const EEAFOGBNDGK = struct {
+pub const AvatarContributionInfo = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "EEAFOGBNDGK";
+    pub const pb_desc_name = "AvatarContributionInfo";
     avatar_id: u32 = 0,
-    GNHFBNFPKPK: u32 = 0,
+    contribution: u32 = 0,
 };
 
 pub const DLCGIJHNODJ = struct {
@@ -21701,7 +21701,7 @@ pub const GOGKAHBDCKA = struct {
     JCNJBGIAACL: f32 = 0,
     FPFEANBMPMP: i32 = 0,
     HEABMIBIOIK: bool = false,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
 };
 
 pub const PJBGDNAJOIP = struct {
@@ -22570,7 +22570,7 @@ pub const EELHIKELLNJ = struct {
 pub const MJBBIEKEJMI = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "MJBBIEKEJMI";
-    LKADNGIAOMG: ?FightResult = null,
+    result: ?FightResult = null,
 };
 
 pub const FPODEIPDPPE = struct {
@@ -24385,7 +24385,7 @@ pub const EIODIHHPMAK = struct {
 pub const FCGKHGJHHGB = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "FCGKHGJHHGB";
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     JKKDEFMHOOO: u32 = 0,
     MMIKCLNLLJC: u32 = 0,
     rank: ?HDNBBFNPFPK = null,
@@ -25285,7 +25285,7 @@ pub const EJIFOBJJMKH = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "EJIFOBJJMKH";
     rank: u32 = 0,
-    LKADNGIAOMG: ?IHOJKKCNEGJ = null,
+    result: ?IHOJKKCNEGJ = null,
     CHCJDBHHFBA: bool = false,
     BBLDEJIIAIP: ?FAEHLLGHCKM = null,
     PBPHEJOJFLE: ?HFOHNECFIKC = null,
@@ -25557,7 +25557,7 @@ pub const OMNGDAEOFBC = struct {
 pub const HCADDGAEMOK = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "HCADDGAEMOK";
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     HCCIPPEOMND: std.ArrayList(MapEntry(u32, ECNEEEIOBFL)) = .empty,
     BKFPCMBJMGH: u32 = 0,
     LJGACLHMONA: std.ArrayList(MapEntry(u32, u64)) = .empty,
@@ -26023,7 +26023,7 @@ pub const JCDBNHOKNDO = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "JCDBNHOKNDO";
     AJGOHFEFKOC: std.ArrayList(OEKLGKKENMK) = .empty,
-    LKADNGIAOMG: ?LBLDHLAHLMG = null,
+    result: ?LBLDHLAHLMG = null,
     FONKLHKEMNC: ?ABJPFKMJJIL = null,
 };
 
@@ -26139,7 +26139,7 @@ pub const BAMGEOPJPCH = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "BAMGEOPJPCH";
     UNK_BAMGEOPJPCH_40: std.ArrayList(PJMEMBJHLDB) = .empty,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     COIOPKCKNCK: f32 = 0,
     MGDKELGPCLO: std.ArrayList(u32) = .empty,
     EFDJCIADOPM: std.ArrayList(u32) = .empty,
@@ -29121,7 +29121,7 @@ pub const CIKKLMJGHME = struct {
     NPKBPBKJMAJ: i32 = 0,
     NGDBHBKFMGI: i32 = 0,
     BFPLIPGCNOF: i32 = 0,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
     GFHKNLFGFDP: []const u8 = "",
     end_timestamp: []const u8 = "",
     EEBNPIJBAJH: std.ArrayList(EFAMLDDPKEJ) = .empty,
@@ -29308,7 +29308,7 @@ pub const OEPINIHBCJL = struct {
 pub const DIOEDOELENH = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "DIOEDOELENH";
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     GMGDIIJMKAL: ?KFEPHHOKCJO = null,
     total_time: u32 = 0,
     CDBLLELDDKH: u32 = 0,
@@ -31596,7 +31596,7 @@ pub const BDIDGJDIHCP = struct {
     AIBODIEHIHN: i32 = 0,
     IMBLNAIHPIH: i32 = 0,
     avatar_id: i32 = 0,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
 };
 
 pub const PCHILCILNAL = struct {
@@ -33221,7 +33221,7 @@ pub const AMAJGFEAMFI = struct {
     pub const pb_desc_name = "AMAJGFEAMFI";
     PMOLGIKDEGN: i32 = 0,
     CMDGIHPACNI: i32 = 0,
-    LKADNGIAOMG: bool = false,
+    result: bool = false,
 };
 
 pub const EODNIEMIBCC = struct {
@@ -33230,7 +33230,7 @@ pub const EODNIEMIBCC = struct {
     BLJKMLBHFEJ: i64 = 0,
     JLEDLKMNIJA: i32 = 0,
     FHDHPHGLALO: i64 = 0,
-    LKADNGIAOMG: i32 = 0,
+    result: i32 = 0,
 };
 
 pub const CBKIIMPDAEM = struct {
@@ -34776,7 +34776,7 @@ pub const AOHEFAKLKME = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "AOHEFAKLKME";
     group_id: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
 };
 
 pub const MLNEOGEEICO = struct {
@@ -35899,7 +35899,7 @@ pub const GEBOHPINGEN = struct {
     ADBLHFHNKPD: u32 = 0,
     rank: u32 = 0,
     MJADFDJCMLN: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
 };
 
 pub const FFGHNKFPJHJ = struct {
@@ -37227,7 +37227,7 @@ pub const JMDCNBCLDPL = struct {
     LAHFCLJHKGE: u32 = 0,
     JKNADOGBFLM: std.ArrayList(MJDDPMLABAP) = .empty,
     NGDBHBKFMGI: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     MHKHIJHPJHF: std.ArrayList(AHOMBGJDGOD) = .empty,
     MHPCJDKLLCD: u32 = 0,
 };
@@ -39264,7 +39264,7 @@ pub const OBEOIHICJEF = struct {
     skill_type_level: std.ArrayList(HMOIHJKBEBH) = .empty,
     NBPECOKJOPF: std.ArrayList(GMNIMHPHKCJ) = .empty,
     NGDBHBKFMGI: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
 };
 
 pub const HOLABAGMMHN = struct {
@@ -39835,7 +39835,7 @@ pub const HDNPNPJDIGP = struct {
     IGDCOKOCHLB: std.ArrayList(u32) = .empty,
     PIJCEAPINGC: std.ArrayList(BMDPKNMNNGD) = .empty,
     NGDBHBKFMGI: u32 = 0,
-    LKADNGIAOMG: u32 = 0,
+    result: u32 = 0,
     HKMAMGIGMEF: bool = false,
 };
 

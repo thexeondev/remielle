@@ -153,9 +153,16 @@ pub fn startHadalZoneBattle(
 
 pub fn endBattle(
     message: Message(pb.EndBattleCsReq),
+    changes: Changes.Builder(.{
+        Changes.DungeonQuestFinished,
+    }),
     response: Response(pb.EndBattleScRsp),
 ) !void {
-    _ = message;
+    const dungeon_quest_finished: Changes.DungeonQuestFinished = .{
+        .result = if (message.data.fight_result) |fight_result| @intCast(fight_result.result) else 0,
+    };
+    changes.insert(dungeon_quest_finished);
+
     response.set(.{ .fight_settle = .init });
 }
 

@@ -1,4 +1,5 @@
 game_mode: ?GameMode,
+dungeon_quest_finished: ?DungeonQuestFinished,
 player_accessory: ?PlayerAccessory,
 main_city_time: ?MainCityTime,
 pos_in_main_city: ?PosInMainCity,
@@ -13,6 +14,7 @@ hadal_zone: ?HadalZoneSchedule,
 
 pub const init: Changes = .{
     .game_mode = null,
+    .dungeon_quest_finished = null,
     .player_accessory = null,
     .main_city_time = null,
     .pos_in_main_city = null,
@@ -177,6 +179,10 @@ pub const GameMode = union(enum) {
             };
         }
     };
+};
+
+pub const DungeonQuestFinished = struct {
+    result: u32,
 };
 
 pub const PlayerAccessory = struct {
