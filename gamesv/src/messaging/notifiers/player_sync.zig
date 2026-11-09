@@ -13,6 +13,7 @@ pub fn playerSync(
         logic.Changes.PlayerAccessory,
         logic.Changes.QuickTeam,
         logic.Changes.HadalZoneSchedule,
+        logic.Changes.CameraMasterMode,
     }),
     notify: Notify(pb.PlayerSyncScNotify),
 ) !void {
@@ -35,6 +36,7 @@ pub fn playerSync(
             changes.player_accessory,
         ),
         .quick_team = try buildQuickTeamSync(notify.allocator, changes.quick_teams),
+        .photo_camera = try buildPhotoCameraSync(notify.allocator, changes.camera_master_mode),
     };
 
     sync.item = try buildItemSync(
@@ -166,6 +168,48 @@ fn buildItemSync(
 
 fn buildQuickTeamSync(allocator: Allocator, quick_teams: []const logic.Changes.QuickTeam) !?pb.QuickTeamSync {
     return if (quick_teams.len == 0) null else try packers.packQuickTeamSync(allocator, quick_teams);
+}
+
+fn buildPhotoCameraSync(
+    allocator: Allocator,
+    maybe_camera_master_mode: ?*const logic.Changes.CameraMasterMode,
+) !?pb.PhotoCameraSync {
+    var sync: pb.PhotoCameraSync = .{};
+    if (maybe_camera_master_mode) |camera_master_mode| {
+        var avatar_actions: std.ArrayList(pb.AvatarActionInfo) = try .initCapacity(
+            allocator,
+            templates.avatar_action_config.entries.len,
+        );
+        var camera_stickers: std.ArrayList(pb.CameraStickersInfo) = try .initCapacity(
+            allocator,
+            templates.camera_stickers.entries.len,
+        );
+        var photo_filters: std.ArrayList(pb.PhotoFilterInfo) = try .initCapacity(
+            allocator,
+            templates.photo_filters_cfg.entries.len,
+        );
+        var photo_frames: std.ArrayList(pb.PhotoFrameInfo) = try .initCapacity(
+            allocator,
+            templates.photo_frame.entries.len,
+        );
+
+        for (templates.avatar_action_config.entries) |config|
+            avatar_actions.appendAssumeCapacity(.{ .id = @intCast(config.id), .is_unlocked = true });
+        for (templates.camera_stickers.entries) |config|
+            camera_stickers.appendAssumeCapacity(.{ .id = @intCast(config.id), .is_unlocked = true });
+        for (templates.photo_filters_cfg.entries) |config|
+            photo_filters.appendAssumeCapacity(.{ .id = @intCast(config.id), .is_unlocked = true });
+        for (templates.photo_frame.entries) |config|
+            photo_frames.appendAssumeCapacity(.{ .id = @intCast(config.id), .is_unlocked = true });
+
+        sync.photo_filter = photo_filters;
+        sync.camera_stickers = camera_stickers;
+        sync.photo_frame = photo_frames;
+        sync.avatar_action = avatar_actions;
+        sync.master_mode = camera_master_mode.master_mode;
+    }
+
+    return sync;
 }
 
 fn buildHadalZoneSync(

@@ -23,6 +23,10 @@ pub const equipment_level = @import("templates/equipment_level.zig");
 pub const equipment_suit = @import("templates/equipment_suit.zig");
 pub const avatar_battle = @import("templates/avatar_battle.zig");
 pub const avatar_special_awaken = @import("templates/avatar_special_awaken.zig");
+pub const avatar_action_config = @import("templates/avatar_action_config.zig");
+pub const camera_stickers = @import("templates/camera_stickers.zig");
+pub const photo_filters_cfg = @import("templates/photo_filters_cfg.zig");
+pub const photo_frame = @import("templates/photo_frame.zig");
 
 pub const Property = struct {
     property: u32,

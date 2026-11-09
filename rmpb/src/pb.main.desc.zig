@@ -7479,7 +7479,7 @@ pub const MiscData = struct {
     pub const BHKGLGCANJP_field_desc: FieldDesc = .{ .number = 134, .xor = 0 };
     pub const business_card_field_desc: FieldDesc = .{ .number = 159, .xor = 0 };
     pub const EEJBBJJPJBH_field_desc: FieldDesc = .{ .number = 299, .xor = 0 };
-    pub const AEOCGAJIMJF_field_desc: FieldDesc = .{ .number = 513, .xor = 0 };
+    pub const photo_camera_field_desc: FieldDesc = .{ .number = 513, .xor = 0 };
     pub const HJNCMBLKECC_field_desc: FieldDesc = .{ .number = 524, .xor = 0 };
     pub const AIGOJOGBABO_field_desc: FieldDesc = .{ .number = 777, .xor = 0 };
     pub const DHHAJEJKMHH_field_desc: FieldDesc = .{ .number = 834, .xor = 0 };
@@ -7702,7 +7702,7 @@ pub const MiscSync = struct {
     pub const FDIJGOGIBNG_field_desc: FieldDesc = .{ .number = 1600, .xor = 0 };
     pub const FGDNMAHFMNP_field_desc: FieldDesc = .{ .number = 1656, .xor = 0 };
     pub const HJMIALLCBGH_field_desc: FieldDesc = .{ .number = 1707, .xor = 0 };
-    pub const AEOCGAJIMJF_field_desc: FieldDesc = .{ .number = 1775, .xor = 0 };
+    pub const photo_camera_field_desc: FieldDesc = .{ .number = 1775, .xor = 0 };
     pub const player_accessory_field_desc: FieldDesc = .{ .number = 1805, .xor = 0 };
     pub const quick_team_field_desc: FieldDesc = .{ .number = 1844, .xor = 0 };
     pub const PCEEHCECJIO_field_desc: FieldDesc = .{ .number = 1935, .xor = 0 };
@@ -14983,7 +14983,7 @@ pub const FNFONGIJNOD = struct {
     pub const OGMKJDAENMA_field_desc: FieldDesc = .{ .number = 12, .xor = 10831 };
 };
 
-pub const IBGEOBJKNOB = struct {
+pub const AvatarActionInfo = struct {
     pub const id_field_desc: FieldDesc = .{ .number = 3, .xor = 5732 };
     pub const is_unlocked_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
 };
@@ -18372,12 +18372,12 @@ pub const EndBattleCsReq = struct {
     pub const fight_result_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
 };
 
-pub const JANODNDPMCL = struct {
-    pub const LFPJCBALKKP_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const OPHJMCDOEMG_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
-    pub const DLKDIALDMMM_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
-    pub const EOOACLHFHCH_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
-    pub const HJGKNJJHMKI_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
+pub const PhotoCameraData = struct {
+    pub const camera_stickers_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const avatar_action_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+    pub const photo_filter_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const master_mode_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
+    pub const photo_frame_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
     pub const MHEOFHFCJCD_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
 };
 
@@ -23437,7 +23437,7 @@ pub const FNOJEICNMLF = struct {
     pub const FAMANJBNIDO_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
 
-pub const IMNAKPDHEGC = struct {
+pub const PhotoFilterInfo = struct {
     pub const id_field_desc: FieldDesc = .{ .number = 2, .xor = 6967 };
     pub const is_unlocked_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
 };
@@ -24001,13 +24001,13 @@ pub const OHIEDADEOKO = struct {
     pub const retcode_field_desc: FieldDesc = .{ .number = 7, .xor = 15008 };
 };
 
-pub const ADIPJDHBGLH = struct {
+pub const PhotoCameraSync = struct {
     pub const MHEOFHFCJCD_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const HJGKNJJHMKI_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
-    pub const DLKDIALDMMM_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
-    pub const OPHJMCDOEMG_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
-    pub const LFPJCBALKKP_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
-    pub const EOOACLHFHCH_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
+    pub const photo_frame_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const photo_filter_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
+    pub const avatar_action_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
+    pub const camera_stickers_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
+    pub const master_mode_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
 };
 
 pub const LMILAJMHNGO = struct {
@@ -28044,9 +28044,9 @@ pub const GKPIHKEHCDB = struct {
     pub const GCPOCENEHGL_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
 };
 
-pub const IDHMEOLCDHB = struct {
+pub const CameraMasterModeToggleCsReq = struct {
     pub const cmd_id: u16 = 4361;
-    pub const EOOACLHFHCH_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
+    pub const master_mode_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
 };
 
 pub const JEGNKNOJCMC = struct {
@@ -29312,7 +29312,7 @@ pub const PDJBLPJHJOI = struct {
     pub const HEMMJNPHDNI_field_desc: FieldDesc = .{ .number = 6, .xor = 9903 };
 };
 
-pub const OGCFNDDEEOL = struct {
+pub const CameraStickersInfo = struct {
     pub const is_unlocked_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
     pub const id_field_desc: FieldDesc = .{ .number = 11, .xor = 1864 };
 };
@@ -32631,7 +32631,7 @@ pub const DLHDGAPKKAK = struct {
     pub const EMAHPEPDJGI_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
 };
 
-pub const ICHBEGFPKGG = struct {
+pub const PhotoFrameInfo = struct {
     pub const id_field_desc: FieldDesc = .{ .number = 2, .xor = 11105 };
     pub const is_unlocked_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
 };

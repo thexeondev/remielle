@@ -1,0 +1,15 @@
+.{ .{
+    .id = 101,
+    .avatar_id = 1581,
+    .material_id = 3730001,
+    .form_ids = .{1581},
+}, .{
+    .id = 102,
+    .avatar_id = 1601,
+    .material_id = 3730002,
+    .form_ids = .{
+        1601,
+        1602,
+        1603,
+    },
+} }

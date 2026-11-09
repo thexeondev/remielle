@@ -4373,6 +4373,18 @@ pub const PFGIFMOLPMN = struct {
     GCGMENIENDL: bool = false,
 };
 
+pub const CameraMasterModeToggleCsReq = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "CameraMasterModeToggleCsReq";
+    master_mode: bool = false,
+};
+
+pub const CameraMasterModeToggleScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "CameraMasterModeToggleScRsp";
+    retcode: i32 = 0,
+};
+
 pub const KBALKAKMGEE = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "KBALKAKMGEE";
@@ -7974,7 +7986,7 @@ pub const MiscData = struct {
     GLIALPHPGOE: ?JKMOAPHHCJF = null,
     EEMCFPDDCBI: ?NMEBGPCGIEL = null,
     business_card: ?BusinessCardData = null,
-    LMECIIGLFPN: ?IMHFGJAOEDJ = null,
+    photo_camera: ?PhotoCameraData = null,
     NKMDOKHNAOK: ?BGEEHCFCCJE = null,
     MGHIMNHBDJI: ?AAHLAPODBEF = null,
     LLIFDAOOECA: std.ArrayList(LDGIGHEPKCJ) = .empty,
@@ -17486,12 +17498,14 @@ pub const LKKHPMGKHDN = struct {
     GHEFGNKOCAE: u32 = 0,
 };
 
-pub const AEGPEAODKGO = struct {
+pub const PhotoCameraSync = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "AEGPEAODKGO";
-    MDHNDKJELAO: std.ArrayList(IKBBMCDFNPP) = .empty,
-    DIJGHELBDNE: std.ArrayList(ENGLGGDMIIG) = .empty,
-    JGFOGICLPAK: std.ArrayList(PPAECLJAACM) = .empty,
+    pub const pb_desc_name = "PhotoCameraSync";
+    camera_stickers: std.ArrayList(CameraStickersInfo) = .empty,
+    photo_frame: std.ArrayList(PhotoFrameInfo) = .empty,
+    photo_filter: std.ArrayList(PhotoFilterInfo) = .empty,
+    avatar_action: std.ArrayList(AvatarActionInfo) = .empty,
+    master_mode: bool = false,
 };
 
 pub const IKFNOGFEAKN = struct {
@@ -25035,9 +25049,9 @@ pub const BEEAPPLJDNP = struct {
     FAEIJKMBCMB: u32 = 0,
 };
 
-pub const PPAECLJAACM = struct {
+pub const PhotoFilterInfo = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "PPAECLJAACM";
+    pub const pb_desc_name = "PhotoFilterInfo";
     is_unlocked: bool = false,
     id: u32 = 0,
 };
@@ -27399,9 +27413,9 @@ pub const KONJEDFIBHJ = struct {
     JMONIDLKBPB: u32 = 0,
 };
 
-pub const IKBBMCDFNPP = struct {
+pub const CameraStickersInfo = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "IKBBMCDFNPP";
+    pub const pb_desc_name = "CameraStickersInfo";
     id: u32 = 0,
     is_unlocked: bool = false,
 };
@@ -28095,7 +28109,7 @@ pub const MiscSync = struct {
     NKMDOKHNAOK: ?JIPAMBFBNPC = null,
     quick_team: ?QuickTeamSync = null,
     post_girl: ?PostGirlSync = null,
-    LMECIIGLFPN: ?AEGPEAODKGO = null,
+    photo_camera: ?PhotoCameraSync = null,
 };
 
 pub const PCFNIOPCHPE = struct {
@@ -33534,12 +33548,14 @@ pub const GALJABLODMM = struct {
     DMILDFDIHHC: std.ArrayList(AAGFAJNNIIH) = .empty,
 };
 
-pub const IMHFGJAOEDJ = struct {
+pub const PhotoCameraData = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "IMHFGJAOEDJ";
-    JGFOGICLPAK: std.ArrayList(PPAECLJAACM) = .empty,
-    MDHNDKJELAO: std.ArrayList(IKBBMCDFNPP) = .empty,
-    DIJGHELBDNE: std.ArrayList(ENGLGGDMIIG) = .empty,
+    pub const pb_desc_name = "PhotoCameraData";
+    photo_filter: std.ArrayList(PhotoFilterInfo) = .empty,
+    camera_stickers: std.ArrayList(CameraStickersInfo) = .empty,
+    photo_frame: std.ArrayList(PhotoFrameInfo) = .empty,
+    avatar_action: std.ArrayList(AvatarActionInfo) = .empty,
+    master_mode: bool = false,
 };
 
 pub const GetNewAreaPortalListCsReq = struct {
@@ -38714,9 +38730,16 @@ pub const MOKGMLGJDJA = struct {
     IJBELFGNHHG: bool = false,
 };
 
-pub const ENGLGGDMIIG = struct {
+pub const PhotoFrameInfo = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "ENGLGGDMIIG";
+    pub const pb_desc_name = "PhotoFrameInfo";
+    is_unlocked: bool = false,
+    id: u32 = 0,
+};
+
+pub const AvatarActionInfo = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "AvatarActionInfo";
     is_unlocked: bool = false,
     id: u32 = 0,
 };
