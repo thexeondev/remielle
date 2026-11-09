@@ -43,7 +43,7 @@ pub fn mutateDungeonQuest(
     if (changes.game_mode) |game_mode| switch (game_mode.*) {
         .hall => {
             properties.dungeon_quest.quest_id = 0;
-            properties.dungeon_quest.avatar_ids = undefined;
+            properties.dungeon_quest.avatar_ids = @splat(0);
         },
         .training => |training| {
             properties.dungeon_quest.quest_id = training.quest.getBattleEventId();

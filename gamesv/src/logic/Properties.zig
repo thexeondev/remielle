@@ -342,7 +342,7 @@ pub const DungeonQuest = struct {
 
     pub const init: DungeonQuest = .{
         .quest_id = 0,
-        .avatar_ids = undefined,
+        .avatar_ids = @splat(0),
     };
 
     pub fn putAvatarId(
