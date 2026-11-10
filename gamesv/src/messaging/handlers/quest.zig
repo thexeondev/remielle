@@ -151,6 +151,91 @@ pub fn startHadalZoneBattle(
     response.set(.init);
 }
 
+pub fn restartHadalZoneBattle(
+    message: Message(pb.RestartHadalZoneBattleCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+        Properties.Buddy,
+        Properties.HadalZone,
+    }),
+    changes: Changes.Builder(.{
+        Changes.GameMode,
+    }),
+    response: Response(pb.RestartHadalZoneBattleScRsp),
+) !void {
+    _ = message;
+
+    const zone_id = Changes.GameMode.HadalZone.ZoneId.fromInt(properties.hadal_zone.zone_id) orelse
+        return response.fail(1);
+
+    const layer: Changes.GameMode.HadalZone.Layer = .{
+        .zone_id = zone_id,
+        .layer_index = properties.hadal_zone.layer_index,
+        .room_index = properties.hadal_zone.room_index,
+    };
+
+    const layer_id = layer.getId();
+
+    const quest_id = quest_id: {
+        for (templates.hadal_zone_quest.entries) |entry|
+            if (entry.layer_id == layer_id)
+                break :quest_id entry.quest_id;
+
+        return response.fail(1);
+    };
+
+    const quest_type = quest_type: {
+        for (templates.quest_config.entries) |entry|
+            if (entry.quest_id == quest_id)
+                break :quest_type entry.quest_type;
+
+        return response.fail(1);
+    };
+
+    var rooms: Changes.GameMode.HadalZone.Rooms = .empty;
+
+    for (
+        &rooms.avatar_lists,
+        &rooms.buddies,
+        0..,
+    ) |*avatar_slots, *optional_buddy, room_index| {
+        for (avatar_slots, 0..) |*avatar_slot, avatar_index| {
+            const raw_avatar_id = properties.hadal_zone.avatar_id_list[room_index * Properties.HadalZone.max_avatar_per_room_count + avatar_index];
+            if (raw_avatar_id == 0) continue;
+
+            const avatar_id = std.enums.fromInt(templates.avatar_base.Id, raw_avatar_id) orelse
+                return response.fail(1); // invalid avatar id
+
+            if (!properties.avatar.indexes.contains(avatar_id))
+                return response.fail(1); // avatar not unlocked
+
+            avatar_slot.* = .fromId(avatar_id);
+        }
+
+        const raw_buddy_id = properties.hadal_zone.buddy_id_list[room_index];
+        if (raw_buddy_id != 0) {
+            const buddy_id = std.enums.fromInt(templates.buddy_base.Id, raw_buddy_id) orelse
+                return response.fail(1); // invalid buddy id
+
+            if (!properties.buddy.indexes.contains(buddy_id))
+                return response.fail(1);
+
+            optional_buddy.* = .fromId(buddy_id);
+        }
+    }
+
+    const mode_switch: Changes.GameMode = .{ .hadal_zone = .{
+        .rooms = rooms,
+        .layer = layer,
+        .layer_item_id = properties.hadal_zone.layer_item_id,
+        .quest_id = quest_id,
+        .quest_type = quest_type,
+    } };
+
+    changes.insert(mode_switch);
+    response.set(.init);
+}
+
 pub fn endBattle(
     message: Message(pb.EndBattleCsReq),
     changes: Changes.Builder(.{

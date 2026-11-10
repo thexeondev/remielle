@@ -5,6 +5,7 @@ pub const Weapon = @import("Properties/Weapon.zig");
 pub const Equipment = @import("Properties/Equipment.zig");
 pub const Hall = @import("Properties/Hall.zig");
 pub const QuickTeam = @import("Properties/QuickTeam.zig");
+pub const HadalZone = @import("Properties/HadalZone.zig");
 
 basic_info: BasicInfo,
 player_accessory: PlayerAccessory,
@@ -16,6 +17,7 @@ hall: Hall,
 main_city_time: MainCityTime,
 quick_team: QuickTeam,
 dungeon_quest: DungeonQuest,
+hadal_zone: HadalZone,
 
 pub const List = rmmem.RemielleArrayList(
     rmmem.suggestBucketSize(64, Properties),
@@ -36,6 +38,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     list.getPtr(.main_city_time, index).* = .init;
     list.getPtr(.quick_team, index).* = .init;
     list.getPtr(.dungeon_quest, index).* = .init;
+    list.getPtr(.hadal_zone, index).* = .init;
 
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);

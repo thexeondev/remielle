@@ -15273,6 +15273,13 @@ pub const StartHadalZoneBattleCsReq = struct {
     zone_id: u32 = 0,
 };
 
+pub const RestartHadalZoneBattleCsReq = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "RestartHadalZoneBattleCsReq";
+    GBLOILJAPCB: bool = false,
+    HIJKIALNKKE: bool = false,
+};
+
 pub const COPDDCFDABA = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "COPDDCFDABA";
@@ -19644,6 +19651,12 @@ pub const AGBAMCIEIMI = struct {
 pub const StartHadalZoneBattleScRsp = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "StartHadalZoneBattleScRsp";
+    retcode: i32 = 0,
+};
+
+pub const RestartHadalZoneBattleScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "RestartHadalZoneBattleScRsp";
     retcode: i32 = 0,
 };
 

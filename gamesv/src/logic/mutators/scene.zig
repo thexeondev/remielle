@@ -32,6 +32,33 @@ pub fn mutateMainCityTime(
     properties.main_city_time.day_of_week = changes.main_city_time.?.day_of_week;
 }
 
+pub fn mutateHadalZone(
+    changes: logic.Changes.Subset(.{
+        logic.Changes.GameMode,
+    }),
+    properties: logic.Properties.Mutable(.{
+        logic.Properties.HadalZone,
+    }),
+) !void {
+    if (changes.game_mode) |game_mode| switch (game_mode.*) {
+        .hall, .training => {
+            properties.hadal_zone.* = .init;
+        },
+        .hadal_zone => |hadal_zone| {
+            properties.hadal_zone.zone_id = @intFromEnum(hadal_zone.layer.zone_id);
+            properties.hadal_zone.layer_index = hadal_zone.layer.layer_index;
+            properties.hadal_zone.room_index = hadal_zone.layer.room_index;
+            properties.hadal_zone.layer_item_id = hadal_zone.layer_item_id;
+            for (hadal_zone.rooms.avatar_lists, hadal_zone.rooms.buddies, 0..) |avatar_slots, optional_buddy, room_index| {
+                for (avatar_slots[0..logic.Properties.HadalZone.max_avatar_per_room_count], 0..) |avatar_slot, avatar_index| {
+                    properties.hadal_zone.avatar_id_list[room_index * logic.Properties.HadalZone.max_avatar_per_room_count + avatar_index] = @intFromEnum(avatar_slot);
+                }
+                properties.hadal_zone.buddy_id_list[room_index] = @intFromEnum(optional_buddy);
+            }
+        },
+    };
+}
+
 pub fn mutateDungeonQuest(
     changes: logic.Changes.Subset(.{
         logic.Changes.GameMode,

@@ -208,7 +208,7 @@ pub const FBKJAHAFENP = struct {
     pub const HIDMPCAFKIB_field_desc: FieldDesc = .{ .number = 15, .xor = 774 };
 };
 
-pub const KMJJDFLMDED = struct {
+pub const RestartHadalZoneBattleScRsp = struct {
     pub const cmd_id: u16 = 1156;
     pub const PDDDCKKHMDO_field_desc: FieldDesc = .{ .number = 1, .xor = 11748 };
     pub const retcode_field_desc: FieldDesc = .{ .number = 3, .xor = 6921 };
@@ -18908,7 +18908,7 @@ pub const MPPOBFJLBPI = struct {
 pub const DECOMOBMANB = struct {
 };
 
-pub const CKIKDCAGOAE = struct {
+pub const RestartHadalZoneBattleCsReq = struct {
     pub const cmd_id: u16 = 8355;
     pub const GBLOILJAPCB_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
     pub const HIJKIALNKKE_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
