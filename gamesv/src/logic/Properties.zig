@@ -79,7 +79,7 @@ pub fn addDefaultAvatar(avatar: *Avatar, id: templates.avatar_base.Id, i: usize)
     avatar.awake_material_counts[i] = .none;
 
     for (templates.avatar_special_awaken.entries) |template| {
-        if (std.enums.fromInt(Properties.Avatar.Id, template.avatar_id) == null) continue;
+        if (template.avatar_id != @intFromEnum(id)) continue;
 
         avatar.awake_material_counts[i] = .add(avatar.awake_material_counts[i], 1);
     }
