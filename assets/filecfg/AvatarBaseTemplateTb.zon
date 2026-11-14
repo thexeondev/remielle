@@ -1097,4 +1097,13 @@
         .full_name = "",
         .audio_event_replace_param = "",
     },
+    .{
+        .id = 8036,
+        .camp = 0,
+        .gender = 0,
+        .name = "",
+        .code_name = "",
+        .full_name = "",
+        .audio_event_replace_param = "YoKaiGoldenBomb",
+    },
 }

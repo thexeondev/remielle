@@ -72,6 +72,6 @@
     .{
         .area_group_id = 112,
         .group_name = "WorldMap_UrbanMapGroupName_VRSimulation",
-        .is_map_visible = true,
+        .is_map_visible = false,
     },
 }
