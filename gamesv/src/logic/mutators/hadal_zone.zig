@@ -8,9 +8,13 @@ pub fn mutateHadalZone(
 ) !void {
     if (changes.hadal_zone_room_finished) |change| {
         const maybe_layer_id = layer_id: {
-            for (Assets.templates.zone_info.entries) |zone_info| if (zone_info.zone_id == properties.hadal_zone.zone_id and zone_info.layer_index == properties.hadal_zone.layer_index) {
-                break :layer_id zone_info.layer_id;
-            };
+            for (Assets.templates.zone_info.entries) |zone_info|
+                if (zone_info.zone_id == properties.hadal_zone.zone_id and
+                    zone_info.layer_index == properties.hadal_zone.layer_index and
+                    zone_info.sub_layer_index == properties.hadal_zone.sub_layer_index)
+                {
+                    break :layer_id zone_info.layer_id;
+                };
             break :layer_id null;
         };
         const maybe_layer_info = if (maybe_layer_id) |layer_id| layer_info: {

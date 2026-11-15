@@ -9,4 +9,5 @@ pub const Template = struct {
     zone_group_id: u32,
     entrance_id: u32,
     time_period_list: []const []const u8,
+    sub_layer_index: u32,
 };

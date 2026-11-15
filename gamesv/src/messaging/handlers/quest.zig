@@ -171,7 +171,7 @@ pub fn restartHadalZoneBattle(
     const layer: Changes.GameMode.HadalZone.Layer = .{
         .zone_id = zone_id,
         .layer_index = properties.hadal_zone.layer_index,
-        .room_index = properties.hadal_zone.room_index,
+        .room_index = properties.hadal_zone.sub_layer_index,
     };
 
     const layer_id = layer.getId();

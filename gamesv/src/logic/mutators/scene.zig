@@ -47,7 +47,7 @@ pub fn mutateHadalZone(
         .hadal_zone => |hadal_zone| {
             properties.hadal_zone.zone_id = @intFromEnum(hadal_zone.layer.zone_id);
             properties.hadal_zone.layer_index = hadal_zone.layer.layer_index;
-            properties.hadal_zone.room_index = hadal_zone.layer.room_index;
+            properties.hadal_zone.sub_layer_index = hadal_zone.layer.room_index;
             properties.hadal_zone.layer_item_id = hadal_zone.layer_item_id;
             for (hadal_zone.rooms.avatar_lists, hadal_zone.rooms.buddies, 0..) |avatar_slots, optional_buddy, room_index| {
                 for (avatar_slots[0..logic.Properties.HadalZone.max_avatar_per_room_count], 0..) |avatar_slot, avatar_index| {
