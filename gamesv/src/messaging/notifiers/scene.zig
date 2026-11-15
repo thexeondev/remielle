@@ -184,6 +184,40 @@ pub fn switchGameMode(
                         @intFromEnum(id)
                     else
                         0,
+                    .scene_perform = .{
+                        .time = time: {
+                            for (templates.zone_info.entries) |zone_info|
+                                if (zone_info.zone_id == @intFromEnum(hadal_zone.layer.zone_id) and
+                                    zone_info.layer_index == hadal_zone.layer.layer_index and
+                                    zone_info.sub_layer_index == hadal_zone.layer.room_index and
+                                    zone_info.time_period_list.len >= 1)
+                                {
+                                    break :time zone_info.time_period_list[0];
+                                };
+                            break :time "Morning";
+                        },
+                        .weather = weather: {
+                            const maybe_layer_id = layer_id: {
+                                for (templates.zone_info.entries) |zone_info|
+                                    if (zone_info.zone_id == @intFromEnum(hadal_zone.layer.zone_id) and
+                                        zone_info.layer_index == hadal_zone.layer.layer_index and
+                                        zone_info.sub_layer_index == hadal_zone.layer.room_index)
+                                    {
+                                        break :layer_id zone_info.layer_id;
+                                    };
+                                break :layer_id null;
+                            };
+                            if (maybe_layer_id) |layer_id| {
+                                for (templates.layer_info.entries) |layer_info|
+                                    if (layer_info.layer_id == layer_id and
+                                        layer_info.weather_list.len >= 1)
+                                    {
+                                        break :weather layer_info.weather_list[0];
+                                    };
+                            }
+                            break :weather "SunShine";
+                        },
+                    },
                 },
             },
             .dungeon = dungeon: {
