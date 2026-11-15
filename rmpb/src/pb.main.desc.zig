@@ -361,8 +361,8 @@ pub const KJBDBNGDMAD = struct {
     pub const FMMCHMFJECB_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
 };
 
-pub const FIAMMPPDAAM = struct {
-    pub const OPONPIAKEJH_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+pub const HadalZoneBattleSummary = struct {
+    pub const battle_data_record_map_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
 };
 
 pub const CNNLFKDFBIO = struct {
@@ -660,7 +660,7 @@ pub const LKBNHEOAJJI = struct {
     pub const HOBEMFGCCED_field_desc: FieldDesc = .{ .number = 1, .xor = 2776 };
     pub const total_time_field_desc: FieldDesc = .{ .number = 3, .xor = 13657 };
     pub const result_field_desc: FieldDesc = .{ .number = 7, .xor = 5470 };
-    pub const MHDMFOEBBJA_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
+    pub const battle_summary_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
 };
 
 pub const BHINIIGPGAG = struct {
@@ -2924,9 +2924,9 @@ pub const IFDLDHNEKNK = struct {
     pub const HLMBNICBHPG_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
 };
 
-pub const BJJHODDAOFB = struct {
+pub const BattleSummary = struct {
     pub const NHGPPFPKPCM_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
-    pub const IAIFEKDDKPJ_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const hadal_zone_battle_summary_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const JMNLJCOIMLB_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const MHAAIFOOMPI_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
     pub const AOAGABGHJHA_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
@@ -7357,7 +7357,7 @@ pub const HadalZoneSync = struct {
     pub const sync_entrance_list_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
 
-pub const LIMMHMBHKDJ = struct {
+pub const EndHadalZoneRoomCsReq = struct {
     pub const cmd_id: u16 = 6304;
     pub const result_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
 };
@@ -8593,7 +8593,7 @@ pub const LayerRecord = struct {
     pub const room_index_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
     pub const PGKKEEBFJGL_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
     pub const OFCDMNDNGDK_field_desc: FieldDesc = .{ .number = 16, .xor = 0 };
-    pub const OPONPIAKEJH_field_desc: FieldDesc = .{ .number = 17, .xor = 0 };
+    pub const battle_data_record_map_field_desc: FieldDesc = .{ .number = 17, .xor = 0 };
 };
 
 pub const COOLNHCDCGI = struct {
@@ -9079,7 +9079,7 @@ pub const DungeonQuestFinishedScNotify = struct {
     pub const ALOCGHGIKJC_field_desc: FieldDesc = .{ .number = 1309, .xor = 10455 };
     pub const ACOONIFDEGL_field_desc: FieldDesc = .{ .number = 1432, .xor = 0 };
     pub const FOLEPPJGOPK_field_desc: FieldDesc = .{ .number = 1668, .xor = 9701 };
-    pub const MHDMFOEBBJA_field_desc: FieldDesc = .{ .number = 1717, .xor = 0 };
+    pub const battle_summary_field_desc: FieldDesc = .{ .number = 1717, .xor = 0 };
     pub const AHGAMPNHBBA_field_desc: FieldDesc = .{ .number = 1984, .xor = 0 };
 };
 

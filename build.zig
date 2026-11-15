@@ -231,6 +231,7 @@ const gamesv_assets: []const StaticAsset = &.{
     .asset("TeleportConfigTemplateTb", "assets/filecfg/TeleportConfigTemplateTb.zon"),
     .asset("EquipmentTemplateTb", "assets/filecfg/EquipmentTemplateTb.zon"),
     .asset("ZoneInfoTemplateTb", "assets/filecfg/ZoneInfoTemplateTb.zon"),
+    .asset("LayerInfoTemplateTb", "assets/filecfg/LayerInfoTemplateTb.zon"),
     .asset("QuestConfigTemplateTb", "assets/filecfg/QuestConfigTemplateTb.zon"),
     .asset("HadalZoneQuestTemplateTb", "assets/filecfg/HadalZoneQuestTemplateTb.zon"),
     .asset("AvatarBattleTemplateTb", "assets/filecfg/AvatarBattleTemplateTb.zon"),

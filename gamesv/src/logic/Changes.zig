@@ -1,5 +1,6 @@
 game_mode: ?GameMode,
 dungeon_quest_finished: ?DungeonQuestFinished,
+hadal_zone_room_finished: ?HadalZoneRoomFinished,
 camera_master_mode: ?CameraMasterMode,
 player_accessory: ?PlayerAccessory,
 main_city_time: ?MainCityTime,
@@ -17,6 +18,7 @@ hadal_zone: ?HadalZoneSchedule,
 pub const init: Changes = .{
     .game_mode = null,
     .dungeon_quest_finished = null,
+    .hadal_zone_room_finished = null,
     .camera_master_mode = null,
     .player_accessory = null,
     .main_city_time = null,
@@ -187,6 +189,10 @@ pub const GameMode = union(enum) {
 
 pub const DungeonQuestFinished = struct {
     result: u32,
+};
+
+pub const HadalZoneRoomFinished = struct {
+    battle_record_members: [Properties.HadalZone.max_battle_record_members_count]Properties.HadalZone.BattleRecordMember,
 };
 
 pub const CameraMasterMode = struct {

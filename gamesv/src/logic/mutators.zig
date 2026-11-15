@@ -6,6 +6,7 @@ const namespaces: []const type = &.{
     @import("mutators/item.zig"),
     @import("mutators/scene.zig"),
     @import("mutators/quick_team.zig"),
+    @import("mutators/hadal_zone.zig"),
 };
 
 pub fn dispatchLogicChanges(frame: *const Server.Frame, changes: *const logic.Changes) Error!void {

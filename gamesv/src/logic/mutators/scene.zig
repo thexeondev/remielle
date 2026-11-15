@@ -55,6 +55,8 @@ pub fn mutateHadalZone(
                 }
                 properties.hadal_zone.buddy_id_list[room_index] = @intFromEnum(optional_buddy);
             }
+            properties.hadal_zone.current_room_index = 0;
+            properties.hadal_zone.battle_records = @splat(.init);
         },
     };
 }

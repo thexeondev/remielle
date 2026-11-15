@@ -27,6 +27,35 @@ pub fn getHadalZoneData(
     response.set(.{ .hadal_entrance_list = entrance_list });
 }
 
+pub fn endHadalZoneRoom(
+    message: Message(pb.EndHadalZoneRoomCsReq),
+    changes: logic.Changes.Builder(.{
+        logic.Changes.HadalZoneRoomFinished,
+    }),
+    response: Response(pb.EndHadalZoneRoomScRsp),
+) !void {
+    if (message.data.result.?.battle_data_record) |battle_data_record| {
+        changes.insert(logic.Changes.HadalZoneRoomFinished{
+            .battle_record_members = battle_records: {
+                var battle_records: [logic.Properties.HadalZone.max_battle_record_members_count]logic.Properties.HadalZone.BattleRecordMember = undefined;
+
+                for (&battle_records, 0..) |*battle_record, i| {
+                    if (i == logic.Properties.HadalZone.max_avatar_per_room_count) {
+                        battle_record.* = .fromBattleRecordMemberData(battle_data_record.buddy_member_data);
+                        break;
+                    }
+                    const maybe_battle_record_member_data = if (i < battle_data_record.avatar_member_list.items.len) battle_data_record.avatar_member_list.items[i] else null;
+                    battle_record.* = .fromBattleRecordMemberData(maybe_battle_record_member_data);
+                }
+
+                break :battle_records battle_records;
+            },
+        });
+    }
+
+    response.set(.init);
+}
+
 const ArrayList = std.ArrayList;
 const Message = handlers.Message;
 const Response = handlers.Response;

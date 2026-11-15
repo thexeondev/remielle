@@ -333,6 +333,7 @@ pub fn dungeonQuestFinished(
         logic.Properties.Avatar,
         logic.Properties.Weapon,
         logic.Properties.DungeonQuest,
+        logic.Properties.HadalZone,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.DungeonQuestFinished,
@@ -410,6 +411,10 @@ pub fn dungeonQuestFinished(
 
             break :avatar_contribution_list avatar_contribution_list;
         },
+        .battle_summary = try packers.packBattleSummary(
+            notify.allocator,
+            properties.hadal_zone,
+        ),
     });
 }
 

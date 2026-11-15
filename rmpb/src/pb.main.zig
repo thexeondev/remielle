@@ -1,5 +1,5 @@
 const std = @import("std");
-fn MapEntry(comptime K: type, comptime V: type) type {
+pub fn MapEntry(comptime K: type, comptime V: type) type {
     return struct {
         pub const map_entry: void = {};
         pub const init: @This() = .{
@@ -3317,7 +3317,7 @@ pub const DungeonQuestFinishedScNotify = struct {
     rank: u32 = 0,
     EOIJJOHCPDD: u32 = 0,
     OGPDMBMECLE: i32 = 0,
-    GMGDIIJMKAL: ?BDPLHIICCPA = null,
+    battle_summary: ?BattleSummary = null,
     DCJJIJABMFB: ?JBECFHNNBDB = null,
     ODHKIKEHGCF: bool = false,
     NGNMAPMEELL: std.ArrayList(u32) = .empty,
@@ -10703,7 +10703,7 @@ pub const LayerRecord = struct {
     room_index: u32 = 0,
     PECPPOGAFCH: std.ArrayList(u32) = .empty,
     IIEDFIKOEKL: std.ArrayList(u32) = .empty,
-    LAJMPNJCKFN: std.ArrayList(MapEntry(u32, BattleDataRecord)) = .empty,
+    battle_data_record_map: std.ArrayList(MapEntry(u32, BattleDataRecord)) = .empty,
 };
 
 pub const LHFMLICLPEG = struct {
@@ -21820,10 +21820,10 @@ pub const EBEALPOEKAL = struct {
     pub const pb_desc_name = "EBEALPOEKAL";
 };
 
-pub const PPAMGEFOAGD = struct {
+pub const HadalZoneBattleSummary = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "PPAMGEFOAGD";
-    LAJMPNJCKFN: std.ArrayList(MapEntry(u32, BattleDataRecord)) = .empty,
+    pub const pb_desc_name = "HadalZoneBattleSummary";
+    battle_data_record_map: std.ArrayList(MapEntry(u32, BattleDataRecord)) = .empty,
 };
 
 pub const FIIIPFIHHIK = struct {
@@ -22594,10 +22594,16 @@ pub const EELHIKELLNJ = struct {
     MALNBOJHJFO: u32 = 0,
 };
 
-pub const MJBBIEKEJMI = struct {
+pub const EndHadalZoneRoomCsReq = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "MJBBIEKEJMI";
+    pub const pb_desc_name = "EndHadalZoneRoomCsReq";
     result: ?FightResult = null,
+};
+
+pub const EndHadalZoneRoomScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "EndHadalZoneRoomScRsp";
+    retcode: i32 = 0,
 };
 
 pub const FPODEIPDPPE = struct {
@@ -29336,7 +29342,7 @@ pub const DIOEDOELENH = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "DIOEDOELENH";
     result: u32 = 0,
-    GMGDIIJMKAL: ?KFEPHHOKCJO = null,
+    battle_summary: ?KFEPHHOKCJO = null,
     total_time: u32 = 0,
     CDBLLELDDKH: u32 = 0,
 };
@@ -36843,10 +36849,10 @@ pub const NBJKICMDAJA = struct {
     retcode: i32 = 0,
 };
 
-pub const BDPLHIICCPA = struct {
+pub const BattleSummary = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "BDPLHIICCPA";
-    FNIKDAOPDDJ: ?PPAMGEFOAGD = null,
+    pub const pb_desc_name = "BattleSummary";
+    hadal_zone_battle_summary: ?HadalZoneBattleSummary = null,
     NHOENIGOALF: ?EPMFCJKJMND = null,
     IHPNDKLGAJI: ?CGGMHNKLIMO = null,
     FGBBHPIGJLP: ?JCFNEKBDFOI = null,

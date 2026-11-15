@@ -13,6 +13,7 @@ pub const urban_area_map_group = @import("templates/urban_area_map_group.zig");
 pub const teleport_config = @import("templates/teleport_config.zig");
 pub const main_city_object = @import("templates/main_city_object.zig");
 pub const zone_info = @import("templates/zone_info.zig");
+pub const layer_info = @import("templates/layer_info.zig");
 pub const quest_config = @import("templates/quest_config.zig");
 pub const hadal_zone_quest = @import("templates/hadal_zone_quest.zig");
 pub const avatar_level_advance = @import("templates/avatar_level_advance.zig");

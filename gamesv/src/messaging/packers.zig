@@ -281,6 +281,55 @@ pub fn packZoneRecord(
     };
 }
 
+pub fn packBattleSummary(
+    arena: Allocator,
+    hadal_zone: *const Properties.HadalZone,
+) !?pb.BattleSummary {
+    return .{
+        .hadal_zone_battle_summary = .{
+            .battle_data_record_map = battle_data_record_map: {
+                var map: ArrayList(pb.MapEntry(u32, pb.BattleDataRecord)) = .empty;
+                for (hadal_zone.battle_records) |battle_record| if (battle_record.room_id != 0) {
+                    try map.append(arena, .{
+                        .key = battle_record.room_id,
+                        .value = .{
+                            .avatar_member_list = avatar_member_list: {
+                                var avatar_member_list: ArrayList(pb.BattleRecordMemberData) = .empty;
+                                for (battle_record.members) |member| if (member.type == .Avatar) {
+                                    try avatar_member_list.append(arena, packBattleRecordMemberData(member));
+                                };
+                                break :avatar_member_list avatar_member_list;
+                            },
+                            .buddy_member_data = buddy_member_data: {
+                                for (battle_record.members) |member| if (member.type == .Buddy) {
+                                    break :buddy_member_data packBattleRecordMemberData(member);
+                                };
+                                break :buddy_member_data null;
+                            },
+                        },
+                    });
+                };
+
+                break :battle_data_record_map map;
+            },
+        },
+    };
+}
+
+pub fn packBattleRecordMemberData(
+    battle_record_member: Properties.HadalZone.BattleRecordMember,
+) pb.BattleRecordMemberData {
+    return .{
+        .avatar_id = if (battle_record_member.type == .Avatar) battle_record_member.id else 0,
+        .buddy_id = if (battle_record_member.type == .Buddy) battle_record_member.id else 0,
+        .damage = battle_record_member.damage,
+        .stun = battle_record_member.stun,
+        .element_abnormal_accumulation = battle_record_member.element_abnormal_accumulation,
+        .recover = battle_record_member.recover,
+        .shield = battle_record_member.shield,
+    };
+}
+
 const Timestamp = std.Io.Timestamp;
 const ArrayList = std.ArrayList;
 const GameMode = logic.Changes.GameMode;
