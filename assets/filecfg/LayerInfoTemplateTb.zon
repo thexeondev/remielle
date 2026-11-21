@@ -5642,7 +5642,7 @@
         .layer_room_ids = .{690531011},
         .layer_items = .{
             69013005,
-            69014506,
+            69015304,
             69014507,
         },
         .weather_list = .{"SunShine"},
