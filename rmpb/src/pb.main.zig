@@ -28638,11 +28638,11 @@ pub const NEJFNEFHFOB = struct {
     pub const pb_desc_name = "NEJFNEFHFOB";
 };
 
-pub const OLNOPCJAEDF = struct {
+pub const AddBuddyScNotify = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "OLNOPCJAEDF";
+    pub const pb_desc_name = "AddBuddyScNotify";
     lock: bool = false,
-    UNK_OLNOPCJAEDF_32: std.ArrayList(GAEOLHHGGAH) = .empty,
+    UNK_AddBuddyScNotify_32: std.ArrayList(GAEOLHHGGAH) = .empty,
     buddy_id: u32 = 0,
 };
 

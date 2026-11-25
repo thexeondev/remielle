@@ -25109,9 +25109,9 @@ pub const NDONMOPJPEG = struct {
     pub const FEKHOKDIGGP_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
 };
 
-pub const IHFBOOGDFNJ = struct {
+pub const AddBuddyScNotify = struct {
     pub const cmd_id: u16 = 7145;
-    pub const UNK_IHFBOOGDFNJ_32_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+    pub const UNK_AddBuddyScNotify_32_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const buddy_id_field_desc: FieldDesc = .{ .number = 4, .xor = 4164 };
     pub const lock_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
 };

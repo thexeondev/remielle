@@ -90,23 +90,28 @@ fn unlockAllBuddies(props: *Properties.List, at: Player) void {
 
     for (templates.buddy_base.entries) |template| if (template.id < 55000) {
         const i = buddy.indexes.count();
-        buddy.indexes.put(template.getId(), @intCast(i));
-        buddy.ids[i] = template.getId();
 
-        buddy.meta[i] = .{
-            .level = .max,
-            .exp = 0,
-            .rank = .max,
-            .star = .init,
-            .skill_levels = .initUndefined(),
-            .flags = .init,
-        };
-
-        inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
-            const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
-            buddy.meta[i].skill_levels.set(skill, .maxFor(skill));
-        }
+        addDefaultBuddy(buddy, template.getId(), i);
     };
+}
+
+pub fn addDefaultBuddy(buddy: *Buddy, id: templates.buddy_base.Id, i: usize) void {
+    buddy.indexes.put(id, @intCast(i));
+    buddy.ids[i] = id;
+
+    buddy.meta[i] = .{
+        .level = .max,
+        .exp = 0,
+        .rank = .max,
+        .star = .init,
+        .skill_levels = .initUndefined(),
+        .flags = .init,
+    };
+
+    inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
+        const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+        buddy.meta[i].skill_levels.set(skill, .maxFor(skill));
+    }
 }
 
 fn unlockAllWeapons(props: *Properties.List, at: Player) void {

@@ -4,12 +4,14 @@ pub fn playerSync(
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
         logic.Properties.Avatar,
+        logic.Properties.Buddy,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.ControlAvatar,
         logic.Changes.ControlGuiseAvatar,
-        logic.Changes.NewAvatar,
         logic.Changes.Avatar,
+        logic.Changes.NewAvatar,
+        logic.Changes.NewBuddy,
         logic.Changes.Weapon,
         logic.Changes.Equip,
         logic.Changes.PlayerAccessory,
@@ -33,6 +35,12 @@ pub fn playerSync(
         properties.avatar,
         changes.avatars,
         changes.new_avatars,
+    );
+
+    sync.buddy = try buildBuddySync(
+        notify.allocator,
+        properties.buddy,
+        changes.new_buddies,
     );
 
     sync.misc = .{
@@ -83,6 +91,25 @@ pub fn addAvatar(
     notify.many(packets.items);
 }
 
+pub fn addBuddy(
+    changes: logic.Changes.Subset(.{
+        logic.Changes.NewBuddy,
+    }),
+    notify: Notify(pb.AddBuddyScNotify),
+) !void {
+    const buddies: []const logic.Changes.NewBuddy = changes.new_buddies;
+    var packets: std.ArrayList(pb.AddBuddyScNotify) = .empty;
+
+    for (buddies) |buddy| {
+        var add: pb.AddBuddyScNotify = .init;
+        add.buddy_id = @intFromEnum(buddy.id);
+
+        packets.append(notify.allocator, add) catch @panic("OOM");
+    }
+
+    notify.many(packets.items);
+}
+
 fn buildSelfBasicInfo(
     allocator: Allocator,
     info: *const Properties.BasicInfo,
@@ -124,6 +151,30 @@ fn buildAvatarSync(
             &properties.meta[i],
             properties.weapon_uids[i],
             properties.equipment_uids[i],
+        ));
+    }
+
+    return sync;
+}
+
+fn buildBuddySync(
+    allocator: Allocator,
+    properties: *const logic.Properties.Buddy,
+    new_buddies: []const logic.Changes.NewBuddy,
+) !?pb.BuddySync {
+    if (new_buddies.len == 0) return null;
+
+    var sync: pb.BuddySync = .{
+        .buddy_list = try .initCapacity(allocator, new_buddies.len),
+    };
+
+    for (new_buddies) |new_buddy| {
+        const i = properties.indexes.get(new_buddy.id).?;
+
+        sync.buddy_list.appendAssumeCapacity(try packers.packBuddyInfo(
+            allocator,
+            properties.ids[i],
+            &properties.meta[i],
         ));
     }
 
