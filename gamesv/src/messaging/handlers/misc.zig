@@ -123,6 +123,37 @@ pub fn cameraMasterModeToggle(
     response.set(.init);
 }
 
+const usm_keys: []const pb.MapEntry(u32, u64) = &.{};
+
+const usm_keys_v2: []const pb.MapEntry(u32, []const u8) = &.{
+    .{ .key = 2813, .value = &.{ 201, 170, 242, 20, 83, 24, 7, 86, 108, 23, 255, 89, 241, 56, 175, 169 } },
+    .{ .key = 2954, .value = &.{ 172, 23, 181, 21, 102, 113, 168, 159, 176, 140, 103, 241, 242, 168, 63, 180 } },
+    .{ .key = 2955, .value = &.{ 25, 80, 228, 247, 164, 215, 130, 125, 210, 184, 3, 123, 85, 142, 18, 238 } },
+    .{ .key = 2967, .value = &.{ 185, 156, 246, 75, 171, 179, 97, 55, 40, 201, 90, 251, 55, 234, 90, 15 } },
+    .{ .key = 2968, .value = &.{ 177, 82, 80, 127, 112, 214, 72, 28, 174, 8, 117, 142, 175, 78, 109, 51 } },
+    .{ .key = 2978, .value = &.{ 77, 66, 58, 236, 101, 80, 93, 101, 138, 129, 74, 81, 239, 103, 197, 240 } },
+    .{ .key = 2982, .value = &.{ 44, 122, 188, 114, 217, 38, 13, 100, 106, 160, 154, 200, 198, 160, 59, 153 } },
+};
+
+pub fn videoGetInfo(
+    message: Message(pb.VideoGetInfoCsReq),
+    response: Response(pb.VideoGetInfoScRsp),
+) !void {
+    _ = message;
+
+    response.set(.{
+        .retcode = 0,
+        .video_key_map = .{
+            .capacity = usm_keys.len,
+            .items = @constCast(usm_keys),
+        },
+        .video_key_v2_map = .{
+            .capacity = usm_keys_v2.len,
+            .items = @constCast(usm_keys_v2),
+        },
+    });
+}
+
 const templates = Assets.templates;
 
 const ArrayList = std.ArrayList;

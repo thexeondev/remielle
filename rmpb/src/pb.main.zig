@@ -28953,6 +28953,7 @@ pub const VideoGetInfoScRsp = struct {
     pub const pb_desc_name = "VideoGetInfoScRsp";
     retcode: i32 = 0,
     video_key_map: std.ArrayList(MapEntry(u32, u64)) = .empty,
+    video_key_v2_map: std.ArrayList(MapEntry(u32, []const u8)) = .empty,
 };
 
 pub const KAOMJBGPGNI = struct {
