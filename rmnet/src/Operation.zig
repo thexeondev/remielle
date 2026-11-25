@@ -8,6 +8,7 @@ pub const Tag = enum(u16) {
     create_equip = 4,
     mod_hadal_zone_schedule = 5,
     unlock_avatar = 6,
+    unlock_buddy = 7,
     _,
 };
 
@@ -134,6 +135,14 @@ pub const UnlockAvatar = extern struct {
 
     player_uid: u32,
     avatar_id: u32,
+};
+
+pub const UnlockBuddy = extern struct {
+    pub const tag: Tag = .unlock_buddy;
+    pub const version: Version = 0;
+
+    player_uid: u32,
+    buddy_id: u32,
 };
 
 pub fn Message(comptime Op: type) type {

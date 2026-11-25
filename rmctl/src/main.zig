@@ -217,6 +217,18 @@ pub fn main(init: Init) void {
             const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
             _ = ack;
         },
+        .@"unlock-buddy" => |unlock_buddy| {
+            var message: Operation.Message(Operation.UnlockBuddy) = .init(userdata, .{
+                .player_uid = unlock_buddy.uid,
+                .buddy_id = @intFromEnum(unlock_buddy.id),
+            });
+
+            socket.send(io, &destination, @ptrCast(&message)) catch |err|
+                fatal("send: {t}", .{err});
+
+            const ack = receive(rmnet.Event.Ack, io, &socket, &recv_buffer);
+            _ = ack;
+        },
     }
 }
 

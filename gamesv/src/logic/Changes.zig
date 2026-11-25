@@ -10,6 +10,7 @@ control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
 new_avatars: []const NewAvatar,
+new_buddies: []const NewBuddy,
 quick_teams: []const QuickTeam,
 weapons: []const Weapon,
 equipment: []const Equip,
@@ -28,6 +29,7 @@ pub const init: Changes = .{
     .control_guise_avatar = null,
     .avatars = &.{},
     .new_avatars = &.{},
+    .new_buddies = &.{},
     .quick_teams = &.{},
     .weapons = &.{},
     .equipment = &.{},
@@ -236,6 +238,11 @@ pub const Avatar = struct {
 /// Avatar addition
 pub const NewAvatar = struct {
     id: Properties.Avatar.Id,
+};
+
+/// Buddy addition
+pub const NewBuddy = struct {
+    id: Properties.Buddy.Id,
 };
 
 pub const QuickTeam = struct {

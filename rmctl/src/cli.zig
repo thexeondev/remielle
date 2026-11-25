@@ -75,6 +75,10 @@ pub const Command = union(enum) {
         uid: u32,
         id: avatar_base.Id,
     },
+    @"unlock-buddy": struct {
+        uid: u32,
+        id: buddy_base.Id,
+    },
 
     /// Exits on invalid input.
     pub fn parse(
@@ -139,6 +143,7 @@ pub const Command = union(enum) {
 const fatal = std.process.fatal;
 
 const avatar_base = @import("assets/avatar_base.zig");
+const buddy_base = @import("assets/buddy_base.zig");
 
 const rmnet = @import("rmnet");
 const std = @import("std");

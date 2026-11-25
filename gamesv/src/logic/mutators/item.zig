@@ -48,6 +48,21 @@ pub fn mutateEquipment(
     }
 }
 
+pub fn createBuddy(
+    changes: logic.Changes.Subset(.{
+        logic.Changes.NewBuddy,
+    }),
+    properties: logic.Properties.Mutable(.{
+        logic.Properties.Buddy,
+    }),
+) !void {
+    for (changes.new_buddies) |change| {
+        const i = properties.buddy.count();
+
+        logic.Properties.addDefaultBuddy(properties.buddy, change.id, i);
+    }
+}
+
 const Weapon = Properties.Weapon;
 const Equipment = Properties.Equipment;
 const Properties = logic.Properties;
