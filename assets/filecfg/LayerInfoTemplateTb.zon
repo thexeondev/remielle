@@ -2644,6 +2644,108 @@
         .weather_list = .{},
     },
     .{
+        .layer_id = 6206601,
+        .layer_room_ids = .{ 62066011, 62066012 },
+        .layer_items = .{62001661},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206602,
+        .layer_room_ids = .{ 62066021, 62066022 },
+        .layer_items = .{62001661},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206603,
+        .layer_room_ids = .{ 62066031, 62066032 },
+        .layer_items = .{62001661},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206604,
+        .layer_room_ids = .{ 62066041, 62066042 },
+        .layer_items = .{62001661},
+        .weather_list = .{"Fog"},
+    },
+    .{
+        .layer_id = 6206605,
+        .layer_room_ids = .{},
+        .layer_items = .{
+            62001661,
+            62001662,
+            62001663,
+        },
+        .weather_list = .{},
+    },
+    .{
+        .layer_id = 6206701,
+        .layer_room_ids = .{ 62067011, 62067012 },
+        .layer_items = .{62001671},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206702,
+        .layer_room_ids = .{ 62067021, 62067022 },
+        .layer_items = .{62001671},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206703,
+        .layer_room_ids = .{ 62067031, 62067032 },
+        .layer_items = .{62001671},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206704,
+        .layer_room_ids = .{ 62067041, 62067042 },
+        .layer_items = .{62001671},
+        .weather_list = .{"Fog"},
+    },
+    .{
+        .layer_id = 6206705,
+        .layer_room_ids = .{},
+        .layer_items = .{
+            62001671,
+            62001672,
+            62001673,
+        },
+        .weather_list = .{},
+    },
+    .{
+        .layer_id = 6206801,
+        .layer_room_ids = .{ 62068011, 62068012 },
+        .layer_items = .{62001681},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206802,
+        .layer_room_ids = .{ 62068021, 62068022 },
+        .layer_items = .{62001681},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206803,
+        .layer_room_ids = .{ 62068031, 62068032 },
+        .layer_items = .{62001681},
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 6206804,
+        .layer_room_ids = .{ 62068041, 62068042 },
+        .layer_items = .{62001681},
+        .weather_list = .{"Fog"},
+    },
+    .{
+        .layer_id = 6206805,
+        .layer_room_ids = .{},
+        .layer_items = .{
+            62001681,
+            62001682,
+            62001683,
+        },
+        .weather_list = .{},
+    },
+    .{
         .layer_id = 6900101,
         .layer_room_ids = .{69001011},
         .layer_items = .{
@@ -5214,6 +5316,96 @@
         .weather_list = .{"SunShine"},
     },
     .{
+        .layer_id = 62066051,
+        .layer_room_ids = .{62066051},
+        .layer_items = .{
+            62001661,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62066052,
+        .layer_room_ids = .{62066052},
+        .layer_items = .{
+            62001662,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62066053,
+        .layer_room_ids = .{62066053},
+        .layer_items = .{
+            62001663,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62067051,
+        .layer_room_ids = .{62067051},
+        .layer_items = .{
+            62001671,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62067052,
+        .layer_room_ids = .{62067052},
+        .layer_items = .{
+            62001672,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62067053,
+        .layer_room_ids = .{62067053},
+        .layer_items = .{
+            62001673,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62068051,
+        .layer_room_ids = .{62068051},
+        .layer_items = .{
+            62001681,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62068052,
+        .layer_room_ids = .{62068052},
+        .layer_items = .{
+            62001682,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 62068053,
+        .layer_room_ids = .{62068053},
+        .layer_items = .{
+            62001683,
+            62001001,
+            62001002,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
         .layer_id = 69042101,
         .layer_room_ids = .{690421011},
         .layer_items = .{
@@ -5674,6 +5866,126 @@
             69015205,
             69014406,
             69015204,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69054101,
+        .layer_room_ids = .{690541011},
+        .layer_items = .{ 69010402, 69013702 },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69054102,
+        .layer_room_ids = .{690541021},
+        .layer_items = .{
+            69013005,
+            69015107,
+            69015108,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69054103,
+        .layer_room_ids = .{690541031},
+        .layer_items = .{
+            69013003,
+            69014405,
+            69014406,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69054201,
+        .layer_room_ids = .{690542011},
+        .layer_items = .{
+            69013005,
+            69015105,
+            69014507,
+            69015104,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69055101,
+        .layer_room_ids = .{690551011},
+        .layer_items = .{
+            69013004,
+            69012602,
+            69012603,
+            69012102,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69055102,
+        .layer_room_ids = .{690551021},
+        .layer_items = .{
+            69013003,
+            69014405,
+            69014406,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69055103,
+        .layer_room_ids = .{690551031},
+        .layer_items = .{
+            69013005,
+            69015304,
+            69014507,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69055201,
+        .layer_room_ids = .{690552011},
+        .layer_items = .{
+            69014904,
+            69013304,
+            69015404,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69056101,
+        .layer_room_ids = .{690561011},
+        .layer_items = .{
+            69013002,
+            69012302,
+            69012303,
+            69012102,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69056102,
+        .layer_room_ids = .{690561021},
+        .layer_items = .{
+            69013005,
+            69015107,
+            69015108,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69056103,
+        .layer_room_ids = .{690561031},
+        .layer_items = .{
+            69013003,
+            69013601,
+            69013602,
+        },
+        .weather_list = .{"SunShine"},
+    },
+    .{
+        .layer_id = 69056201,
+        .layer_room_ids = .{690562011},
+        .layer_items = .{
+            69013005,
+            69015105,
+            69014507,
+            69015104,
         },
         .weather_list = .{"SunShine"},
     },
